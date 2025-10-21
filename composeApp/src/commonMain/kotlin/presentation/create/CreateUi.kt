@@ -1,6 +1,7 @@
 package presentation.create
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -41,16 +42,25 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             )
         }
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
         ) {
-            if (state.generatedCards.isEmpty()) {
-                CreateForm(state)
-            } else {
-                PreviewCards(state)
+            val maxContentWidth = 840.dp
+            val contentWidth = minOf(maxWidth, maxContentWidth)
+
+            Column(
+                modifier = Modifier
+                    .width(contentWidth)
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp)
+            ) {
+                if (state.generatedCards.isEmpty()) {
+                    CreateForm(state)
+                } else {
+                    PreviewCards(state)
+                }
             }
         }
     }
