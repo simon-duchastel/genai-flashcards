@@ -11,6 +11,7 @@ plugins {
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
+        outputModuleName = "genai-flashcards"
         browser()
         binaries.executable()
     }

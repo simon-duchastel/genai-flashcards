@@ -1,6 +1,5 @@
 package presentation.home
 
-import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import domain.model.FlashcardSet
@@ -13,13 +12,8 @@ data object HomeScreen : Screen
 data class HomeUiState(
     val flashcardSets: List<FlashcardSet>,
     val isLoading: Boolean = false,
-    val eventSink: (HomeEvent) -> Unit
+    val onCreateNewSet: () -> Unit,
+    val onOpenSet: (String) -> Unit,
+    val onDeleteSet: (String) -> Unit,
+    val onRefresh: () -> Unit
 ) : CircuitUiState
-
-// Events
-sealed interface HomeEvent : CircuitUiEvent {
-    data object CreateNewSet : HomeEvent
-    data class OpenSet(val setId: String) : HomeEvent
-    data class DeleteSet(val setId: String) : HomeEvent
-    data object Refresh : HomeEvent
-}

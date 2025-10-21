@@ -30,30 +30,26 @@ class HomePresenter(
         return HomeUiState(
             flashcardSets = flashcardSets,
             isLoading = isLoading,
-            eventSink = { event ->
-                when (event) {
-                    HomeEvent.CreateNewSet -> {
-                        navigator.goTo(CreateScreen())
+            onCreateNewSet = {
+                navigator.goTo(CreateScreen())
+            },
+            onOpenSet = { setId ->
+                navigator.goTo(StudyScreen(setId = setId))
+            },
+            onDeleteSet = { setId ->
+                scope.launch {
+                    repository.deleteFlashcardSet(setId)
+                    loadFlashcardSets { sets ->
+                        flashcardSets = sets
                     }
-                    is HomeEvent.OpenSet -> {
-                        navigator.goTo(StudyScreen(setId = event.setId))
-                    }
-                    is HomeEvent.DeleteSet -> {
-                        scope.launch {
-                            repository.deleteFlashcardSet(event.setId)
-                            loadFlashcardSets { sets ->
-                                flashcardSets = sets
-                            }
-                        }
-                    }
-                    HomeEvent.Refresh -> {
-                        isLoading = true
-                        scope.launch {
-                            loadFlashcardSets { sets ->
-                                flashcardSets = sets
-                                isLoading = false
-                            }
-                        }
+                }
+            },
+            onRefresh = {
+                isLoading = true
+                scope.launch {
+                    loadFlashcardSets { sets ->
+                        flashcardSets = sets
+                        isLoading = false
                     }
                 }
             }

@@ -20,7 +20,7 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             TopAppBar(
                 title = { Text("Create Flashcards") },
                 navigationIcon = {
-                    IconButton(onClick = { state.eventSink(CreateEvent.BackClicked) }) {
+                    IconButton(onClick = state.onBackClicked) {
                         Text("←", style = MaterialTheme.typography.headlineSmall)
                     }
                 }
@@ -56,7 +56,7 @@ private fun CreateForm(state: CreateUiState) {
 
         OutlinedTextField(
             value = state.topic,
-            onValueChange = { state.eventSink(CreateEvent.TopicChanged(it)) },
+            onValueChange = state.onTopicChanged,
             label = { Text("Topic") },
             placeholder = { Text("e.g., Kotlin Coroutines, World History, Biology...") },
             modifier = Modifier.fillMaxWidth(),
@@ -78,7 +78,7 @@ private fun CreateForm(state: CreateUiState) {
             Text("${state.count} cards")
             Slider(
                 value = state.count.toFloat(),
-                onValueChange = { state.eventSink(CreateEvent.CountChanged(it.toInt())) },
+                onValueChange = { state.onCountChanged(it.toInt()) },
                 valueRange = 5f..50f,
                 steps = 44,
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
@@ -103,7 +103,7 @@ private fun CreateForm(state: CreateUiState) {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = { state.eventSink(CreateEvent.GenerateClicked) },
+            onClick = state.onGenerateClicked,
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isGenerating && state.topic.isNotBlank()
         ) {
@@ -144,7 +144,7 @@ private fun PreviewCards(state: CreateUiState) {
             items(state.generatedCards, key = { it.id }) { card ->
                 FlashcardPreviewItem(
                     card = card,
-                    onDelete = { state.eventSink(CreateEvent.DeleteCard(card.id)) }
+                    onDelete = { state.onDeleteCard(card.id) }
                 )
             }
         }
@@ -156,13 +156,13 @@ private fun PreviewCards(state: CreateUiState) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
-                onClick = { state.eventSink(CreateEvent.BackClicked) },
+                onClick = state.onBackClicked,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Cancel")
             }
             Button(
-                onClick = { state.eventSink(CreateEvent.SaveClicked) },
+                onClick = state.onSaveClicked,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Save Set")

@@ -41,35 +41,31 @@ class StudyPresenter(
             currentIndex = currentIndex,
             isFlipped = isFlipped,
             topic = topic,
-            eventSink = { event ->
-                when (event) {
-                    StudyEvent.FlipCard -> {
-                        isFlipped = !isFlipped
-                    }
-                    StudyEvent.NextCard -> {
-                        if (currentIndex < flashcards.size - 1) {
-                            currentIndex++
-                            isFlipped = false
-                        }
-                    }
-                    StudyEvent.PreviousCard -> {
-                        if (currentIndex > 0) {
-                            currentIndex--
-                            isFlipped = false
-                        }
-                    }
-                    StudyEvent.ExitStudy -> {
-                        navigator.pop()
-                    }
-                    StudyEvent.RestartStudy -> {
-                        currentIndex = 0
-                        isFlipped = false
-                        scope.launch {
-                            val cards = repository.getRandomizedFlashcards(screen.setId)
-                            if (cards != null) {
-                                flashcards = cards
-                            }
-                        }
+            onFlipCard = {
+                isFlipped = !isFlipped
+            },
+            onNextCard = {
+                if (currentIndex < flashcards.size - 1) {
+                    currentIndex++
+                    isFlipped = false
+                }
+            },
+            onPreviousCard = {
+                if (currentIndex > 0) {
+                    currentIndex--
+                    isFlipped = false
+                }
+            },
+            onExitStudy = {
+                navigator.pop()
+            },
+            onRestartStudy = {
+                currentIndex = 0
+                isFlipped = false
+                scope.launch {
+                    val cards = repository.getRandomizedFlashcards(screen.setId)
+                    if (cards != null) {
+                        flashcards = cards
                     }
                 }
             }

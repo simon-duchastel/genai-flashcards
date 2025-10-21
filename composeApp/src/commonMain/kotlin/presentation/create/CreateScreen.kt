@@ -1,6 +1,5 @@
 package presentation.create
 
-import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import domain.model.Flashcard
@@ -18,16 +17,11 @@ data class CreateUiState(
     val isGenerating: Boolean,
     val generatedCards: List<Flashcard>,
     val error: String?,
-    val eventSink: (CreateEvent) -> Unit
+    val onTopicChanged: (String) -> Unit,
+    val onCountChanged: (Int) -> Unit,
+    val onGenerateClicked: () -> Unit,
+    val onSaveClicked: () -> Unit,
+    val onBackClicked: () -> Unit,
+    val onEditCard: (String, String, String) -> Unit,
+    val onDeleteCard: (String) -> Unit
 ) : CircuitUiState
-
-// Events
-sealed interface CreateEvent : CircuitUiEvent {
-    data class TopicChanged(val topic: String) : CreateEvent
-    data class CountChanged(val count: Int) : CreateEvent
-    data object GenerateClicked : CreateEvent
-    data object SaveClicked : CreateEvent
-    data object BackClicked : CreateEvent
-    data class EditCard(val cardId: String, val front: String, val back: String) : CreateEvent
-    data class DeleteCard(val cardId: String) : CreateEvent
-}
