@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -132,8 +134,8 @@ private fun FlashcardView(
                 detectHorizontalDragGestures(
                     onDragEnd = {
                         when {
-                            swipeOffset > 100 -> onSwipeRight()
-                            swipeOffset < -100 -> onSwipeLeft()
+                            swipeOffset > 100 -> onSwipeLeft()
+                            swipeOffset < -100 -> onSwipeRight()
                         }
                         swipeOffset = 0f
                     },
@@ -146,7 +148,7 @@ private fun FlashcardView(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isFlipped)
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.tertiaryContainer
             else
                 MaterialTheme.colorScheme.primaryContainer
         )
@@ -158,16 +160,25 @@ private fun FlashcardView(
             contentAlignment = Alignment.Center
         ) {
             AnimatedContent(targetState = isFlipped) { flipped ->
-                Text(
-                    text = if (flipped) card.back else card.front,
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
+                val scrollState = rememberScrollState()
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer {
-                            rotationY = if (flipped) 180f else 0f
-                        }
-                )
+                        .fillMaxSize()
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = if (flipped) card.back else card.front,
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                rotationY = if (flipped) 180f else 0f
+                            }
+                    )
+                }
             }
         }
     }
