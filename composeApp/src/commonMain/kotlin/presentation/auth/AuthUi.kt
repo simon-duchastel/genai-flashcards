@@ -21,7 +21,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("GenAI Flashcards", fontWeight = FontWeight.Bold) },
+                title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
