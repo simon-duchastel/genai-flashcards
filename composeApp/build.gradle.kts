@@ -38,6 +38,7 @@ kotlin {
 
             // Koog (AI agents)
             implementation(libs.koog.agents)
+            implementation(libs.koog.ktor)
 
             // Ktor (HTTP client)
             implementation(libs.ktor.client.core)

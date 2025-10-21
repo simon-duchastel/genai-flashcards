@@ -1,30 +1,61 @@
 package data.ai
 
-import domain.model.Flashcard
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.agent.functionalStrategy
+import ai.koog.agents.core.dsl.extension.requestLLMStructured
+import ai.koog.prompt.executor.clients.google.GoogleModels
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
+import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.markdown.markdown
+import ai.koog.prompt.structure.StructureFixingParser
 import domain.model.FlashcardSet
-import kotlin.uuid.Uuid
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * AI-powered flashcard generator using Koog framework.
- *
- * For now, we'll use a direct OpenAI API call approach.
- * TODO: Integrate full Koog agent framework once we verify JS compatibility.
  */
 class FlashcardGenerator(
     private val apiKey: String
 ) {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        prettyPrint = false
-    }
+    /**
+     * Koog agent configured for flashcard generation using functional strategy.
+     */
+    private fun createAgent(): AIAgent<String, FlashcardSet> {
+        return AIAgent(
+            systemPrompt = """
+                You are a flashcard generation assistant. Your task is to create educational flashcards
+                that help students learn and test their understanding of a given topic.
 
-    @Serializable
-    private data class GeneratedCard(
-        val front: String,
-        val back: String
-    )
+                For each flashcard:
+                - front: Create a clear, specific question that tests understanding of a key concept
+                - back: Provide a concise, accurate answer that explains the concept
+
+                Focus on:
+                - Important concepts and definitions
+                - Key facts and principles
+                - Practical applications
+                - Common misconceptions to clarify
+
+                Return your response in structured JSON format.
+
+                Generate exactly the number of flashcards requested, ensuring variety and comprehensive coverage.
+            """.trimIndent(),
+            promptExecutor = MultiLLMPromptExecutor(
+                LLMProvider.OpenAI to OpenAILLMClient(apiKey)
+            ),
+            strategy = functionalStrategy { query ->
+                requestLLMStructured<FlashcardSet>(
+                    message = query,
+                    fixingParser = StructureFixingParser(
+                        fixingModel = GoogleModels.Gemini2_5Flash,
+                        retries = 3,
+                    )
+                ).getOrNull()!!.structure
+            },
+            llmModel = GoogleModels.Gemini2_5Pro
+        )
+    }
 
     /**
      * Generate flashcards on a given topic.
@@ -33,53 +64,18 @@ class FlashcardGenerator(
      * @param count Number of flashcards to generate
      * @return FlashcardSet with generated cards
      */
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-    suspend fun generate(topic: String, count: Int): FlashcardSet {
-        // This is a placeholder implementation
-        // In a real app, this would call the OpenAI API via Koog
-        // For now, we'll return mock data for testing
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun generate(topic: String, count: Int, userQuery: String,): FlashcardSet {
+        val agent = createAgent()
 
-        val setId = Uuid.random().toString()
-        val mockCards = (1..count).map { i ->
-            Flashcard(
-                front = "Question $i about $topic?",
-                back = "Answer $i explaining key concepts about $topic.",
-                setId = setId
-            )
+        val prompt = markdown {
+            +"Please generate exactly $count flashcards on the topic of '$topic'"
+
+            h2("Additional Information")
+            +"Here is more information to help guide you:"
+            +userQuery
         }
 
-        return FlashcardSet(
-            id = setId,
-            topic = topic,
-            flashcards = mockCards
-        )
+        return agent.run(prompt)
     }
-
-    /**
-     * TODO: Implement with Koog agent framework
-     *
-     * Example Koog implementation:
-     * ```kotlin
-     * private val agent = koogAgent {
-     *     model = OpenAI(apiKey = apiKey, model = "gpt-4-turbo")
-     *
-     *     systemPrompt = """
-     *         You are an expert flashcard creator.
-     *         Generate $count high-quality flashcards about: $topic
-     *
-     *         Return ONLY a JSON array in this exact format:
-     *         [{"front": "question", "back": "answer"}, ...]
-     *
-     *         Guidelines:
-     *         - Questions should be clear and specific
-     *         - Answers should be comprehensive but concise
-     *         - Focus on key concepts and important details
-     *         - Use active learning principles
-     *     """.trimIndent()
-     * }
-     *
-     * val response = agent.chat("Generate the flashcards")
-     * return parseResponse(response, topic)
-     * ```
-     */
 }

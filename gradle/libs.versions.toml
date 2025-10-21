@@ -29,6 +29,7 @@ circuit-runtime = { module = "com.slack.circuit:circuit-runtime", version.ref = 
 
 # Koog (AI agents)
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
+koog-ktor = { module = "ai.koog:koog-ktor", version.ref = "koog" }
 
 # Ktor (for Koog and HTTP client)
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

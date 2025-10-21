@@ -49,7 +49,7 @@ class CreatePresenter(
                         error = null
                         scope.launch {
                             try {
-                                val flashcardSet = generator.generate(topic, count)
+                                val flashcardSet = generator.generate(topic, count, "Make it good")
                                 generatedCards = flashcardSet.flashcards
                                 isGenerating = false
                             } catch (e: Exception) {
