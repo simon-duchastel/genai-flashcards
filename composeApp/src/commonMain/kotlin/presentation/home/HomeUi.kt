@@ -1,11 +1,14 @@
 package presentation.home
 
+import LocalThemeState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +24,8 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
+    val themeState = LocalThemeState.current
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -33,6 +38,12 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 actions = {
+                    IconButton(onClick = themeState.onToggle) {
+                        Icon(
+                            imageVector = if (themeState.isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = "Toggle theme"
+                        )
+                    }
                     IconButton(onClick = state.onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
