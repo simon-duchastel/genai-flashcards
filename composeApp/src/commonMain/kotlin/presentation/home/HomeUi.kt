@@ -22,10 +22,12 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("GenAI Flashcards", fontWeight = FontWeight.Bold) },
+                title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
