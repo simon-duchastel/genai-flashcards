@@ -67,11 +67,28 @@ private fun CreateForm(state: CreateUiState) {
             value = state.topic,
             onValueChange = state.onTopicChanged,
             label = { Text("Topic") },
-            placeholder = { Text("e.g., Kotlin Coroutines, World History, Biology...") },
+            placeholder = { Text("e.g., Kotlin Coroutines") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isGenerating,
+            singleLine = true,
+            supportingText = {
+                Text(
+                    "${state.topic.length}/30",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        )
+
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = state.onQueryChanged,
+            label = { Text("Additional Details (Optional)") },
+            placeholder = { Text("Describe what you want to focus on, any specific areas, difficulty level, etc.") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isGenerating,
             singleLine = false,
-            minLines = 2
+            minLines = 3,
+            maxLines = 5
         )
 
         Text(

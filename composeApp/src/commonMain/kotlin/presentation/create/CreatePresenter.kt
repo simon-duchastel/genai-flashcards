@@ -18,6 +18,7 @@ class CreatePresenter(
     @Composable
     override fun present(): CreateUiState {
         var topic by remember { mutableStateOf(screen.topicHint ?: "") }
+        var query by remember { mutableStateOf("") }
         var count by remember { mutableStateOf(10) }
         var isGenerating by remember { mutableStateOf(false) }
         var generatedCards by remember { mutableStateOf(emptyList<Flashcard>()) }
@@ -26,12 +27,17 @@ class CreatePresenter(
 
         return CreateUiState(
             topic = topic,
+            query = query,
             count = count,
             isGenerating = isGenerating,
             generatedCards = generatedCards,
             error = error,
             onTopicChanged = { newTopic ->
-                topic = newTopic
+                topic = newTopic.take(30)
+                error = null
+            },
+            onQueryChanged = { newQuery ->
+                query = newQuery
                 error = null
             },
             onCountChanged = { newCount ->
@@ -45,7 +51,7 @@ class CreatePresenter(
                         isGenerating = true
                         error = null
                         scope.launch {
-                            val flashcardSet = generator.generate(topic, count, "Make it good")
+                            val flashcardSet = generator.generate(topic, count, query.ifBlank { "Generate comprehensive flashcards" })
 
                             if (flashcardSet == null) {
                                 error = "Failed to generate flashcards"

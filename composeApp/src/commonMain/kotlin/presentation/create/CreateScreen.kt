@@ -13,11 +13,13 @@ data class CreateScreen(
 // UI State
 data class CreateUiState(
     val topic: String,
+    val query: String,
     val count: Int,
     val isGenerating: Boolean,
     val generatedCards: List<Flashcard>,
     val error: String?,
     val onTopicChanged: (String) -> Unit,
+    val onQueryChanged: (String) -> Unit,
     val onCountChanged: (Int) -> Unit,
     val onGenerateClicked: () -> Unit,
     val onSaveClicked: () -> Unit,
