@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -153,7 +155,7 @@ private fun FlashcardView(
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (isFlipped)
-                    MaterialTheme.colorScheme.secondaryContainer
+                    MaterialTheme.colorScheme.tertiaryContainer
                 else
                     MaterialTheme.colorScheme.primaryContainer
             )
@@ -165,24 +167,33 @@ private fun FlashcardView(
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(targetState = isFlipped) { flipped ->
-                    val text = if (flipped) card.back else card.front
-                    val textLength = text.length
-                    val fontSize = when {
-                        textLength > 300 -> MaterialTheme.typography.bodyLarge
-                        textLength > 150 -> MaterialTheme.typography.titleLarge
-                        else -> MaterialTheme.typography.headlineSmall
-                    }
-
-                    Text(
-                        text = text,
-                        style = fontSize,
-                        textAlign = TextAlign.Center,
+                    val scrollState = rememberScrollState()
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer {
-                                rotationY = if (flipped) 180f else 0f
-                            }
-                    )
+                            .fillMaxSize()
+                            .verticalScroll(scrollState),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        val text = if (flipped) card.back else card.front
+                        val textLength = text.length
+                        val fontSize = when {
+                            textLength > 300 -> MaterialTheme.typography.bodyLarge
+                            textLength > 150 -> MaterialTheme.typography.titleLarge
+                            else -> MaterialTheme.typography.headlineSmall
+                        }
+
+                        Text(
+                            text = text,
+                            style = fontSize,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer {
+                                    rotationY = if (flipped) 180f else 0f
+                                }
+                        )
+                    }
                 }
             }
         }
