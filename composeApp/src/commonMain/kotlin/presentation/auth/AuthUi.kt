@@ -1,6 +1,7 @@
 package presentation.auth
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -38,75 +39,84 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             )
         }
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Welcome!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            val maxContentWidth = 600.dp
+            val contentWidth = minOf(maxWidth, maxContentWidth)
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Enter your Gemini API key to get started",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = state.apiKeyInput ?: "",
-                onValueChange = state.onApiKeyChanged,
-                label = {
-                    if (state.apiKeyInput != null) {
-                        Text("Gemini API Key")
-                    } else {
-                        CircularProgressIndicator()
-                    }
-                },
-                placeholder = { Text("AIza...") },
-                singleLine = true,
-                enabled = !state.isSaving,
-                isError = state.error != null,
-                supportingText = state.error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = state.onSaveClicked,
-                enabled = !state.isSaving && !state.apiKeyInput.isNullOrBlank(),
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .width(contentWidth)
+                    .align(Alignment.Center)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                if (state.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Continue")
+                Text(
+                    text = "Welcome!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Enter your Gemini API key to get started",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedTextField(
+                    value = state.apiKeyInput ?: "",
+                    onValueChange = state.onApiKeyChanged,
+                    label = {
+                        if (state.apiKeyInput != null) {
+                            Text("Gemini API Key")
+                        } else {
+                            CircularProgressIndicator()
+                        }
+                    },
+                    placeholder = { Text("AIza...") },
+                    singleLine = true,
+                    enabled = !state.isSaving,
+                    isError = state.error != null,
+                    supportingText = state.error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = state.onSaveClicked,
+                    enabled = !state.isSaving && !state.apiKeyInput.isNullOrBlank(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (state.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Continue")
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Get your API key from Google AI Studio",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Get your API key from Google AI Studio",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }

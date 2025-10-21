@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -124,60 +125,75 @@ private fun FlashcardView(
         targetValue = if (isFlipped) 180f else 0f
     )
 
-    Card(
-        modifier = modifier
-            .aspectRatio(1.5f)
-            .graphicsLayer {
-                rotationY = cardRotation
-            }
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        when {
-                            swipeOffset > 100 -> onSwipeLeft()
-                            swipeOffset < -100 -> onSwipeRight()
-                        }
-                        swipeOffset = 0f
-                    },
-                    onHorizontalDrag = { _, dragAmount ->
-                        swipeOffset += dragAmount
-                    }
-                )
-            }
-            .clickable(onClick = onFlip),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isFlipped)
-                MaterialTheme.colorScheme.tertiaryContainer
-            else
-                MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Box(
+    BoxWithConstraints(modifier = modifier) {
+        val maxCardWidth = 700.dp
+        val cardWidth = minOf(maxWidth, maxCardWidth)
+
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            AnimatedContent(targetState = isFlipped) { flipped ->
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (flipped) card.back else card.front,
-                        style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer {
-                                rotationY = if (flipped) 180f else 0f
+                .width(cardWidth)
+                .align(Alignment.Center)
+                .heightIn(min = 280.dp, max = maxHeight)
+                .graphicsLayer {
+                    rotationY = cardRotation
+                }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            when {
+                                swipeOffset > 100 -> onSwipeRight()
+                                swipeOffset < -100 -> onSwipeLeft()
                             }
+                            swipeOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            swipeOffset += dragAmount
+                        }
                     )
+                }
+                .clickable(onClick = onFlip),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isFlipped)
+                    MaterialTheme.colorScheme.tertiaryContainer
+                else
+                    MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(targetState = isFlipped) { flipped ->
+                    val scrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        val text = if (flipped) card.back else card.front
+                        val textLength = text.length
+                        val fontSize = when {
+                            textLength > 300 -> MaterialTheme.typography.bodyLarge
+                            textLength > 150 -> MaterialTheme.typography.titleLarge
+                            else -> MaterialTheme.typography.headlineSmall
+                        }
+
+                        Text(
+                            text = text,
+                            style = fontSize,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer {
+                                    rotationY = if (flipped) 180f else 0f
+                                }
+                        )
+                    }
                 }
             }
         }
