@@ -49,3 +49,4 @@ kotlin-js-store/
 
 # Local configuration
 local.properties
+dist/
