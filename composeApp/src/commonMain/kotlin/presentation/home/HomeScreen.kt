@@ -15,5 +15,6 @@ data class HomeUiState(
     val onCreateNewSet: () -> Unit,
     val onOpenSet: (String) -> Unit,
     val onDeleteSet: (String) -> Unit,
-    val onRefresh: () -> Unit
+    val onRefresh: () -> Unit,
+    val onSettingsClick: () -> Unit
 ) : CircuitUiState

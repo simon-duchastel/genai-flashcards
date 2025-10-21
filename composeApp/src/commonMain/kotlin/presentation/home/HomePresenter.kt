@@ -5,6 +5,7 @@ import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
+import presentation.auth.AuthScreen
 import presentation.create.CreateScreen
 import presentation.study.StudyScreen
 
@@ -52,6 +53,9 @@ class HomePresenter(
                         isLoading = false
                     }
                 }
+            },
+            onSettingsClick = {
+                navigator.goTo(AuthScreen)
             }
         )
     }

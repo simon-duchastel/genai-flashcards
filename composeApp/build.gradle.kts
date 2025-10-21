@@ -26,6 +26,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.compose.material.icons.extended)
 
             // Kotlinx
             implementation(libs.kotlinx.coroutines.core)

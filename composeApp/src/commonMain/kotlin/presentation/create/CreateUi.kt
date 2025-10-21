@@ -3,6 +3,12 @@ package presentation.create
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FlipToBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +27,10 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
                 title = { Text("Create Flashcards") },
                 navigationIcon = {
                     IconButton(onClick = state.onBackClicked) {
-                        Text("←", style = MaterialTheme.typography.headlineSmall)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -197,7 +206,10 @@ private fun FlashcardPreviewItem(
                     onClick = onDelete,
                     modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
                 ) {
-                    Text("×", style = MaterialTheme.typography.titleLarge)
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    )
                 }
             }
             Text(
