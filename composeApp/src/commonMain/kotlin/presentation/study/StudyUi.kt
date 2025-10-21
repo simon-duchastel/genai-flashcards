@@ -6,6 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Settings
@@ -172,7 +175,7 @@ private fun FlashcardView(
     // Hint text
     Spacer(modifier = Modifier.height(16.dp))
     Text(
-        text = if (isFlipped) "← Swipe or tap to flip →" else "Tap to reveal answer",
+        text = if (isFlipped) "Swipe or tap to flip" else "Tap to reveal answer",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -196,7 +199,8 @@ private fun NavigationButtons(
             enabled = canGoPrevious,
             modifier = Modifier.weight(1f)
         ) {
-            Text("← Previous")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            Text("Previous")
         }
         Spacer(modifier = Modifier.width(16.dp))
         Button(
@@ -204,7 +208,8 @@ private fun NavigationButtons(
             enabled = canGoNext,
             modifier = Modifier.weight(1f)
         ) {
-            Text("Next →")
+            Text("Next")
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
     }
 }
