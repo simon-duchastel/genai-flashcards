@@ -2,7 +2,7 @@ package presentation.study
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -153,7 +153,10 @@ private fun FlashcardView(
                         }
                     )
                 }
-                .clickable(onClick = onFlip),
+                .combinedClickable(
+                    onClick = onFlip,
+                    onLongClick = {}
+                ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (isFlipped)
