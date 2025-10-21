@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import domain.model.Flashcard
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
     Scaffold(

@@ -23,16 +23,18 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
-
-            // Circuit
-            implementation(libs.circuit.foundation)
-            implementation(libs.circuit.overlay)
-            implementation(libs.circuit.runtime)
+            implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.runtimeCompose)
 
             // Kotlinx
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+
+            // Circuit
+            implementation(libs.circuit.foundation)
+            implementation(libs.circuit.overlay)
+            implementation(libs.circuit.runtime)
 
             // Koog (AI agents)
             implementation(libs.koog.agents)
@@ -41,11 +43,6 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.json)
-        }
-
-        wasmJsMain.dependencies {
-            implementation(compose.html.core)
-            implementation(libs.ktor.client.js)
         }
 
         commonTest.dependencies {

@@ -15,6 +15,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
     Scaffold(

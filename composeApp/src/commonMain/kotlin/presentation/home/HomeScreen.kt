@@ -1,6 +1,5 @@
 package presentation.home
 
-import androidx.compose.runtime.*
 import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
@@ -8,7 +7,7 @@ import domain.model.FlashcardSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-class HomeScreen : Screen
+data object HomeScreen : Screen
 
 // UI State
 data class HomeUiState(

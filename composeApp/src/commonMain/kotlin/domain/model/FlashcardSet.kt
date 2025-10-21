@@ -1,12 +1,13 @@
 package domain.model
 
-import com.benasher44.uuid.uuid4
+import kotlin.uuid.Uuid
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Serializable
 data class FlashcardSet(
-    val id: String = uuid4().toString(),
+    val id: String = Uuid.random().toString(),
     val topic: String,
     val flashcards: List<Flashcard>,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()

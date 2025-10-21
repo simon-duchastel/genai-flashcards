@@ -2,7 +2,7 @@ package data.ai
 
 import domain.model.Flashcard
 import domain.model.FlashcardSet
-import com.benasher44.uuid.uuid4
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -33,12 +33,13 @@ class FlashcardGenerator(
      * @param count Number of flashcards to generate
      * @return FlashcardSet with generated cards
      */
+    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
     suspend fun generate(topic: String, count: Int): FlashcardSet {
         // This is a placeholder implementation
         // In a real app, this would call the OpenAI API via Koog
         // For now, we'll return mock data for testing
 
-        val setId = uuid4().toString()
+        val setId = Uuid.random().toString()
         val mockCards = (1..count).map { i ->
             Flashcard(
                 front = "Question $i about $topic?",

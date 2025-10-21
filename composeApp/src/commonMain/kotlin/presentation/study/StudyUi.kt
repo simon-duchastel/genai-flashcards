@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import domain.model.Flashcard
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
     if (state.flashcards.isEmpty()) {
@@ -201,6 +202,7 @@ private fun NavigationButtons(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CompletionScreen(
     state: StudyUiState,

@@ -1,7 +1,8 @@
 [versions]
 kotlin = "2.2.20"
-composeHotReload = "1.0.0-beta07"
 composeMultiplatform = "1.9.0"
+composeHotReload = "1.0.0-beta07"
+androidx-lifecycle = "2.9.4"
 circuit = "0.24.0"
 coroutines = "1.9.0"
 serialization = "1.7.3"
@@ -12,6 +13,9 @@ ktor = "3.0.3"
 [libraries]
 # Kotlin
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+# Compose
+androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 # Kotlinx
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
