@@ -2,6 +2,7 @@ package presentation.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -110,17 +111,24 @@ private fun FlashcardSetList(
     onDeleteClick: (FlashcardSet) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(sets, key = { it.id }) { set ->
-            FlashcardSetItem(
-                set = set,
-                onClick = { onSetClick(set) },
-                onDeleteClick = { onDeleteClick(set) }
-            )
+    BoxWithConstraints(modifier = modifier) {
+        val maxContentWidth = 840.dp
+        val contentWidth = minOf(maxWidth, maxContentWidth)
+
+        LazyColumn(
+            modifier = Modifier
+                .width(contentWidth)
+                .align(Alignment.TopCenter),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(sets, key = { it.id }) { set ->
+                FlashcardSetItem(
+                    set = set,
+                    onClick = { onSetClick(set) },
+                    onDeleteClick = { onDeleteClick(set) }
+                )
+            }
         }
     }
 }
