@@ -47,17 +47,27 @@ class CreatePresenter(
                 if (topic.isBlank()) {
                     error = "Please enter a topic"
                 } else {
-
-                        isGenerating = true
-                        error = null
-                        scope.launch {
+                    isGenerating = true
+                    error = null
+                    scope.launch {
+                        try {
                             val flashcardSet = generator.generate(topic, count, query.ifBlank { "Generate comprehensive flashcards" })
 
                             if (flashcardSet == null) {
-                                error = "Failed to generate flashcards"
-                            isGenerating = false
-                        } else {
-                            generatedCards = flashcardSet.flashcards
+                                error = """
+                                    Failed to generate flashcards. Please try again later.
+                                    
+                                    Common issues to check for:
+                                    - Internet issues
+                                    - API key (did you forget to set it?)
+                                """.trimIndent()
+                                isGenerating = false
+                            } else {
+                                generatedCards = flashcardSet.flashcards
+                                isGenerating = false
+                            }
+                        } catch (e: Exception) {
+                            error = "Error: ${e.message ?: "Failed to generate flashcards"}"
                             isGenerating = false
                         }
                     }

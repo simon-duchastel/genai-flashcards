@@ -57,6 +57,6 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add dist
+          git add -f dist
           git commit -m "Deploy build from main (${GITHUB_SHA::7})" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:releases
