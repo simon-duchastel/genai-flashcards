@@ -67,7 +67,7 @@ private fun CreateForm(state: CreateUiState) {
             value = state.topic,
             onValueChange = state.onTopicChanged,
             label = { Text("Topic") },
-            placeholder = { Text("e.g., Kotlin Coroutines") },
+            placeholder = { Text("ex.  \"Cats\", \"Sirens in Greek Mythology\", \"16th Century Witchcraft\"") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isGenerating,
             singleLine = true,
