@@ -1,6 +1,8 @@
 package presentation.auth
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -16,8 +18,11 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
+    val scrollState = rememberScrollState()
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text("GenAI Flashcards", fontWeight = FontWeight.Bold) },
@@ -42,6 +47,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(scrollState)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

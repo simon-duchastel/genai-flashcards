@@ -3,6 +3,8 @@ package presentation.create
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -22,7 +24,9 @@ import domain.model.Flashcard
 @Composable
 fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text("Create Flashcards") },
@@ -54,8 +58,11 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CreateForm(state: CreateUiState) {
+    val scrollState = rememberScrollState()
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
@@ -285,12 +292,14 @@ private fun EditCardDialog(
 ) {
     var editedFront by remember { mutableStateOf(front) }
     var editedBack by remember { mutableStateOf(back) }
+    val scrollState = rememberScrollState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Flashcard") },
         text = {
             Column(
+                modifier = Modifier.verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedTextField(
