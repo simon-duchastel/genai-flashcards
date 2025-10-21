@@ -2,6 +2,8 @@ package presentation.study
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -25,6 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import domain.model.Flashcard
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,7 +129,11 @@ private fun FlashcardView(
     var swipeOffset by remember { mutableStateOf(0f) }
 
     val cardRotation by animateFloatAsState(
-        targetValue = if (isFlipped) 180f else 0f
+        targetValue = if (isFlipped) 180f else 0f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = EaseInOutCubic
+        )
     )
 
     BoxWithConstraints(modifier = modifier) {
@@ -138,6 +147,7 @@ private fun FlashcardView(
                 .heightIn(min = 280.dp, max = maxHeight)
                 .graphicsLayer {
                     rotationY = cardRotation
+                    cameraDistance = 60f * density
                 }
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
