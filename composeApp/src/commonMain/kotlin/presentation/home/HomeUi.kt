@@ -22,7 +22,9 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },

@@ -1,7 +1,6 @@
 package presentation.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -18,7 +17,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
