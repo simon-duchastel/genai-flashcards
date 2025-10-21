@@ -24,6 +24,7 @@ import data.storage.getFlashcardStorage
 import domain.repository.FlashcardRepository
 import presentation.create.*
 import presentation.home.*
+import presentation.splash.*
 import presentation.study.*
 
 @Composable
@@ -36,7 +37,7 @@ fun App(
             color = MaterialTheme.colorScheme.background
         ) {
             CircuitCompositionLocals(circuit) {
-                val backStack = rememberSaveableBackStack(HomeScreen)
+                val backStack = rememberSaveableBackStack(SplashScreen)
                 val navigator = rememberCircuitNavigator(
                     backStack = backStack,
                     onRootPop = { }, // no-op root pop
