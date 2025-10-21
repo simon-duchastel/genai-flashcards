@@ -3,12 +3,14 @@ package data.ai
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.functionalStrategy
 import ai.koog.agents.core.dsl.extension.requestLLMStructured
+import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.structure.StructureFixingParser
+import data.storage.ConfigRepository
 import domain.model.FlashcardSet
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -16,12 +18,12 @@ import kotlin.uuid.ExperimentalUuidApi
  * AI-powered flashcard generator using Koog framework.
  */
 class FlashcardGenerator(
-    private val apiKey: String
+    private val configRepository: ConfigRepository,
 ) {
     /**
      * Koog agent configured for flashcard generation using functional strategy.
      */
-    private fun createAgent(): AIAgent<String, FlashcardSet> {
+    private fun createAgent(geminiApiKey: String): AIAgent<String, FlashcardSet> {
         return AIAgent(
             systemPrompt = """
                 You are a flashcard generation assistant. Your task is to create educational flashcards
@@ -42,7 +44,7 @@ class FlashcardGenerator(
                 Generate exactly the number of flashcards requested, ensuring variety and comprehensive coverage.
             """.trimIndent(),
             promptExecutor = MultiLLMPromptExecutor(
-                LLMProvider.OpenAI to OpenAILLMClient(apiKey)
+                LLMProvider.Google to GoogleLLMClient(geminiApiKey)
             ),
             strategy = functionalStrategy { query ->
                 requestLLMStructured<FlashcardSet>(
@@ -64,9 +66,9 @@ class FlashcardGenerator(
      * @param count Number of flashcards to generate
      * @return FlashcardSet with generated cards
      */
-    @OptIn(ExperimentalUuidApi::class)
-    suspend fun generate(topic: String, count: Int, userQuery: String,): FlashcardSet {
-        val agent = createAgent()
+    suspend fun generate(topic: String, count: Int, userQuery: String): FlashcardSet? {
+        val geminiApiKey = configRepository.getGeminiApiKey() ?: return null
+        val agent = createAgent(geminiApiKey)
 
         val prompt = markdown {
             +"Please generate exactly $count flashcards on the topic of '$topic'"

@@ -48,12 +48,13 @@ class CreatePresenter(
                         isGenerating = true
                         error = null
                         scope.launch {
-                            try {
-                                val flashcardSet = generator.generate(topic, count, "Make it good")
-                                generatedCards = flashcardSet.flashcards
+                            val flashcardSet = generator.generate(topic, count, "Make it good")
+
+                            if (flashcardSet == null) {
+                                error = "Failed to generate flashcards"
                                 isGenerating = false
-                            } catch (e: Exception) {
-                                error = "Failed to generate flashcards: ${e.message}"
+                            } else {
+                                generatedCards = flashcardSet.flashcards
                                 isGenerating = false
                             }
                         }
