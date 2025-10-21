@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -170,6 +171,7 @@ private fun PreviewCards(state: CreateUiState) {
             items(state.generatedCards, key = { it.id }) { card ->
                 FlashcardPreviewItem(
                     card = card,
+                    onEdit = { front, back -> state.onEditCard(card.id, front, back) },
                     onDelete = { state.onDeleteCard(card.id) }
                 )
             }
@@ -200,9 +202,12 @@ private fun PreviewCards(state: CreateUiState) {
 @Composable
 private fun FlashcardPreviewItem(
     card: Flashcard,
+    onEdit: (String, String) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showEditDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -219,14 +224,25 @@ private fun FlashcardPreviewItem(
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete"
-                    )
+                Row {
+                    IconButton(
+                        onClick = { showEditDialog = true },
+                        modifier = Modifier.size(24.dp).offset(y = (-8).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit"
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                    }
                 }
             }
             Text(
@@ -246,4 +262,67 @@ private fun FlashcardPreviewItem(
             )
         }
     }
+
+    if (showEditDialog) {
+        EditCardDialog(
+            front = card.front,
+            back = card.back,
+            onDismiss = { showEditDialog = false },
+            onSave = { newFront, newBack ->
+                onEdit(newFront, newBack)
+                showEditDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditCardDialog(
+    front: String,
+    back: String,
+    onDismiss: () -> Unit,
+    onSave: (String, String) -> Unit
+) {
+    var editedFront by remember { mutableStateOf(front) }
+    var editedBack by remember { mutableStateOf(back) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Flashcard") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = editedFront,
+                    onValueChange = { editedFront = it },
+                    label = { Text("Front") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 5
+                )
+                OutlinedTextField(
+                    value = editedBack,
+                    onValueChange = { editedBack = it },
+                    label = { Text("Back") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 5
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(editedFront, editedBack) },
+                enabled = editedFront.isNotBlank() && editedBack.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
