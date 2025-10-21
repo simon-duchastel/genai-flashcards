@@ -2,7 +2,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.slack.circuit.backstack.rememberSaveableBackStack
 import com.slack.circuit.foundation.Circuit
@@ -14,6 +18,7 @@ import com.slack.circuit.runtime.presenter.Presenter
 import com.slack.circuit.runtime.ui.Ui
 import com.slack.circuit.runtime.ui.ui
 import data.ai.FlashcardGenerator
+import data.storage.ConfigRepository
 import data.storage.FlashcardStorage
 import data.storage.getFlashcardStorage
 import domain.repository.FlashcardRepository
@@ -23,9 +28,6 @@ import presentation.study.*
 
 @Composable
 fun App(
-    storage: FlashcardStorage,
-    repository: FlashcardRepository,
-    generator: FlashcardGenerator,
     circuit: Circuit,
 ) {
     MaterialTheme {

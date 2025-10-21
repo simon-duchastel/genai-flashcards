@@ -52,9 +52,6 @@ fun main() {
     ComposeViewport(
         content = {
             App(
-                storage = storage,
-                repository = repository,
-                generator = generator,
                 circuit = circuit,
             )
         }
