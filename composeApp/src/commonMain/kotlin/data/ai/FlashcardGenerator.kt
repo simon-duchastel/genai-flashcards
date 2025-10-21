@@ -23,7 +23,7 @@ class FlashcardGenerator(
     /**
      * Koog agent configured for flashcard generation using functional strategy.
      */
-    private fun createAgent(geminiApiKey: String): AIAgent<String, FlashcardSet> {
+    private fun createAgent(geminiApiKey: String): AIAgent<String, FlashcardSet?> {
         return AIAgent(
             systemPrompt = """
                 You are a flashcard generation assistant. Your task is to create educational flashcards
@@ -51,9 +51,9 @@ class FlashcardGenerator(
                     message = query,
                     fixingParser = StructureFixingParser(
                         fixingModel = GoogleModels.Gemini2_5Flash,
-                        retries = 3,
+                        retries = 5,
                     )
-                ).getOrNull()!!.structure
+                ).getOrNull()?.structure
             },
             llmModel = GoogleModels.Gemini2_5Pro
         )
@@ -64,20 +64,27 @@ class FlashcardGenerator(
      *
      * @param topic The subject/topic for the flashcards
      * @param count Number of flashcards to generate
-     * @return FlashcardSet with generated cards
+     * @return FlashcardSet with generated cards, or null if generation fails
      */
     suspend fun generate(topic: String, count: Int, userQuery: String): FlashcardSet? {
         val geminiApiKey = configRepository.getGeminiApiKey() ?: return null
-        val agent = createAgent(geminiApiKey)
 
-        val prompt = markdown {
-            +"Please generate exactly $count flashcards on the topic of '$topic'"
+        return try {
+            val agent = createAgent(geminiApiKey)
 
-            h2("Additional Information")
-            +"Here is more information to help guide you:"
-            +userQuery
+            val prompt = markdown {
+                +"Please generate exactly $count flashcards on the topic of '$topic'"
+
+                h2("Additional Information")
+                +"Here is more information to help guide you:"
+                +userQuery
+            }
+
+            agent.run(prompt)
+        } catch (e: Exception) {
+            // Return null for any API errors (invalid API key, network issues, etc.)
+            println("Failed to generate flashcards: ${e.message}")
+            null
         }
-
-        return agent.run(prompt)
     }
 }
