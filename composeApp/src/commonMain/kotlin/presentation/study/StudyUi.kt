@@ -38,7 +38,7 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
             TopAppBar(
                 title = { Text(state.topic) },
                 navigationIcon = {
-                    IconButton(onClick = { state.eventSink(StudyEvent.ExitStudy) }) {
+                    IconButton(onClick = state.onExitStudy) {
                         Text("←", style = MaterialTheme.typography.headlineSmall)
                     }
                 },
@@ -64,9 +64,9 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
                 FlashcardView(
                     card = card,
                     isFlipped = state.isFlipped,
-                    onFlip = { state.eventSink(StudyEvent.FlipCard) },
-                    onSwipeLeft = { state.eventSink(StudyEvent.PreviousCard) },
-                    onSwipeRight = { state.eventSink(StudyEvent.NextCard) },
+                    onFlip = state.onFlipCard,
+                    onSwipeLeft = state.onPreviousCard,
+                    onSwipeRight = state.onNextCard,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -79,8 +79,8 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
             NavigationButtons(
                 canGoPrevious = state.currentIndex > 0,
                 canGoNext = state.currentIndex < state.flashcards.size - 1,
-                onPrevious = { state.eventSink(StudyEvent.PreviousCard) },
-                onNext = { state.eventSink(StudyEvent.NextCard) },
+                onPrevious = state.onPreviousCard,
+                onNext = state.onNextCard,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
         }
@@ -246,10 +246,10 @@ private fun CompletionScreen(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                OutlinedButton(onClick = { state.eventSink(StudyEvent.ExitStudy) }) {
+                OutlinedButton(onClick = state.onExitStudy) {
                     Text("Go Home")
                 }
-                Button(onClick = { state.eventSink(StudyEvent.RestartStudy) }) {
+                Button(onClick = state.onRestartStudy) {
                     Text("Study Again")
                 }
             }

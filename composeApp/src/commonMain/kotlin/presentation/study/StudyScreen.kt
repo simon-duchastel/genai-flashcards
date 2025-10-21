@@ -1,7 +1,6 @@
 package presentation.study
 
 import androidx.compose.runtime.*
-import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import domain.model.Flashcard
@@ -18,18 +17,13 @@ data class StudyUiState(
     val currentIndex: Int,
     val isFlipped: Boolean,
     val topic: String,
-    val eventSink: (StudyEvent) -> Unit
+    val onFlipCard: () -> Unit,
+    val onNextCard: () -> Unit,
+    val onPreviousCard: () -> Unit,
+    val onExitStudy: () -> Unit,
+    val onRestartStudy: () -> Unit
 ) : CircuitUiState {
     val currentCard: Flashcard? = flashcards.getOrNull(currentIndex)
     val progress: String = "${currentIndex + 1}/${flashcards.size}"
     val isComplete: Boolean = currentIndex >= flashcards.size
-}
-
-// Events
-sealed interface StudyEvent : CircuitUiEvent {
-    data object FlipCard : StudyEvent
-    data object NextCard : StudyEvent
-    data object PreviousCard : StudyEvent
-    data object ExitStudy : StudyEvent
-    data object RestartStudy : StudyEvent
 }

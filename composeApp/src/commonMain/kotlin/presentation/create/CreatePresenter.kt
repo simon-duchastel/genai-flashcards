@@ -30,69 +30,63 @@ class CreatePresenter(
             isGenerating = isGenerating,
             generatedCards = generatedCards,
             error = error,
-            eventSink = { event ->
-                when (event) {
-                    is CreateEvent.TopicChanged -> {
-                        topic = event.topic
-                        error = null
-                    }
-                    is CreateEvent.CountChanged -> {
-                        count = event.count.coerceIn(5, 50)
-                    }
-                    CreateEvent.GenerateClicked -> {
-                        if (topic.isBlank()) {
-                            error = "Please enter a topic"
-                            return@CreateUiState
+            onTopicChanged = { newTopic ->
+                topic = newTopic
+                error = null
+            },
+            onCountChanged = { newCount ->
+                count = newCount.coerceIn(5, 50)
+            },
+            onGenerateClicked = {
+                if (topic.isBlank()) {
+                    error = "Please enter a topic"
+                } else {
+                    isGenerating = true
+                    error = null
+                    scope.launch {
+                        try {
+                            val flashcardSet = generator.generate(topic, count, "Make it good")
+                            generatedCards = flashcardSet.flashcards
+                            isGenerating = false
+                        } catch (e: Exception) {
+                            error = "Failed to generate flashcards: ${e.message}"
+                            isGenerating = false
                         }
-
-                        isGenerating = true
-                        error = null
-                        scope.launch {
-                            try {
-                                val flashcardSet = generator.generate(topic, count, "Make it good")
-                                generatedCards = flashcardSet.flashcards
-                                isGenerating = false
-                            } catch (e: Exception) {
-                                error = "Failed to generate flashcards: ${e.message}"
-                                isGenerating = false
-                            }
-                        }
-                    }
-                    CreateEvent.SaveClicked -> {
-                        if (generatedCards.isEmpty()) {
-                            error = "No flashcards to save"
-                            return@CreateUiState
-                        }
-
-                        scope.launch {
-                            try {
-                                val flashcardSet = domain.model.FlashcardSet(
-                                    topic = topic,
-                                    flashcards = generatedCards
-                                )
-                                repository.saveFlashcardSet(flashcardSet)
-                                navigator.pop()
-                            } catch (e: Exception) {
-                                error = "Failed to save flashcards: ${e.message}"
-                            }
-                        }
-                    }
-                    CreateEvent.BackClicked -> {
-                        navigator.pop()
-                    }
-                    is CreateEvent.EditCard -> {
-                        generatedCards = generatedCards.map { card ->
-                            if (card.id == event.cardId) {
-                                card.copy(front = event.front, back = event.back)
-                            } else {
-                                card
-                            }
-                        }
-                    }
-                    is CreateEvent.DeleteCard -> {
-                        generatedCards = generatedCards.filter { it.id != event.cardId }
                     }
                 }
+            },
+            onSaveClicked = {
+                if (generatedCards.isEmpty()) {
+                    error = "No flashcards to save"
+                } else {
+                    scope.launch {
+                        try {
+                            val flashcardSet = domain.model.FlashcardSet(
+                                topic = topic,
+                                flashcards = generatedCards
+                            )
+                            repository.saveFlashcardSet(flashcardSet)
+                            navigator.pop()
+                        } catch (e: Exception) {
+                            error = "Failed to save flashcards: ${e.message}"
+                        }
+                    }
+                }
+            },
+            onBackClicked = {
+                navigator.pop()
+            },
+            onEditCard = { cardId, front, back ->
+                generatedCards = generatedCards.map { card ->
+                    if (card.id == cardId) {
+                        card.copy(front = front, back = back)
+                    } else {
+                        card
+                    }
+                }
+            },
+            onDeleteCard = { cardId ->
+                generatedCards = generatedCards.filter { it.id != cardId }
             }
         )
     }

@@ -31,7 +31,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { state.eventSink(HomeEvent.CreateNewSet) },
+                onClick = state.onCreateNewSet,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Text("+", style = MaterialTheme.typography.headlineMedium)
@@ -50,14 +50,14 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             state.flashcardSets.isEmpty() -> {
                 EmptyState(
                     modifier = Modifier.fillMaxSize().padding(padding),
-                    onCreateClick = { state.eventSink(HomeEvent.CreateNewSet) }
+                    onCreateClick = state.onCreateNewSet
                 )
             }
             else -> {
                 FlashcardSetList(
                     sets = state.flashcardSets,
-                    onSetClick = { state.eventSink(HomeEvent.OpenSet(it.id)) },
-                    onDeleteClick = { state.eventSink(HomeEvent.DeleteSet(it.id)) },
+                    onSetClick = { state.onOpenSet(it.id) },
+                    onDeleteClick = { state.onDeleteSet(it.id) },
                     modifier = Modifier.fillMaxSize().padding(padding)
                 )
             }
