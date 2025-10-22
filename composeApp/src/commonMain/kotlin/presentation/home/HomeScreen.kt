@@ -12,9 +12,16 @@ data object HomeScreen : Screen
 data class HomeUiState(
     val flashcardSets: List<FlashcardSet>,
     val isLoading: Boolean = false,
+    val deleteDialog: DeleteSetDialog? = null,
     val onCreateNewSet: () -> Unit,
     val onOpenSet: (String) -> Unit,
-    val onDeleteSet: (String) -> Unit,
+    val onDeleteSetClick: (FlashcardSet) -> Unit,
     val onRefresh: () -> Unit,
     val onSettingsClick: () -> Unit
 ) : CircuitUiState
+
+data class DeleteSetDialog(
+    val set: FlashcardSet,
+    val onCancel: () -> Unit,
+    val onConfirm: () -> Unit
+)

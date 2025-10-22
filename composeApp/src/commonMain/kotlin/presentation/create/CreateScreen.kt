@@ -18,6 +18,7 @@ data class CreateUiState(
     val isGenerating: Boolean,
     val generatedCards: List<Flashcard>,
     val error: String?,
+    val deleteDialog: DeleteCardDialog? = null,
     val onTopicChanged: (String) -> Unit,
     val onQueryChanged: (String) -> Unit,
     val onCountChanged: (Int) -> Unit,
@@ -25,5 +26,11 @@ data class CreateUiState(
     val onSaveClicked: () -> Unit,
     val onBackClicked: () -> Unit,
     val onEditCard: (String, String, String) -> Unit,
-    val onDeleteCard: (String) -> Unit
+    val onDeleteCardClick: (Flashcard) -> Unit
 ) : CircuitUiState
+
+data class DeleteCardDialog(
+    val card: Flashcard,
+    val onCancel: () -> Unit,
+    val onConfirm: () -> Unit
+)

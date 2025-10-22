@@ -65,6 +65,24 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             }
         }
     }
+
+    state.deleteDialog?.let { dialog ->
+        AlertDialog(
+            onDismissRequest = dialog.onCancel,
+            title = { Text("Remove Flashcard") },
+            text = { Text("Are you sure you want to remove this flashcard?") },
+            confirmButton = {
+                Button(onClick = dialog.onConfirm) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = dialog.onCancel) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -168,8 +186,6 @@ private fun CreateForm(state: CreateUiState) {
 
 @Composable
 private fun PreviewCards(state: CreateUiState) {
-    var cardToDelete by remember { mutableStateOf<Flashcard?>(null) }
-
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             "Generated ${state.generatedCards.size} flashcards",
@@ -192,7 +208,7 @@ private fun PreviewCards(state: CreateUiState) {
                 FlashcardPreviewItem(
                     card = card,
                     onEdit = { front, back -> state.onEditCard(card.id, front, back) },
-                    onDeleteClick = { cardToDelete = card }
+                    onDeleteClick = { state.onDeleteCardClick(card) }
                 )
             }
         }
@@ -216,29 +232,6 @@ private fun PreviewCards(state: CreateUiState) {
                 Text("Save Set")
             }
         }
-    }
-
-    cardToDelete?.let { card ->
-        AlertDialog(
-            onDismissRequest = { cardToDelete = null },
-            title = { Text("Remove Flashcard") },
-            text = { Text("Are you sure you want to remove this flashcard?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        cardToDelete = null
-                        state.onDeleteCard(card.id)
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { cardToDelete = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 

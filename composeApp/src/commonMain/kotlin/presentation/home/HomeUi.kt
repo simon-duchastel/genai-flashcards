@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
@@ -13,10 +14,6 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -86,10 +83,30 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                 FlashcardSetList(
                     sets = state.flashcardSets,
                     onSetClick = { state.onOpenSet(it.id) },
-                    onDeleteClick = { state.onDeleteSet(it.id) },
+                    onDeleteClick = state.onDeleteSetClick,
                     modifier = Modifier.fillMaxSize().padding(padding)
                 )
             }
+        }
+    }
+
+    state.deleteDialog?.let { dialog ->
+        DisableSelection {
+            AlertDialog(
+                onDismissRequest = dialog.onCancel,
+                title = { Text("Remove Set") },
+                text = { Text("Are you sure you want to remove \"${dialog.set.topic}\"?") },
+                confirmButton = {
+                    Button(onClick = dialog.onConfirm) {
+                        Text("Remove")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = dialog.onCancel) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -129,8 +146,6 @@ private fun FlashcardSetList(
     onDeleteClick: (FlashcardSet) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var setToDelete by remember { mutableStateOf<FlashcardSet?>(null) }
-
     BoxWithConstraints(modifier = modifier) {
         val maxContentWidth = 840.dp
         val contentWidth = minOf(maxWidth, maxContentWidth)
@@ -146,33 +161,10 @@ private fun FlashcardSetList(
                 FlashcardSetItem(
                     set = set,
                     onClick = { onSetClick(set) },
-                    onDeleteClick = { setToDelete = set }
+                    onDeleteClick = { onDeleteClick(set) }
                 )
             }
         }
-    }
-
-    setToDelete?.let { set ->
-        AlertDialog(
-            onDismissRequest = { setToDelete = null },
-            title = { Text("Remove Set") },
-            text = { Text("Are you sure you want to remove \"${set.topic}\"?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        setToDelete = null
-                        onDeleteClick(set)
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { setToDelete = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
