@@ -1,35 +1,62 @@
 package presentation.study
 
+import LocalSnackkbarHostState
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FullscreenExit
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import domain.model.Flashcard
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.sin
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,6 +154,9 @@ private fun FlashcardView(
     modifier: Modifier = Modifier
 ) {
     var swipeOffset by remember { mutableStateOf(0f) }
+    val clipboardManager = LocalClipboard.current
+    val snackbarHostState = LocalSnackkbarHostState.current
+    val scope = rememberCoroutineScope()
 
     val cardRotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
@@ -165,7 +195,13 @@ private fun FlashcardView(
                 }
                 .combinedClickable(
                     onClick = onFlip,
-                    onLongClick = {}
+                    onLongClick = {
+                        val text = if (isFlipped) card.back else card.front
+                        scope.launch {
+                            clipboardManager.setClipEntry(ClipEntry.withPlainText(text))
+                            snackbarHostState.showSnackbar("Text copied to clipboard")
+                        }
+                    }
                 ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
@@ -182,7 +218,7 @@ private fun FlashcardView(
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(targetState = isFlipped) { flipped ->
-                    val scrollState = rememberScrollState()
+                val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier
                             .fillMaxSize()

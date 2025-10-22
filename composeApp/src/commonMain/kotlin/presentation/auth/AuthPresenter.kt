@@ -40,7 +40,11 @@ class AuthPresenter(
                 val apiKeyToSubmit = apiKeyInput
                 when {
                     apiKeyToSubmit.isNullOrBlank() -> {
-                        error = "Please enter an API key"
+                        error = """
+                            Please enter an API key.
+    
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
                     }
                     else -> {
                         isSaving = true
@@ -50,7 +54,11 @@ class AuthPresenter(
                                 configRepository.setGeminiApiKey(apiKeyToSubmit.trim())
                                 navigator.resetRoot(SplashScreen)
                             } catch (e: Exception) {
-                                error = "Failed to save API key: ${e.message}"
+                                error = """
+                                    Failed to save API key: ${e.message}
+                                    
+                                    Need help? Email help@solenne.ai
+                                """.trimIndent()
                                 isSaving = false
                             }
                         }

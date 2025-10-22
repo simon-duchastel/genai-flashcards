@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -21,10 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.slack.circuit.backstack.rememberSaveableBackStack
@@ -32,6 +41,12 @@ import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.foundation.CircuitCompositionLocals
 import com.slack.circuit.foundation.NavigableCircuitContent
 import com.slack.circuit.foundation.rememberCircuitNavigator
+import data.storage.ConfigRepository
+import genai_flashcards.composeapp.generated.resources.Res
+import genai_flashcards.composeapp.generated.resources.mermaid
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import presentation.splash.SplashScreen
 import data.storage.getConfigRepository
 import genai_flashcards.composeapp.generated.resources.Res
 import genai_flashcards.composeapp.generated.resources.mermaid
@@ -48,11 +63,16 @@ val LocalThemeState = compositionLocalOf<ThemeState> {
     error("No ThemeState provided")
 }
 
+val LocalSnackkbarHostState = staticCompositionLocalOf<SnackbarHostState> {
+    error("No SnackbarHostState provided")
+}
+
 @Composable
 fun App(
+    configRepository: ConfigRepository,
     circuit: Circuit,
 ) {
-    val configRepository = remember { getConfigRepository() }
+    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var isDarkMode by remember { mutableStateOf(false) }
 
@@ -73,67 +93,89 @@ fun App(
         }
     )
 
-    MaterialTheme(colorScheme = colorScheme) {
-        CompositionLocalProvider(LocalThemeState provides themeState) {
-            Surface(
+    CompositionLocalProvider(
+        LocalSnackkbarHostState provides snackbarHostState,
+        LocalThemeState provides themeState,
+    ) {
+        MaterialTheme(colorScheme = colorScheme) {
+            Scaffold(
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+                snackbarHost = { SnackbarHost(snackbarHostState) }
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    CircuitCompositionLocals(circuit) {
-                        val backStack = rememberSaveableBackStack(SplashScreen)
-                        val navigator = rememberCircuitNavigator(
-                            backStack = backStack,
-                            onRootPop = { }, // no-op root pop
-                        )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        CircuitCompositionLocals(circuit) {
+                            val backStack = rememberSaveableBackStack(SplashScreen)
+                            val navigator = rememberCircuitNavigator(
+                                backStack = backStack,
+                                onRootPop = { }, // no-op root pop
+                            )
 
-                        NavigableCircuitContent(
-                            navigator = navigator,
-                            backStack = backStack,
-                            circuit = circuit,
-                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                        )
-                    }
-
-                    // Footer banner
-                    val uriHandler = LocalUriHandler.current
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "built with ",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                            Image(
-                                painter = painterResource(Res.drawable.mermaid),
-                                contentDescription = "Mermaid",
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Text(
-                                text = " by ",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                            Text(
-                                text = "Simon Duchastel",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                textDecoration = TextDecoration.Underline,
-                                modifier = Modifier.clickable {
-                                    uriHandler.openUri("https://simon.duchastel.com")
-                                }
+                            NavigableCircuitContent(
+                                navigator = navigator,
+                                backStack = backStack,
+                                circuit = circuit,
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
                             )
                         }
+                        FooterBanner()
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun FooterBanner() {
+    val uriHandler = LocalUriHandler.current
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "built with ",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Image(
+                painter = painterResource(Res.drawable.mermaid),
+                contentDescription = "Mermaid",
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = " by ",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Text(
+                text = buildAnnotatedString {
+                    withLink(LinkAnnotation.Url("https://simon.duchastel.com")) {
+                        withStyle(
+                            style = SpanStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline,
+                            )
+                        ) {
+                            append("Simon Duchastel")
+                        }
+                    }
+                },
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable {
+                    uriHandler.openUri("https://simon.duchastel.com")
+                }
+            )
         }
     }
 }

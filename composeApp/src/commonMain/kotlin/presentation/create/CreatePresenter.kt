@@ -50,7 +50,11 @@ class CreatePresenter(
             },
             onGenerateClicked = {
                 if (topic.isBlank()) {
-                    error = "Please enter a topic"
+                    error = """
+                    Please enter a topic.
+                    
+                    Need help? Email help@solenne.ai
+                    """.trimIndent()
                 } else {
                     isGenerating = true
                     error = null
@@ -65,10 +69,12 @@ class CreatePresenter(
                             if (flashcardSet == null) {
                                 error = """
                                     Failed to generate flashcards. Please try again later.
-                                    
+
                                     Common issues to check for:
                                     - Internet issues
                                     - API key (did you forget to set it?)
+
+                                    Need help? Email help@solenne.ai
                                 """.trimIndent()
                                 isGenerating = false
                             } else {
@@ -76,7 +82,11 @@ class CreatePresenter(
                                 isGenerating = false
                             }
                         } catch (e: Exception) {
-                            error = "Error: ${e.message ?: "Failed to generate flashcards"}"
+                            error = """
+                                Error: ${e.message ?: "Failed to generate flashcards"}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
                             isGenerating = false
                         }
                     }
@@ -84,7 +94,11 @@ class CreatePresenter(
             },
             onSaveClicked = {
                 if (generatedCards.isEmpty()) {
-                    error = "No flashcards to save"
+                    error = """
+                        No flashcards to save
+
+                        Need help? Email help@solenne.ai
+                    """.trimIndent()
                 } else {
                     scope.launch {
                         try {
@@ -95,7 +109,11 @@ class CreatePresenter(
                             repository.saveFlashcardSet(flashcardSet)
                             navigator.pop()
                         } catch (e: Exception) {
-                            error = "Failed to save flashcards: ${e.message}"
+                            error = """
+                                Failed to save flashcards: ${e.message}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
                         }
                     }
                 }
