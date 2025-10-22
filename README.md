@@ -1,4 +1,5 @@
-# Solenne Flashcards [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/simonduchastel)
+# Solenne Flashcards 
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/simonduchastel)
 
 I built this for my girlfriend after she finds flashcards useful for school but couldn't find a tool that worked the way she wanted.
 
