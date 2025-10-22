@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
@@ -81,10 +83,30 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                 FlashcardSetList(
                     sets = state.flashcardSets,
                     onSetClick = { state.onOpenSet(it.id) },
-                    onDeleteClick = { state.onDeleteSet(it.id) },
+                    onDeleteClick = state.onDeleteSetClick,
                     modifier = Modifier.fillMaxSize().padding(padding)
                 )
             }
+        }
+    }
+
+    state.deleteDialog?.let { dialog ->
+        DisableSelection {
+            AlertDialog(
+                onDismissRequest = dialog.onCancel,
+                title = { Text("Remove Set") },
+                text = { Text("Are you sure you want to remove \"${dialog.set.topic}\"?") },
+                confirmButton = {
+                    Button(onClick = dialog.onConfirm) {
+                        Text("Remove")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = dialog.onCancel) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -185,7 +207,10 @@ private fun FlashcardSetItem(
                 )
             }
             IconButton(onClick = onDeleteClick) {
-                Text("×", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                )
             }
         }
     }

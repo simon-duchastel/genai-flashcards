@@ -28,6 +28,7 @@ class CreatePresenter(
         var isGenerating by remember { mutableStateOf(false) }
         var generatedCards by remember { mutableStateOf(emptyList<Flashcard>()) }
         var error by remember { mutableStateOf<String?>(null) }
+        var deleteDialog by remember { mutableStateOf<DeleteCardDialog?>(null) }
         val scope = rememberCoroutineScope()
 
         return CreateUiState(
@@ -37,6 +38,7 @@ class CreatePresenter(
             isGenerating = isGenerating,
             generatedCards = generatedCards,
             error = error,
+            deleteDialog = deleteDialog,
             onTopicChanged = { newTopic ->
                 topic = newTopic.take(30)
                 error = null
@@ -130,8 +132,15 @@ class CreatePresenter(
                     }
                 }
             },
-            onDeleteCard = { cardId ->
-                generatedCards = generatedCards.filter { it.id != cardId }
+            onDeleteCardClick = { card ->
+                deleteDialog = DeleteCardDialog(
+                    card = card,
+                    onCancel = { deleteDialog = null },
+                    onConfirm = {
+                        deleteDialog = null
+                        generatedCards = generatedCards.filter { it.id != card.id }
+                    }
+                )
             }
         )
     }
