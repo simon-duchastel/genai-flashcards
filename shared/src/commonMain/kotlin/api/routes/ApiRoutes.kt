@@ -1,0 +1,23 @@
+package api.routes
+
+/**
+ * API route constants shared between client and server.
+ */
+object ApiRoutes {
+    private const val API_BASE = "/api/v1"
+
+    // Authentication routes
+    private const val AUTH_BASE = "$API_BASE/auth"
+    const val AUTH_GOOGLE_LOGIN = "$AUTH_BASE/google/login"
+    const val AUTH_GOOGLE_CALLBACK = "$AUTH_BASE/google/callback"
+    const val AUTH_LOGOUT = "$AUTH_BASE/logout"
+    const val AUTH_ME = "$AUTH_BASE/me"
+
+    // Flashcard routes
+    const val FLASHCARD_SETS = "$API_BASE/flashcards/sets"
+    fun flashcardSet(id: String) = "$FLASHCARD_SETS/$id"
+    fun randomizedFlashcards(id: String) = "$FLASHCARD_SETS/$id/randomized"
+
+    // Generator routes
+    const val GENERATE = "$API_BASE/generate"
+}
