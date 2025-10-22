@@ -110,6 +110,8 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
             state.currentCard?.let { card ->
                 FlashcardView(
                     card = card,
+                    currentIndex = state.currentIndex,
+                    totalCards = state.flashcards.size,
                     isFlipped = state.isFlipped,
                     onFlip = state.onFlipCard,
                     onSwipeLeft = state.onPreviousCard,
@@ -147,24 +149,83 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun FlashcardView(
     card: Flashcard,
+    currentIndex: Int,
+    totalCards: Int,
     isFlipped: Boolean,
     onFlip: () -> Unit,
-    onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit,
+    onSwipeLeft: () -> Unit, // This is now "onPrevious"
+    onSwipeRight: () -> Unit, // This is now "onNext"
     modifier: Modifier = Modifier
 ) {
     var swipeOffset by remember { mutableStateOf(0f) }
+    var targetSwipeOffset by remember { mutableStateOf(0f) }
+    var displayedCard by remember { mutableStateOf(card) }
+    var displayedIsFlipped by remember { mutableStateOf(isFlipped) }
+    var previousIndex by remember { mutableStateOf(currentIndex) }
+    var isExiting by remember { mutableStateOf(false) }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val clipboardManager = LocalClipboard.current
     val snackbarHostState = LocalSnackkbarHostState.current
     val scope = rememberCoroutineScope()
 
+    val isGoingNext = currentIndex > previousIndex
+    val isGoingPrevious = currentIndex < previousIndex
+
+    // Detect when index changes and trigger enter/exit animations
+    androidx.compose.runtime.LaunchedEffect(currentIndex) {
+        if (currentIndex != previousIndex) {
+            val exitTo = if (isGoingNext) 1500f else -1500f
+            val enterFrom = if (isGoingNext) 1500f else -1500f
+
+            if (!isExiting) {
+                // Button click: animate out the old card, then animate in the new one
+                targetSwipeOffset = exitTo
+                kotlinx.coroutines.delay(50) // Allow exit animation to start
+                displayedCard = card
+                displayedIsFlipped = isFlipped
+                targetSwipeOffset = enterFrom // Position new card off-screen
+                kotlinx.coroutines.delay(50)
+                targetSwipeOffset = 0f // Animate new card in
+            } else {
+                // Swipe: old card has already exited, just animate the new one in
+                targetSwipeOffset = enterFrom
+                displayedCard = card
+                displayedIsFlipped = isFlipped
+                kotlinx.coroutines.delay(50)
+                targetSwipeOffset = 0f
+                isExiting = false
+            }
+            previousIndex = currentIndex
+        }
+    }
+
+    val animatedSwipeOffset by animateFloatAsState(
+        targetValue = targetSwipeOffset,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = EaseInOutCubic
+        ),
+        finishedListener = {
+            swipeOffset = 0f
+            // If there's a pending action (from swipe exit), execute it now
+            if (pendingAction != null) {
+                val action = pendingAction
+                pendingAction = null
+                action?.invoke()
+            }
+        }
+    )
+
     val cardRotation by animateFloatAsState(
-        targetValue = if (isFlipped) 180f else 0f,
+        targetValue = if (displayedIsFlipped) 180f else 0f,
         animationSpec = tween(
             durationMillis = 300,
             easing = EaseInOutCubic
         )
     )
+
+    val canGoNext = currentIndex < totalCards - 1
+    val canGoPrevious = currentIndex > 0
 
     BoxWithConstraints(modifier = modifier) {
         val maxCardWidth = 700.dp
@@ -178,25 +239,51 @@ private fun FlashcardView(
                 .graphicsLayer {
                     rotationY = cardRotation
                     cameraDistance = 60f * density
+                    translationX = animatedSwipeOffset
+                    rotationZ = animatedSwipeOffset / 40f
+                    alpha = 1f - (kotlin.math.abs(animatedSwipeOffset) / 1500f)
                 }
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             when {
-                                swipeOffset > 100 -> onSwipeRight()
-                                swipeOffset < -100 -> onSwipeLeft()
+                                // Swipe Right -> Next Card
+                                swipeOffset > 100 && canGoNext -> {
+                                    isExiting = true
+                                    targetSwipeOffset = 1500f // Animate out to the right
+                                    pendingAction = onSwipeRight
+                                }
+                                // Swipe Left -> Previous Card
+                                swipeOffset < -100 && canGoPrevious -> {
+                                    isExiting = true
+                                    targetSwipeOffset = -1500f // Animate out to the left
+                                    pendingAction = onSwipeLeft
+                                }
+                                else -> {
+                                    // Not enough swipe, spring back
+                                    targetSwipeOffset = 0f
+                                }
                             }
                             swipeOffset = 0f
                         },
                         onHorizontalDrag = { _, dragAmount ->
-                            swipeOffset += dragAmount
+                            val newOffset = swipeOffset + dragAmount
+                            // Allow dragging only if the direction is permitted
+                            if ((newOffset > 0 && canGoNext) || (newOffset < 0 && canGoPrevious)) {
+                                swipeOffset = newOffset
+                                targetSwipeOffset = swipeOffset
+                            } else {
+                                // Add resistance at boundaries
+                                swipeOffset += dragAmount * 0.2f
+                                targetSwipeOffset = swipeOffset
+                            }
                         }
                     )
                 }
                 .combinedClickable(
                     onClick = onFlip,
                     onLongClick = {
-                        val text = if (isFlipped) card.back else card.front
+                        val text = if (displayedIsFlipped) displayedCard.back else displayedCard.front
                         scope.launch {
                             clipboardManager.setClipEntry(ClipEntry.withPlainText(text))
                             snackbarHostState.showSnackbar("Text copied to clipboard")
@@ -205,7 +292,7 @@ private fun FlashcardView(
                 ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (isFlipped)
+                containerColor = if (displayedIsFlipped)
                     MaterialTheme.colorScheme.tertiaryContainer
                 else
                     MaterialTheme.colorScheme.primaryContainer
@@ -217,7 +304,7 @@ private fun FlashcardView(
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedContent(targetState = isFlipped) { flipped ->
+                AnimatedContent(targetState = displayedIsFlipped) { flipped ->
                 val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier
@@ -226,7 +313,7 @@ private fun FlashcardView(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val text = if (flipped) card.back else card.front
+                        val text = if (flipped) displayedCard.back else displayedCard.front
                         val textLength = text.length
                         val fontSize = when {
                             textLength > 300 -> MaterialTheme.typography.bodyLarge
@@ -253,7 +340,7 @@ private fun FlashcardView(
     // Hint text
     Spacer(modifier = Modifier.height(16.dp))
     Text(
-        text = if (isFlipped) "Swipe or tap to flip" else "Tap to reveal answer",
+        text = if (displayedIsFlipped) "Swipe or tap to flip" else "Tap to reveal answer",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
