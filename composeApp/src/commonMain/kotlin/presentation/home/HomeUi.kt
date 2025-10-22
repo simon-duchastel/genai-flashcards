@@ -219,7 +219,9 @@ private fun FlashcardSetItem(
 
 @OptIn(ExperimentalTime::class)
 private fun formatDate(timestamp: Long): String {
-    val instant = Instant.fromEpochMilliseconds(timestamp)
-    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${dateTime.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${dateTime.day}, ${dateTime.year}"
+//    val instant = Instant.fromEpochMilliseconds(timestamp)
+//    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+//    val date = dateTime.date
+//    return "${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}, ${date.year}"
+    return "${timestamp}"
 }

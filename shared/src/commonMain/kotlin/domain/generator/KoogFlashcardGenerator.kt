@@ -4,7 +4,6 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.functionalStrategy
 import ai.koog.agents.core.dsl.extension.requestLLMStructured
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
-import ai.koog.prompt.executor.clients.google.GoogleClientSettings
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.llm.LLMProvider
@@ -49,9 +48,7 @@ class KoogFlashcardGenerator(
                 Generate exactly the number of flashcards requested, ensuring variety and comprehensive coverage.
             """.trimIndent(),
             promptExecutor = MultiLLMPromptExecutor(
-                LLMProvider.Google to GoogleLLMClient(
-                    apiKey = apiKey,
-                )
+                LLMProvider.Google to GoogleLLMClient(apiKey)
             ),
             strategy = functionalStrategy { query ->
                 requestLLMStructured<FlashcardSet>(
