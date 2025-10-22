@@ -3,9 +3,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.runtime.ui.ui
-import data.ai.FlashcardGenerator
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
+import domain.generator.KoogFlashcardGenerator
 import domain.repository.FlashcardRepository
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
@@ -33,7 +33,7 @@ fun main() {
     val storage = getFlashcardStorage()
     val repository = FlashcardRepository(storage)
     val configRepository = getConfigRepository()
-    val generator = FlashcardGenerator(configRepository)
+    val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
 
     val circuit = Circuit.Builder()
         .addPresenterFactory { screen, navigator, _ ->

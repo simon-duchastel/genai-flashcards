@@ -1,10 +1,15 @@
 package presentation.create
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
-import data.ai.FlashcardGenerator
 import domain.model.Flashcard
+import domain.repository.FlashcardGenerator
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
 
@@ -51,7 +56,11 @@ class CreatePresenter(
                     error = null
                     scope.launch {
                         try {
-                            val flashcardSet = generator.generate(topic, count, query.ifBlank { "Generate comprehensive flashcards" })
+                            val flashcardSet = generator.generate(
+                                topic = topic,
+                                count = count,
+                                userQuery = query.ifBlank { "Generate comprehensive flashcards" },
+                            )
 
                             if (flashcardSet == null) {
                                 error = """

@@ -18,6 +18,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":shared"))
+
             // Compose
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -31,16 +33,11 @@ kotlin {
             // Kotlinx
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
 
             // Circuit
             implementation(libs.circuit.foundation)
             implementation(libs.circuit.overlay)
             implementation(libs.circuit.runtime)
-
-            // Koog (AI agents)
-            implementation(libs.koog.agents)
-            implementation(libs.koog.ktor)
 
             // Ktor (HTTP client)
             implementation(libs.ktor.client.core)

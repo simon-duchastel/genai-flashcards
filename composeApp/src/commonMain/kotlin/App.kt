@@ -3,7 +3,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,29 +27,17 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.slack.circuit.backstack.rememberSaveableBackStack
+import com.slack.circuit.foundation.Circuit
+import com.slack.circuit.foundation.CircuitCompositionLocals
+import com.slack.circuit.foundation.NavigableCircuitContent
+import com.slack.circuit.foundation.rememberCircuitNavigator
+import data.storage.getConfigRepository
 import genai_flashcards.composeapp.generated.resources.Res
 import genai_flashcards.composeapp.generated.resources.mermaid
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import com.slack.circuit.backstack.rememberSaveableBackStack
-import com.slack.circuit.foundation.Circuit
-import com.slack.circuit.foundation.CircuitCompositionLocals
-import com.slack.circuit.foundation.CircuitContent
-import com.slack.circuit.foundation.NavigableCircuitContent
-import com.slack.circuit.foundation.rememberCircuitNavigator
-import com.slack.circuit.runtime.presenter.Presenter
-import com.slack.circuit.runtime.ui.Ui
-import com.slack.circuit.runtime.ui.ui
-import data.ai.FlashcardGenerator
-import data.storage.ConfigRepository
-import data.storage.FlashcardStorage
-import data.storage.getConfigRepository
-import data.storage.getFlashcardStorage
-import domain.repository.FlashcardRepository
-import presentation.create.*
-import presentation.home.*
-import presentation.splash.*
-import presentation.study.*
+import presentation.splash.SplashScreen
 
 data class ThemeState(
     val isDarkMode: Boolean,
