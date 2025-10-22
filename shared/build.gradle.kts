@@ -3,10 +3,13 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
     jvm() // For server
+
+    androidTarget() // For Android app
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -21,6 +24,9 @@ kotlin {
             // Coroutines for suspend functions
             implementation(libs.kotlinx.coroutines.core)
 
+            // Kotlinx datetime (required by koog-agents)
+            implementation(libs.kotlinx.datetime)
+
             // Koog AI agents (for flashcard generation)
             api(libs.koog.agents)
             api(libs.koog.ktor)
@@ -29,5 +35,19 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+    }
+}
+
+android {
+    namespace = "ai.solenne.flashcards.shared"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
