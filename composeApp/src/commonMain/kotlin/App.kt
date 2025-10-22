@@ -47,12 +47,6 @@ import genai_flashcards.composeapp.generated.resources.mermaid
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import presentation.splash.SplashScreen
-import data.storage.getConfigRepository
-import genai_flashcards.composeapp.generated.resources.Res
-import genai_flashcards.composeapp.generated.resources.mermaid
-import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
-import presentation.splash.SplashScreen
 
 data class ThemeState(
     val isDarkMode: Boolean,

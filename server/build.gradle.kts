@@ -29,6 +29,9 @@ kotlin {
                 implementation(libs.ktor.serialization.json)
                 implementation(libs.ktor.server.call.logging)
                 implementation(libs.ktor.server.status.pages)
+                implementation(libs.ktor.server.auth)
+                implementation(libs.ktor.client.apache)
+                implementation(libs.ktor.client.content.negotiation)
 
                 // Kotlinx
                 implementation(libs.kotlinx.coroutines.core)

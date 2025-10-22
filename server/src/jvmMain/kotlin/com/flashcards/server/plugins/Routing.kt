@@ -1,6 +1,9 @@
 package com.flashcards.server.plugins
 
+import com.flashcards.server.auth.GoogleOAuthService
+import com.flashcards.server.repository.AuthRepository
 import com.flashcards.server.repository.ServerFlashcardRepository
+import com.flashcards.server.routes.authRoutes
 import com.flashcards.server.routes.flashcardRoutes
 import com.flashcards.server.routes.generatorRoutes
 import domain.generator.KoogFlashcardGenerator
@@ -10,15 +13,20 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting(
     repository: ServerFlashcardRepository,
-    generator: KoogFlashcardGenerator
+    generator: KoogFlashcardGenerator,
+    authRepository: AuthRepository,
+    googleOAuthService: GoogleOAuthService
 ) {
     routing {
-        // Health check endpoint
+        // Health check endpoint (public)
         get("/health") {
             call.respondText("OK")
         }
 
-        // API routes
+        // Authentication routes
+        authRoutes(authRepository, googleOAuthService)
+
+        // Protected API routes
         flashcardRoutes(repository)
         generatorRoutes(generator)
     }

@@ -1,55 +1,68 @@
 package com.flashcards.server.routes
 
+import api.dto.ErrorResponse
 import api.dto.GenerateRequest
 import api.dto.GenerateResponse
 import api.routes.ApiRoutes
+import com.flashcards.server.auth.AuthenticatedUser
 import domain.generator.KoogFlashcardGenerator
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.*
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 
 /**
- * Configure flashcard generation routes.
+ * Configure flashcard generation routes (protected by authentication).
  */
 fun Route.generatorRoutes(generator: KoogFlashcardGenerator) {
-    // POST /api/v1/generate - Generate flashcards
-    post(ApiRoutes.GENERATE) {
-        val request = call.receive<GenerateRequest>()
+    authenticate("auth-bearer") {
+        // POST /api/v1/generate - Generate flashcards
+        post(ApiRoutes.GENERATE) {
+            val principal = call.principal<AuthenticatedUser>()
+                ?: return@post call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Authentication required", "UNAUTHORIZED")
+                )
 
-        // Validate request
-        if (request.topic.isBlank()) {
-            return@post call.respond(
-                HttpStatusCode.BadRequest,
-                GenerateResponse(error = "Topic cannot be empty")
-            )
-        }
+            val request = call.receive<GenerateRequest>()
 
-        if (request.count <= 0 || request.count > 100) {
-            return@post call.respond(
-                HttpStatusCode.BadRequest,
-                GenerateResponse(error = "Count must be between 1 and 100")
-            )
-        }
+            // Validate request
+            if (request.topic.isBlank()) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    GenerateResponse(error = "Topic cannot be empty")
+                )
+            }
 
-        // Generate flashcards
-        val flashcardSet = generator.generate(
-            topic = request.topic,
-            count = request.count,
-            userQuery = request.userQuery,
-        )
+            if (request.count <= 0 || request.count > 100) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    GenerateResponse(error = "Count must be between 1 and 100")
+                )
+            }
 
-        if (flashcardSet == null) {
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                GenerateResponse(error = "Failed to generate flashcards. Please check your API key.")
+            // Generate flashcards
+            val flashcardSet = generator.generate(
+                topic = request.topic,
+                count = request.count,
+                userQuery = request.userQuery,
             )
-        } else {
-            call.respond(
-                HttpStatusCode.OK,
-                GenerateResponse(flashcardSet = flashcardSet)
-            )
+
+            if (flashcardSet == null) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    GenerateResponse(error = "Failed to generate flashcards. Please check your API key.")
+                )
+            } else {
+                // Set userId on generated flashcard set
+                val userFlashcardSet = flashcardSet.copy(userId = principal.userId)
+                call.respond(
+                    HttpStatusCode.OK,
+                    GenerateResponse(flashcardSet = userFlashcardSet)
+                )
+            }
         }
     }
 }
