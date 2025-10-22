@@ -9,9 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import presentation.components.HelpText
+import presentation.components.textWithHelpEmail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +29,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
+                title = { Text("Settings", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -71,6 +78,10 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     textAlign = TextAlign.Center
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ApiKeyLinkText()
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedTextField(
@@ -87,7 +98,9 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     singleLine = true,
                     enabled = !state.isSaving,
                     isError = state.error != null,
-                    supportingText = state.error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    supportingText = state.error?.let { errorText ->
+                        { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -109,15 +122,33 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                Text(
-                    text = "Get your API key from Google AI Studio",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+                HelpText(modifier = Modifier.fillMaxWidth())
             }
         }
+    }
+}
+
+@Composable
+private fun ApiKeyLinkText() {
+    val annotatedString = buildAnnotatedString {
+        withLink(LinkAnnotation.Url("https://aistudio.google.com/api-keys")) {
+            append("Get your API key from Google AI Studio")
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = annotatedString,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline
+            )
+        )
     }
 }
