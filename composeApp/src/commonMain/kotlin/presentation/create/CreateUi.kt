@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import domain.model.Flashcard
+import presentation.components.textWithHelpEmail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,7 +138,7 @@ private fun CreateForm(state: CreateUiState) {
                 )
             ) {
                 Text(
-                    text = state.error,
+                    text = textWithHelpEmail(state.error, MaterialTheme.colorScheme.onErrorContainer),
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )

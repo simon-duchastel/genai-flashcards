@@ -28,7 +28,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.slack.circuit.backstack.rememberSaveableBackStack
@@ -146,7 +151,18 @@ fun FooterBanner() {
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Text(
-                text = "Simon Duchastel",
+                text = buildAnnotatedString {
+                    withLink(LinkAnnotation.Url("https://simon.duchastel.com")) {
+                        withStyle(
+                            style = SpanStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline,
+                            )
+                        ) {
+                            append("Simon Duchastel")
+                        }
+                    }
+                },
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 textDecoration = TextDecoration.Underline,
