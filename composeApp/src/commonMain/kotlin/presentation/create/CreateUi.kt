@@ -65,6 +65,24 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             }
         }
     }
+
+    state.deleteDialog?.let { dialog ->
+        AlertDialog(
+            onDismissRequest = dialog.onCancel,
+            title = { Text("Remove Flashcard") },
+            text = { Text("Are you sure you want to remove this flashcard?") },
+            confirmButton = {
+                Button(onClick = dialog.onConfirm) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = dialog.onCancel) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -190,7 +208,7 @@ private fun PreviewCards(state: CreateUiState) {
                 FlashcardPreviewItem(
                     card = card,
                     onEdit = { front, back -> state.onEditCard(card.id, front, back) },
-                    onDelete = { state.onDeleteCard(card.id) }
+                    onDeleteClick = { state.onDeleteCardClick(card) }
                 )
             }
         }
@@ -221,7 +239,7 @@ private fun PreviewCards(state: CreateUiState) {
 private fun FlashcardPreviewItem(
     card: Flashcard,
     onEdit: (String, String) -> Unit,
-    onDelete: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
@@ -253,7 +271,7 @@ private fun FlashcardPreviewItem(
                         )
                     }
                     IconButton(
-                        onClick = onDelete,
+                        onClick = onDeleteClick,
                         modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
                     ) {
                         Icon(

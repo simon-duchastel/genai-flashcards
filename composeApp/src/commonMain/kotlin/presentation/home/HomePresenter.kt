@@ -18,9 +18,9 @@ class HomePresenter(
     override fun present(): HomeUiState {
         var flashcardSets by remember { mutableStateOf(emptyList<domain.model.FlashcardSet>()) }
         var isLoading by remember { mutableStateOf(true) }
+        var deleteDialog by remember { mutableStateOf<DeleteSetDialog?>(null) }
         val scope = rememberCoroutineScope()
 
-        // Load flashcard sets on initial composition
         LaunchedEffect(Unit) {
             loadFlashcardSets { sets ->
                 flashcardSets = sets
@@ -31,19 +31,27 @@ class HomePresenter(
         return HomeUiState(
             flashcardSets = flashcardSets,
             isLoading = isLoading,
+            deleteDialog = deleteDialog,
             onCreateNewSet = {
                 navigator.goTo(CreateScreen())
             },
             onOpenSet = { setId ->
                 navigator.goTo(StudyScreen(setId = setId))
             },
-            onDeleteSet = { setId ->
-                scope.launch {
-                    repository.deleteFlashcardSet(setId)
-                    loadFlashcardSets { sets ->
-                        flashcardSets = sets
+            onDeleteSetClick = { set ->
+                deleteDialog = DeleteSetDialog(
+                    set = set,
+                    onCancel = { deleteDialog = null },
+                    onConfirm = {
+                        deleteDialog = null
+                        scope.launch {
+                            repository.deleteFlashcardSet(set.id)
+                            loadFlashcardSets { sets ->
+                                flashcardSets = sets
+                            }
+                        }
                     }
-                }
+                )
             },
             onRefresh = {
                 isLoading = true
