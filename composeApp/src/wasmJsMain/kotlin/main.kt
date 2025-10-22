@@ -72,6 +72,7 @@ fun main() {
         content = {
             SelectionContainer {
                 App(
+                    configRepository = configRepository,
                     circuit = circuit,
                 )
             }

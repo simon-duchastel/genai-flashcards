@@ -155,7 +155,7 @@ private fun FlashcardView(
 ) {
     var swipeOffset by remember { mutableStateOf(0f) }
     val clipboardManager = LocalClipboard.current
-    val snackbarHostState = LocalSnackkbarHostState.current!!
+    val snackbarHostState = LocalSnackkbarHostState.current
     val scope = rememberCoroutineScope()
 
     val cardRotation by animateFloatAsState(

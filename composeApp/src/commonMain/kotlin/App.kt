@@ -3,7 +3,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,7 +36,7 @@ import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.foundation.CircuitCompositionLocals
 import com.slack.circuit.foundation.NavigableCircuitContent
 import com.slack.circuit.foundation.rememberCircuitNavigator
-import data.storage.getConfigRepository
+import data.storage.ConfigRepository
 import genai_flashcards.composeapp.generated.resources.Res
 import genai_flashcards.composeapp.generated.resources.mermaid
 import kotlinx.coroutines.launch
@@ -53,11 +52,16 @@ val LocalThemeState = compositionLocalOf<ThemeState> {
     error("No ThemeState provided")
 }
 
+val LocalSnackkbarHostState = staticCompositionLocalOf<SnackbarHostState> {
+    error("No SnackbarHostState provided")
+}
+
 @Composable
 fun App(
+    configRepository: ConfigRepository,
     circuit: Circuit,
 ) {
-    val configRepository = remember { getConfigRepository() }
+    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var isDarkMode by remember { mutableStateOf(false) }
 
@@ -78,43 +82,41 @@ fun App(
         }
     )
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    CompositionLocalProvider(LocalSnackkbarHostState provides snackbarHostState) {
+    CompositionLocalProvider(
+        LocalSnackkbarHostState provides snackbarHostState,
+        LocalThemeState provides themeState,
+    ) {
         MaterialTheme(colorScheme = colorScheme) {
-            CompositionLocalProvider(LocalThemeState provides themeState) {
-                Scaffold(
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                snackbarHost = { SnackbarHost(snackbarHostState) }
+            ) {
+                Surface(
                     modifier = Modifier.fillMaxSize(),
-                    snackbarHost = { SnackbarHost(snackbarHostState) }
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            CircuitCompositionLocals(circuit) {
-                                val backStack = rememberSaveableBackStack(SplashScreen)
-                                val navigator = rememberCircuitNavigator(
-                                    backStack = backStack,
-                                    onRootPop = { }, // no-op root pop
-                                )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        CircuitCompositionLocals(circuit) {
+                            val backStack = rememberSaveableBackStack(SplashScreen)
+                            val navigator = rememberCircuitNavigator(
+                                backStack = backStack,
+                                onRootPop = { }, // no-op root pop
+                            )
 
-                                NavigableCircuitContent(
-                                    navigator = navigator,
-                                    backStack = backStack,
-                                    circuit = circuit,
-                                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                                )
-                            }
-                            FooterBanner()
+                            NavigableCircuitContent(
+                                navigator = navigator,
+                                backStack = backStack,
+                                circuit = circuit,
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                            )
                         }
+                        FooterBanner()
                     }
                 }
             }
         }
     }
 }
-
-val LocalSnackkbarHostState = staticCompositionLocalOf<SnackbarHostState?> { null }
 
 @Composable
 fun FooterBanner() {
