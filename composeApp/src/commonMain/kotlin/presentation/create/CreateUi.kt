@@ -225,6 +225,7 @@ private fun FlashcardPreviewItem(
     modifier: Modifier = Modifier
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -253,7 +254,7 @@ private fun FlashcardPreviewItem(
                         )
                     }
                     IconButton(
-                        onClick = onDelete,
+                        onClick = { showDeleteDialog = true },
                         modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
                     ) {
                         Icon(
@@ -289,6 +290,29 @@ private fun FlashcardPreviewItem(
             onSave = { newFront, newBack ->
                 onEdit(newFront, newBack)
                 showEditDialog = false
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Remove Flashcard") },
+            text = { Text("Are you sure you want to remove this flashcard?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
             }
         )
     }
