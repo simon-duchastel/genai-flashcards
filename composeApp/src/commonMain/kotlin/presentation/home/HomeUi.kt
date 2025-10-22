@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
@@ -128,6 +129,8 @@ private fun FlashcardSetList(
     onDeleteClick: (FlashcardSet) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var setToDelete by remember { mutableStateOf<FlashcardSet?>(null) }
+
     BoxWithConstraints(modifier = modifier) {
         val maxContentWidth = 840.dp
         val contentWidth = minOf(maxWidth, maxContentWidth)
@@ -143,10 +146,33 @@ private fun FlashcardSetList(
                 FlashcardSetItem(
                     set = set,
                     onClick = { onSetClick(set) },
-                    onDeleteClick = { onDeleteClick(set) }
+                    onDeleteClick = { setToDelete = set }
                 )
             }
         }
+    }
+
+    setToDelete?.let { set ->
+        AlertDialog(
+            onDismissRequest = { setToDelete = null },
+            title = { Text("Remove Set") },
+            text = { Text("Are you sure you want to remove \"${set.topic}\"?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        setToDelete = null
+                        onDeleteClick(set)
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { setToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -157,8 +183,6 @@ private fun FlashcardSetItem(
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -190,33 +214,13 @@ private fun FlashcardSetItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { showDeleteDialog = true }) {
-                Text("×", style = MaterialTheme.typography.headlineMedium)
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                )
             }
         }
-    }
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Remove Set") },
-            text = { Text("Are you sure you want to remove \"${set.topic}\"?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onDeleteClick()
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
