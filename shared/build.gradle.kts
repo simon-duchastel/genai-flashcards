@@ -17,7 +17,6 @@ kotlin {
         commonMain.dependencies {
             // Kotlinx serialization for DTOs and models
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
 
             // Coroutines for suspend functions
             implementation(libs.kotlinx.coroutines.core)

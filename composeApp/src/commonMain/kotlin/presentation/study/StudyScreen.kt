@@ -5,8 +5,10 @@ import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import domain.model.Flashcard
 import kotlinx.serialization.Serializable
+import parcel.Parcelize
 
 @Serializable
+@Parcelize
 data class StudyScreen(
     val setId: String
 ) : Screen
