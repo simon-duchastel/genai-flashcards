@@ -7,6 +7,7 @@ import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
 import domain.repository.FlashcardRepository
+import domain.repository.FlashcardRepositoryImpl
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
 import presentation.auth.AuthUi
@@ -31,7 +32,7 @@ import presentation.study.StudyUiState
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val storage = getFlashcardStorage()
-    val repository = FlashcardRepository(storage)
+    val repository = FlashcardRepositoryImpl(storage)
     val configRepository = getConfigRepository()
     val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
 

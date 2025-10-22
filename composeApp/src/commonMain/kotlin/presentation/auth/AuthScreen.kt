@@ -3,8 +3,10 @@ package presentation.auth
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import kotlinx.serialization.Serializable
+import parcel.Parcelize
 
 @Serializable
+@Parcelize
 data object AuthScreen : Screen
 
 // UI State

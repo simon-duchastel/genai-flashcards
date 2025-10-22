@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import domain.model.Flashcard
+import domain.model.FlashcardSet
 import domain.repository.FlashcardGenerator
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
@@ -104,7 +105,7 @@ class CreatePresenter(
                 } else {
                     scope.launch {
                         try {
-                            val flashcardSet = domain.model.FlashcardSet(
+                            val flashcardSet = FlashcardSet(
                                 topic = topic,
                                 flashcards = generatedCards
                             )
