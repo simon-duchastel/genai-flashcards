@@ -85,18 +85,26 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
+                    text = if (state.currentUserName != null) {
+                        "Signed in as ${state.currentUserName}"
+                    } else {
+                        "Signed out"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.currentUserName != null) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
                     text = "Welcome!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Sign in to get started",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -123,47 +131,45 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
-                }
-
-                // Google Sign-In Button
-                Button(
-                    onClick = state.onGoogleSignInClicked,
-                    enabled = !state.isAuthenticatingWithGoogle && !state.isSaving,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder
-                ) {
-                    if (state.isAuthenticatingWithGoogle) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        ) {
-                            // Google "G" logo colors approximation
-                            Text(
-                                text = "G",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(end = 12.dp)
+                } else {
+                    Button(
+                        onClick = state.onGoogleSignInClicked,
+                        enabled = !state.isAuthenticatingWithGoogle && !state.isSaving,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder
+                    ) {
+                        if (state.isAuthenticatingWithGoogle) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
                             )
-                            Text(
-                                text = "Sign in with Google",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                // Google "G" logo colors approximation
+                                Text(
+                                    text = "G",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(
+                                    text = "Sign in with Google",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
 
                 // Divider with "OR"
                 Row(

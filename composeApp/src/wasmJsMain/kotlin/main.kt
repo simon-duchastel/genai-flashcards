@@ -6,8 +6,8 @@ import com.slack.circuit.runtime.ui.ui
 import data.api.ApiConfig
 import data.api.AuthApiClient
 import data.api.HttpClientProvider
-import data.api.ServerFlashcardGenerator
 import data.auth.GoogleOAuthHandler
+import data.storage.ConfigRepository
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
@@ -64,18 +64,37 @@ private fun getQueryParam(name: String): String? {
 )
 fun main() {
     val configRepository = getConfigRepository()
+    val httpClient = HttpClientProvider.client
+    val authApiClient = AuthApiClient(
+        isTest = false,
+        httpClient = httpClient,
+        baseUrl = ApiConfig.BASE_URL
+    )
 
     // check if we've been redirected to from auth sign-in
-    if (getQueryParam("auth-redirect") == "true") {
-        val token = getQueryParam("token")
-
-        if (token != null) {
-            // Save session token to localStorage
-            GlobalScope.launch {
+    GlobalScope.launch {
+        if (getQueryParam("auth-redirect") == "true") {
+            val token = getQueryParam("token")
+            if (token != null) {
+                // Save session token to localStorage
                 configRepository.setSessionToken(token)
-
                 window.history.replaceState(null, "", "/")
+
+                configureUserSession(token, configRepository, authApiClient)
             }
+        } else {
+            val sessionToken = configRepository.getSessionToken()
+            if (sessionToken != null) {
+                configureUserSession(token, configRepository, authApiClient)
+            }
+        }
+    }
+
+    // Fetch and persist user info on app start if logged in
+    GlobalScope.launch {
+        val sessionToken = configRepository.getSessionToken()
+        if (sessionToken != null) {
+
         }
     }
 
@@ -83,12 +102,6 @@ fun main() {
     val storage = getFlashcardStorage()
     val repository = FlashcardRepository(storage)
     val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
-    val httpClient = HttpClientProvider.client
-    val authApiClient = AuthApiClient(
-        isTest = false,
-        httpClient = httpClient,
-        baseUrl = ApiConfig.BASE_URL
-    )
     val googleOAuthHandler = GoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
@@ -134,4 +147,21 @@ fun main() {
             }
         }
     )
+}
+
+private suspend fun configureUserSession(
+    sessionToken: String,
+    configRepository: ConfigRepository,
+    authApiClient: AuthApiClient,
+) {
+    try {
+        val meResponse = authApiClient.getMe(sessionToken)
+        configRepository.setUserEmail(meResponse.user.email)
+        meResponse.user.name?.let { configRepository.setUserName(it) }
+        meResponse.user.picture?.let { configRepository.setUserPicture(it) }
+    } catch (_: Exception) {
+        // If /me fails, clear invalid session
+        configRepository.clearSessionToken()
+        configRepository.clearUserInfo()
+    }
 }

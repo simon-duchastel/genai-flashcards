@@ -21,5 +21,6 @@ data class AuthUiState(
     // Logout
     val isLoggedIn: Boolean,
     val isLoggingOut: Boolean,
-    val onLogoutClicked: () -> Unit
+    val onLogoutClicked: () -> Unit,
+    val currentUserName: String? // null if signed out
 ) : CircuitUiState
