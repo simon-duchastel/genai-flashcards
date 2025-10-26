@@ -4,6 +4,7 @@ import com.flashcards.server.auth.GoogleOAuthService
 import com.flashcards.server.plugins.*
 import com.flashcards.server.repository.InMemoryAuthRepository
 import com.flashcards.server.repository.ServerFlashcardRepository
+import com.flashcards.server.storage.GenerationRateLimiter
 import com.flashcards.server.storage.InMemoryStorage
 import domain.generator.KoogFlashcardGenerator
 import io.ktor.server.application.*
@@ -24,6 +25,7 @@ fun Application.module() {
     val storage = InMemoryStorage()
     val repository = ServerFlashcardRepository(storage)
     val authRepository = InMemoryAuthRepository()
+    val rateLimiter = GenerationRateLimiter()
 
     val googleClientId = System.getenv("GOOGLE_OAUTH_CLIENT_ID")
         ?: error("GOOGLE_OAUTH_CLIENT_ID environment variable not set")
@@ -60,5 +62,12 @@ fun Application.module() {
     configureCallLogging()
     configureStatusPages()
     configureAuthentication(authRepository)
-    configureRouting(repository, generator, authRepository, googleOAuthService, testGoogleOAuthService)
+    configureRouting(
+        repository = repository,
+        generator = generator,
+        rateLimiter = rateLimiter,
+        authRepository = authRepository,
+        googleOAuthService = googleOAuthService,
+        testGoogleOAuthService = testGoogleOAuthService
+    )
 }
