@@ -77,7 +77,11 @@ class AuthPresenter(
                     try {
                         val authResponse = googleOAuthHandler.startOAuthFlow()
                         if (authResponse == null) {
-                            error = "Google sign-in failed. Please try again or enter an API key below."
+                            error = """
+                                Google sign-in failed. Please try again or enter an API key below.
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
                             return@launch
                         }
 
@@ -90,7 +94,11 @@ class AuthPresenter(
                         // Navigate to home
                         navigator.resetRoot(HomeScreen)
                     } catch (_: Exception) {
-                        error = "Google sign-in failed. Please try again or use API key below."
+                        error = """
+                            Google sign-in failed. Please try again or use API key below.
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
                         isAuthenticatingWithGoogle = false
                     }
                 }

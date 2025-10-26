@@ -8,10 +8,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
+import data.api.ServerFlashcardGenerator.RateLimitException
 import domain.model.Flashcard
 import domain.repository.FlashcardGenerator
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
 class CreatePresenter(
     private val screen: CreateScreen,
@@ -83,6 +85,17 @@ class CreatePresenter(
                                 generatedCards = flashcardSet.flashcards
                                 isGenerating = false
                             }
+                        } catch (e: RateLimitException) {
+                            val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
+                            error = """
+                                ${e.message}
+
+                                You've used ${e.numberOfGenerations} generations today.
+                                You can try again at $tryAgainDate
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                            isGenerating = false
                         } catch (e: Exception) {
                             error = """
                                 Error: ${e.message ?: "Failed to generate flashcards"}

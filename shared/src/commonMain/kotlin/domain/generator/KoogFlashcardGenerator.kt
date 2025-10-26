@@ -9,8 +9,13 @@ import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.structure.StructureFixingParser
+import domain.model.Flashcard
 import domain.model.FlashcardSet
+import domain.model.FlashcardSetRaw
 import domain.repository.FlashcardGenerator
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlinx.datetime.Clock
 
 /**
  * Koog AI-powered implementation of FlashcardGenerator.
@@ -26,8 +31,9 @@ class KoogFlashcardGenerator(
 
     /**
      * Create a Koog agent configured for flashcard generation.
+     * Returns FlashcardSetRaw without id, userId, or createdAt fields.
      */
-    private fun createAgent(apiKey: String): AIAgent<String, FlashcardSet?> {
+    private fun createAgent(apiKey: String): AIAgent<String, FlashcardSetRaw?> {
         return AIAgent(
             systemPrompt = """
                 You are a flashcard generation assistant. Your task is to create educational flashcards
@@ -51,7 +57,7 @@ class KoogFlashcardGenerator(
                 LLMProvider.Google to GoogleLLMClient(apiKey)
             ),
             strategy = functionalStrategy { query ->
-                requestLLMStructured<FlashcardSet>(
+                requestLLMStructured<FlashcardSetRaw>(
                     message = query,
                     fixingParser = StructureFixingParser(
                         fixingModel = GoogleModels.Gemini2_5Flash,
@@ -60,6 +66,31 @@ class KoogFlashcardGenerator(
                 ).getOrNull()?.structure
             },
             llmModel = GoogleModels.Gemini2_5Pro
+        )
+    }
+
+    /**
+     * Convert a FlashcardSetRaw to a full FlashcardSet by adding metadata.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    private fun FlashcardSetRaw.toFlashcardSet(): FlashcardSet {
+        val setId = Uuid.random().toString()
+        val createdAt = Clock.System.now().toEpochMilliseconds()
+
+        return FlashcardSet(
+            id = setId,
+            userId = null, // Will be set later by the caller (server or client)
+            topic = this.topic,
+            flashcards = this.flashcards.map { rawCard ->
+                Flashcard(
+                    id = Uuid.random().toString(),
+                    setId = setId,
+                    front = rawCard.front,
+                    back = rawCard.back,
+                    createdAt = createdAt
+                )
+            },
+            createdAt = createdAt
         )
     }
 
@@ -84,7 +115,8 @@ class KoogFlashcardGenerator(
                 +userQuery
             }
 
-            agent.run(prompt)
+            val rawSet = agent.run(prompt) ?: return null
+            rawSet.toFlashcardSet()
         } catch (e: Exception) {
             println("Failed to generate flashcards: ${e.message}")
             e.printStackTrace()

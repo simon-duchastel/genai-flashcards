@@ -6,6 +6,7 @@ import com.slack.circuit.runtime.ui.ui
 import data.api.ApiConfig
 import data.api.AuthApiClient
 import data.api.HttpClientProvider
+import data.api.ServerFlashcardGenerator
 import data.auth.GoogleOAuthHandler
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
@@ -81,7 +82,7 @@ fun main() {
     // App initialization
     val storage = getFlashcardStorage()
     val repository = FlashcardRepository(storage)
-    val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
+    val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
     val httpClient = HttpClientProvider.client
     val authApiClient = AuthApiClient(
         isTest = true,
