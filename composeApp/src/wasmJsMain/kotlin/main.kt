@@ -3,10 +3,18 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.runtime.ui.ui
+import data.api.ApiConfig
+import data.api.AuthApiClient
+import data.api.HttpClientProvider
+import data.auth.GoogleOAuthHandler
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
 import domain.repository.FlashcardRepository
+import kotlinx.browser.window
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
 import presentation.auth.AuthUi
@@ -28,18 +36,69 @@ import presentation.study.StudyScreen
 import presentation.study.StudyUi
 import presentation.study.StudyUiState
 
-@OptIn(ExperimentalComposeUiApi::class)
+/**
+ * External interface for accessing URL search params.
+ */
+external interface URLSearchParams : JsAny {
+    fun get(name: String): String?
+}
+
+/**
+ * Create URLSearchParams from window.location.search
+ */
+@JsFun("() => new URLSearchParams(window.location.search)")
+private external fun getURLSearchParams(): URLSearchParams
+
+/**
+ * Get query parameter value from URL.
+ */
+private fun getQueryParam(name: String): String? {
+    return getURLSearchParams().get(name)
+}
+
+@OptIn(ExperimentalComposeUiApi::class, DelicateCoroutinesApi::class)
 fun main() {
+    val configRepository = getConfigRepository()
+
+    if (window.location.pathname == "/redirect") {
+        // Extract token from query params
+        val token = getQueryParam("token")
+
+        if (token != null) {
+            // Save session token to localStorage
+            GlobalScope.launch {
+                configRepository.setSessionToken(token)
+                // Also extract and save user info if provided in query params
+                val email = getQueryParam("email")
+                val name = getQueryParam("name")
+                val picture = getQueryParam("picture")
+
+                email?.let { configRepository.setUserEmail(it) }
+                name?.let { configRepository.setUserName(it) }
+                picture?.let { configRepository.setUserPicture(it) }
+
+                // Redirect to root to start the app
+                window.location.href = "/"
+            }
+            return // Exit main() - will restart after redirect
+        }
+    }
+
+    // Normal app initialization
     val storage = getFlashcardStorage()
     val repository = FlashcardRepository(storage)
-    val configRepository = getConfigRepository()
     val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
+
+    // Setup HTTP client and auth services
+    val httpClient = HttpClientProvider.client
+    val authApiClient = AuthApiClient(httpClient, ApiConfig.BASE_URL)
+    val googleOAuthHandler = GoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
         .addPresenterFactory { screen, navigator, _ ->
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
-                is AuthScreen -> AuthPresenter(navigator, configRepository)
+                is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler)
                 is HomeScreen -> HomePresenter(navigator, repository)
                 is CreateScreen -> CreatePresenter(screen, navigator, repository, generator)
                 is StudyScreen -> StudyPresenter(screen, navigator, repository)

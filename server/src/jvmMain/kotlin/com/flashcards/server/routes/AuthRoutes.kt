@@ -30,10 +30,7 @@ fun Route.authRoutes(
     // GET /api/v1/auth/google/callback?code=xxx - OAuth callback
     get(ApiRoutes.AUTH_GOOGLE_CALLBACK) {
         val code = call.parameters["code"]
-            ?: return@get call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse("Missing authorization code", "MISSING_CODE")
-            )
+            ?: return@get call.respondRedirect("/auth?error=missing_code")
 
         try {
             // Exchange code for user info
@@ -46,20 +43,19 @@ fun Route.authRoutes(
             // Create session
             val session = authRepository.createSession(user.userId)
 
-            // Return session token and user
-            call.respond(
-                HttpStatusCode.OK,
-                AuthResponse(
-                    sessionToken = session.sessionToken,
-                    user = user
-                )
-            )
+            // Redirect to /redirect with token and optional user info in query params
+            val redirectUrl = buildString {
+                append("/redirect?token=${session.sessionToken}")
+                append("&email=${user.email}")
+                user.name?.let { append("&name=${it}") }
+                user.picture?.let { append("&picture=${it}") }
+            }
+
+            call.respondRedirect(redirectUrl)
         } catch (e: Exception) {
+            // Redirect to auth screen with error
             call.application.log.error("OAuth callback error", e)
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse("Authentication failed: ${e.message}", "AUTH_FAILED")
-            )
+            call.respondRedirect("/auth?error=${e.message?.replace(" ", "_") ?: "auth_failed"}")
         }
     }
 
