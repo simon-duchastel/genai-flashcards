@@ -1,11 +1,12 @@
 package com.flashcards.server
 
 import com.flashcards.server.auth.GoogleOAuthService
+import com.flashcards.server.config.FirestoreConfig
 import com.flashcards.server.plugins.*
-import com.flashcards.server.repository.InMemoryAuthRepository
+import com.flashcards.server.repository.FirestoreAuthRepository
 import com.flashcards.server.repository.ServerFlashcardRepository
-import com.flashcards.server.storage.GenerationRateLimiter
-import com.flashcards.server.storage.InMemoryStorage
+import com.flashcards.server.storage.FirestoreRateLimiter
+import com.flashcards.server.storage.FirestoreStorage
 import domain.generator.KoogFlashcardGenerator
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -22,10 +23,13 @@ fun main() {
 }
 
 fun Application.module() {
-    val storage = InMemoryStorage()
+    val firestore = FirestoreConfig.initialize()
+
+    // Create Firestore-backed repositories and storage
+    val storage = FirestoreStorage(firestore)
     val repository = ServerFlashcardRepository(storage)
-    val authRepository = InMemoryAuthRepository()
-    val rateLimiter = GenerationRateLimiter()
+    val authRepository = FirestoreAuthRepository(firestore)
+    val rateLimiter = FirestoreRateLimiter(firestore)
 
     val googleClientId = System.getenv("GOOGLE_OAUTH_CLIENT_ID")
         ?: error("GOOGLE_OAUTH_CLIENT_ID environment variable not set")

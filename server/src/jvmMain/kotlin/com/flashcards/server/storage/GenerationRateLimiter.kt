@@ -28,7 +28,7 @@ sealed class RateLimitResult {
  * Rate limiter for tracking user flashcard generation attempts.
  * Used for rate limiting to prevent abuse.
  */
-class GenerationRateLimiter {
+class GenerationRateLimiter : RateLimiter {
     private data class GenerationAttempt(
         val userId: String,
         val timestamp: Instant
@@ -46,7 +46,7 @@ class GenerationRateLimiter {
      * Set a custom rate limit for a specific user.
      * If not set, the default rate limit of 20 will be used.
      */
-    suspend fun setUserLimit(userId: String, limit: Int) {
+    override suspend fun setUserLimit(userId: String, limit: Int) {
         mutex.withLock {
             userLimits[userId] = limit
         }
@@ -56,7 +56,7 @@ class GenerationRateLimiter {
      * Get the rate limit for a specific user.
      * Returns the custom limit if set, otherwise the default of 20.
      */
-    suspend fun getUserLimit(userId: String): Int {
+    override suspend fun getUserLimit(userId: String): Int {
         return mutex.withLock {
             userLimits[userId] ?: DEFAULT_RATE_LIMIT
         }
@@ -66,7 +66,7 @@ class GenerationRateLimiter {
      * Check if a user can generate flashcards.
      * Returns RateLimitResult.Ok if allowed, or RateLimitResult.RateLimitExceeded if not.
      */
-    suspend fun checkRateLimit(userId: String): RateLimitResult {
+    override suspend fun checkRateLimit(userId: String): RateLimitResult {
         return mutex.withLock {
             val cutoff = Clock.System.now() - 24.hours
             val userLimit = userLimits[userId] ?: DEFAULT_RATE_LIMIT
@@ -98,7 +98,7 @@ class GenerationRateLimiter {
      * Record a generation attempt for a user.
      * Should be called after a successful generation.
      */
-    suspend fun recordAttempt(userId: String) {
+    override suspend fun recordAttempt(userId: String) {
         mutex.withLock {
             attempts.add(GenerationAttempt(userId, Clock.System.now()))
         }
