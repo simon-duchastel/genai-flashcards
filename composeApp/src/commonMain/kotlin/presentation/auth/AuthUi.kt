@@ -101,6 +101,30 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Logout button if logged in
+                if (state.isLoggedIn) {
+                    Button(
+                        onClick = state.onLogoutClicked,
+                        enabled = !state.isLoggingOut,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        if (state.isLoggingOut) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Logout")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
                 // Google Sign-In Button
                 Button(
                     onClick = state.onGoogleSignInClicked,
