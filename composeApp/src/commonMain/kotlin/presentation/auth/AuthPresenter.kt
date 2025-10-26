@@ -76,6 +76,10 @@ class AuthPresenter(
                 scope.launch {
                     try {
                         val authResponse = googleOAuthHandler.startOAuthFlow()
+                        if (authResponse == null) {
+                            error = "Google sign-in failed. Please try again or enter an API key below."
+                            return@launch
+                        }
 
                         // Save session token and user info
                         configRepository.setSessionToken(authResponse.sessionToken)
@@ -86,11 +90,7 @@ class AuthPresenter(
                         // Navigate to home
                         navigator.resetRoot(HomeScreen)
                     } catch (e: Exception) {
-                        error = """
-                            Google sign-in failed: ${e.message}
-
-                            Please try again or use API key below.
-                        """.trimIndent()
+                        error = "Google sign-in failed. Please try again or use API key below."
                         isAuthenticatingWithGoogle = false
                     }
                 }

@@ -12,5 +12,5 @@ expect class GoogleOAuthHandler(authApiClient: AuthApiClient) {
      * Start the Google OAuth flow.
      * Platform implementations will handle popup/redirect logic.
      */
-    suspend fun startOAuthFlow(): AuthResponse
+    suspend fun startOAuthFlow(): AuthResponse?
 }
