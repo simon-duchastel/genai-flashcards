@@ -38,6 +38,19 @@ fun Application.module() {
         redirectUri = googleRedirectUri
     )
 
+    val testGoogleClientId = System.getenv("GOOGLE_OAUTH_TEST_CLIENT_ID")
+        ?: error("GOOGLE_OAUTH_TEST_CLIENT_ID environment variable not set")
+    val testGoogleClientSecret = System.getenv("GOOGLE_OAUTH_TEST_CLIENT_SECRET")
+        ?: error("GOOGLE_OAUTH_TEST_CLIENT_SECRET environment variable not set")
+    val testGoogleRedirectUri = System.getenv("GOOGLE_OAUTH_TEST_REDIRECT_URI")
+        ?: error("GOOGLE_OAUTH_TEST_REDIRECT_URI environment variable not set")
+
+    val testGoogleOAuthService = GoogleOAuthService(
+        clientId = testGoogleClientId,
+        clientSecret = testGoogleClientSecret,
+        redirectUri = testGoogleRedirectUri
+    )
+
     val geminiApiKey: String = System.getenv("GEMINI_API_KEY")
         ?: error("GEMINI_API_KEY environment variable not set")
     val generator = KoogFlashcardGenerator(getGeminiApiKey = { geminiApiKey })
@@ -47,5 +60,5 @@ fun Application.module() {
     configureCallLogging()
     configureStatusPages()
     configureAuthentication(authRepository)
-    configureRouting(repository, generator, authRepository, googleOAuthService)
+    configureRouting(repository, generator, authRepository, googleOAuthService, testGoogleOAuthService)
 }

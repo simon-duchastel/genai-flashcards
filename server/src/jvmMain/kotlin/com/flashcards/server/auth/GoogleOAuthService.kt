@@ -1,5 +1,6 @@
 package com.flashcards.server.auth
 
+import com.flashcards.server.plugins.jsonParser
 import domain.model.User
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -24,9 +25,7 @@ class GoogleOAuthService(
 ) {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-            })
+            json(jsonParser)
         }
     }
 
@@ -93,7 +92,7 @@ class GoogleOAuthService(
 
         // Decode payload (second part of JWT)
         val payload = String(Base64.getUrlDecoder().decode(parts[1]))
-        return Json.decodeFromString<GoogleIdTokenPayload>(payload)
+        return jsonParser.decodeFromString<GoogleIdTokenPayload>(payload)
     }
 
     /**

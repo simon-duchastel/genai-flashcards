@@ -15,7 +15,8 @@ fun Application.configureRouting(
     repository: ServerFlashcardRepository,
     generator: KoogFlashcardGenerator,
     authRepository: AuthRepository,
-    googleOAuthService: GoogleOAuthService
+    googleOAuthService: GoogleOAuthService,
+    testGoogleOAuthService: GoogleOAuthService
 ) {
     routing {
         // Health check endpoint (public)
@@ -26,7 +27,8 @@ fun Application.configureRouting(
         // Authentication routes
         authRoutes(
             authRepository = authRepository,
-            googleOAuthService = googleOAuthService
+            googleOAuthService = googleOAuthService,
+            testGoogleOAuthService = testGoogleOAuthService
         )
 
         // Protected API routes
