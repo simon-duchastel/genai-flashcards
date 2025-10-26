@@ -16,6 +16,7 @@ application {
 dependencies {
     implementation(project(":server"))
 }
+
 ktor {
     docker {
         jreVersion.set(JavaVersion.VERSION_17)

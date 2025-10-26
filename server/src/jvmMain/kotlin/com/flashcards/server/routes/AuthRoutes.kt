@@ -24,10 +24,17 @@ fun Route.authRoutes(
     authRepository: AuthRepository,
     googleOAuthService: GoogleOAuthService,
 ) {
-    // GET /api/v1/auth/google/login - Get Google OAuth URL
+    // GET /api/v1/auth/google/login?redirect=true - Get Google OAuth URL, redirect if redirect=true
+    // redirect is an optional query parameter
     get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
+        val redirect = call.parameters["redirect"] == "true"
         val authUrl = googleOAuthService.getAuthorizationUrl()
-        call.respond(HttpStatusCode.OK, LoginUrlResponse(authUrl))
+
+        if (redirect) {
+            call.respondRedirect(authUrl)
+        } else {
+            call.respond(LoginUrlResponse(authUrl))
+        }
     }
 
     // GET /api/v1/auth/google/callback?code=xxx - OAuth callback
@@ -66,7 +73,7 @@ fun Route.authRoutes(
     authenticate("auth-bearer") {
         // POST /api/v1/auth/logout - Logout
         post(ApiRoutes.AUTH_LOGOUT) {
-            val principal = call.principal<AuthenticatedUser>()
+            call.principal<AuthenticatedUser>()
                 ?: return@post call.respond(
                     HttpStatusCode.Unauthorized,
                     ErrorResponse("Authentication required", "UNAUTHORIZED")

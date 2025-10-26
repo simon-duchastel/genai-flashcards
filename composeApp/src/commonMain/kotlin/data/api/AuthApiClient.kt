@@ -1,9 +1,7 @@
 package data.api
 
-import api.dto.LoginUrlResponse
 import api.routes.ApiRoutes
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -18,8 +16,8 @@ class AuthApiClient(
     /**
      * Get the Google OAuth login URL.
      */
-    suspend fun getGoogleLoginUrl(): LoginUrlResponse {
-        return httpClient.get("$baseUrl${ApiRoutes.AUTH_GOOGLE_LOGIN}").body()
+    suspend fun startGoogleLogin() {
+        httpClient.get("$baseUrl${ApiRoutes.AUTH_GOOGLE_LOGIN}?redirect=true")
     }
 
     /**
