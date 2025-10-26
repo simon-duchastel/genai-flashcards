@@ -95,7 +95,7 @@ fun main() {
         .addPresenterFactory { screen, navigator, _ ->
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
-                is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler)
+                is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler, authApiClient)
                 is HomeScreen -> HomePresenter(navigator, repository)
                 is CreateScreen -> CreatePresenter(screen, navigator, repository, generator)
                 is StudyScreen -> StudyPresenter(screen, navigator, repository)

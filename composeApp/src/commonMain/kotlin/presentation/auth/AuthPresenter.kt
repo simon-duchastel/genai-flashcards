@@ -12,7 +12,8 @@ import presentation.splash.SplashScreen
 class AuthPresenter(
     private val navigator: Navigator,
     private val configRepository: ConfigRepository,
-    private val googleOAuthHandler: GoogleOAuthHandler
+    private val googleOAuthHandler: GoogleOAuthHandler,
+    private val authApiClient: data.api.AuthApiClient
 ) : Presenter<AuthUiState> {
 
     @Composable
@@ -21,6 +22,8 @@ class AuthPresenter(
         var apiKeyInput: String? by remember { mutableStateOf(null) }
         var isSaving by remember { mutableStateOf(false) }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
+        var isLoggingOut by remember { mutableStateOf(false) }
+        var isLoggedIn by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
 
@@ -29,6 +32,9 @@ class AuthPresenter(
             if (currentApiKey != null) {
                 apiKeyInput = currentApiKey
             }
+            // Check if user is logged in
+            val sessionToken = configRepository.getSessionToken()
+            isLoggedIn = sessionToken != null
         }
 
         return AuthUiState(
@@ -100,6 +106,34 @@ class AuthPresenter(
                             Need help? Email help@solenne.ai
                         """.trimIndent()
                         isAuthenticatingWithGoogle = false
+                    }
+                }
+            },
+            isLoggedIn = isLoggedIn,
+            isLoggingOut = isLoggingOut,
+            onLogoutClicked = {
+                isLoggingOut = true
+                error = null
+                scope.launch {
+                    try {
+                        val sessionToken = configRepository.getSessionToken()
+                        if (sessionToken != null) {
+                            authApiClient.logout(sessionToken)
+                        }
+                        // Clear session and user info
+                        configRepository.clearSessionToken()
+                        configRepository.clearUserInfo()
+
+                        // Update state
+                        isLoggedIn = false
+                        isLoggingOut = false
+                    } catch (e: Exception) {
+                        error = """
+                            Logout failed: ${e.message}
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                        isLoggingOut = false
                     }
                 }
             }
