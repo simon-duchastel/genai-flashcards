@@ -56,7 +56,11 @@ private fun getQueryParam(name: String): String? {
     return getURLSearchParams().get(name)
 }
 
-@OptIn(ExperimentalComposeUiApi::class, DelicateCoroutinesApi::class)
+@OptIn(
+    ExperimentalComposeUiApi::class,
+    DelicateCoroutinesApi::class,
+    ExperimentalWasmJsInterop::class,
+)
 fun main() {
     val configRepository = getConfigRepository()
 
@@ -76,11 +80,10 @@ fun main() {
                 email?.let { configRepository.setUserEmail(it) }
                 name?.let { configRepository.setUserName(it) }
                 picture?.let { configRepository.setUserPicture(it) }
-
-                // Redirect to root to start the app
-                window.location.href = "/"
             }
-            return // Exit main() - will restart after redirect
+
+            // Clean up URL by replacing /redirect with / (no page reload!)
+            window.history.replaceState(null, "", "/")
         }
     }
 
