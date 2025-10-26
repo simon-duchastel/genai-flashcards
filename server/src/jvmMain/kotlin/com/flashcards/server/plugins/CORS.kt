@@ -13,5 +13,6 @@ fun Application.configureCORS() {
         allowHeader(HttpHeaders.Authorization)
 
         allowHost("flashcards.solenne.ai", listOf("https"))
+        allowHost("localhost:8080", listOf("http"))
     }
 }

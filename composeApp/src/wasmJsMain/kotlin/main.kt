@@ -64,37 +64,30 @@ private fun getQueryParam(name: String): String? {
 fun main() {
     val configRepository = getConfigRepository()
 
-    if (window.location.pathname == "/redirect") {
-        // Extract token from query params
+    // check if we've been redirected to from auth sign-in
+    if (getQueryParam("auth-redirect") == "true") {
         val token = getQueryParam("token")
 
         if (token != null) {
             // Save session token to localStorage
             GlobalScope.launch {
                 configRepository.setSessionToken(token)
-                // Also extract and save user info if provided in query params
-                val email = getQueryParam("email")
-                val name = getQueryParam("name")
-                val picture = getQueryParam("picture")
 
-                email?.let { configRepository.setUserEmail(it) }
-                name?.let { configRepository.setUserName(it) }
-                picture?.let { configRepository.setUserPicture(it) }
+                window.history.replaceState(null, "", "/")
             }
-
-            // Clean up URL by replacing /redirect with / (no page reload!)
-            window.history.replaceState(null, "", "/")
         }
     }
 
-    // Normal app initialization
+    // App initialization
     val storage = getFlashcardStorage()
     val repository = FlashcardRepository(storage)
     val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
-
-    // Setup HTTP client and auth services
     val httpClient = HttpClientProvider.client
-    val authApiClient = AuthApiClient(httpClient, ApiConfig.BASE_URL)
+    val authApiClient = AuthApiClient(
+        isTest = true,
+        httpClient = httpClient,
+        baseUrl = ApiConfig.BASE_URL
+    )
     val googleOAuthHandler = GoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()

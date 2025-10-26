@@ -89,7 +89,7 @@ class AuthPresenter(
 
                         // Navigate to home
                         navigator.resetRoot(HomeScreen)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         error = "Google sign-in failed. Please try again or use API key below."
                         isAuthenticatingWithGoogle = false
                     }
