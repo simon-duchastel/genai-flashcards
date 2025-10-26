@@ -1,18 +1,18 @@
 package com.flashcards.server.repository
 
-import com.flashcards.server.storage.InMemoryStorage
+import com.flashcards.server.storage.Storage
 import domain.model.Flashcard
 import domain.model.FlashcardSet
 import domain.repository.FlashcardRepository
 
 /**
  * Server-side implementation of FlashcardRepository.
- * Uses in-memory storage for simplicity.
+ * Uses storage abstraction for flexibility (in-memory or Firestore).
  *
  * All methods now require userId for data isolation.
  */
 class ServerFlashcardRepository(
-    private val storage: InMemoryStorage
+    private val storage: Storage
 ) : FlashcardRepository {
 
     override suspend fun saveFlashcardSet(set: FlashcardSet) {

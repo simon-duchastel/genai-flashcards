@@ -6,7 +6,7 @@ import api.dto.GenerateResponse
 import api.dto.RateLimitError
 import api.routes.ApiRoutes
 import com.flashcards.server.auth.AuthenticatedUser
-import com.flashcards.server.storage.GenerationRateLimiter
+import com.flashcards.server.storage.RateLimiter
 import com.flashcards.server.storage.RateLimitResult
 import domain.generator.KoogFlashcardGenerator
 import io.ktor.http.HttpStatusCode
@@ -19,7 +19,7 @@ import io.ktor.server.routing.post
 /**
  * Configure flashcard generation routes (protected by authentication).
  */
-fun Route.generatorRoutes(generator: KoogFlashcardGenerator, rateLimiter: GenerationRateLimiter) {
+fun Route.generatorRoutes(generator: KoogFlashcardGenerator, rateLimiter: RateLimiter) {
     authenticate("auth-bearer") {
         // POST /api/v1/generate - Generate flashcards
         post(ApiRoutes.GENERATE) {
