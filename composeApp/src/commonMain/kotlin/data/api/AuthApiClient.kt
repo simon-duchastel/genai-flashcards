@@ -1,6 +1,7 @@
 package data.api
 
 import api.dto.LoginUrlResponse
+import api.dto.MeResponse
 import api.routes.ApiRoutes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -26,6 +27,15 @@ class AuthApiClient(
             ApiRoutes.AUTH_GOOGLE_LOGIN
         }
         return httpClient.get("$baseUrl$route").body()
+    }
+
+    /**
+     * Get current user info.
+     */
+    suspend fun getMe(sessionToken: String): MeResponse {
+        return httpClient.get("$baseUrl${ApiRoutes.AUTH_ME}") {
+            bearerAuth(sessionToken)
+        }.body()
     }
 
     /**

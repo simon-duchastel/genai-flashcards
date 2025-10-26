@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Flashcard(
     val id: String = Uuid.random().toString(),
-    val setId: String,
-    val front: String,
-    val back: String,
+    val setId: String = "",
+    val front: String = "",
+    val back: String = "",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
 )

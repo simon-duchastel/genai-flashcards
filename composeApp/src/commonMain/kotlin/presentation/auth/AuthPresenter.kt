@@ -24,6 +24,7 @@ class AuthPresenter(
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
         var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
+        var currentUserName by remember { mutableStateOf<String?>(null) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
 
@@ -32,9 +33,17 @@ class AuthPresenter(
             if (currentApiKey != null) {
                 apiKeyInput = currentApiKey
             }
-            // Check if user is logged in
+            // Check if user is logged in and load persisted user info
             val sessionToken = configRepository.getSessionToken()
-            isLoggedIn = sessionToken != null
+            if (sessionToken != null) {
+                isLoggedIn = true
+                val userName = configRepository.getUserName()
+                val userEmail = configRepository.getUserEmail()
+                currentUserName = userName ?: userEmail
+            } else {
+                isLoggedIn = false
+                currentUserName = null
+            }
         }
 
         return AuthUiState(
@@ -88,6 +97,7 @@ class AuthPresenter(
 
                                 Need help? Email help@solenne.ai
                             """.trimIndent()
+                            isAuthenticatingWithGoogle = false
                             return@launch
                         }
 
@@ -96,6 +106,10 @@ class AuthPresenter(
                         configRepository.setUserEmail(authResponse.user.email)
                         authResponse.user.name?.let { configRepository.setUserName(it) }
                         authResponse.user.picture?.let { configRepository.setUserPicture(it) }
+
+                        // Update state
+                        isLoggedIn = true
+                        currentUserName = authResponse.user.name ?: authResponse.user.email
 
                         // Navigate to home
                         navigator.resetRoot(HomeScreen)
@@ -126,6 +140,7 @@ class AuthPresenter(
 
                         // Update state
                         isLoggedIn = false
+                        currentUserName = null
                         isLoggingOut = false
                     } catch (e: Exception) {
                         error = """
@@ -136,7 +151,8 @@ class AuthPresenter(
                         isLoggingOut = false
                     }
                 }
-            }
+            },
+            currentUserName = currentUserName
         )
     }
 }

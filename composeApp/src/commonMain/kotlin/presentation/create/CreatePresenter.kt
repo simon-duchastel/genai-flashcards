@@ -10,7 +10,6 @@ import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import data.api.ServerFlashcardGenerator.RateLimitException
 import domain.model.FlashcardSet
-import domain.repository.FlashcardGenerator
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
@@ -18,8 +17,7 @@ import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 class CreatePresenter(
     private val screen: CreateScreen,
     private val navigator: Navigator,
-    private val repository: FlashcardRepository,
-    private val generator: FlashcardGenerator
+    private val repository: FlashcardRepository
 ) : Presenter<CreateUiState> {
 
     @Composable
@@ -64,7 +62,7 @@ class CreatePresenter(
                     error = null
                     scope.launch {
                         try {
-                            val flashcardSet = generator.generate(
+                            val flashcardSet = repository.generate(
                                 topic = topic,
                                 count = count,
                                 userQuery = query.ifBlank { "Generate comprehensive flashcards" },
