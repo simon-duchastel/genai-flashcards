@@ -84,7 +84,7 @@ fun main() {
     val generator = KoogFlashcardGenerator(getGeminiApiKey =  configRepository::getGeminiApiKey )
     val httpClient = HttpClientProvider.client
     val authApiClient = AuthApiClient(
-        isTest = true,
+        isTest = false,
         httpClient = httpClient,
         baseUrl = ApiConfig.BASE_URL
     )
