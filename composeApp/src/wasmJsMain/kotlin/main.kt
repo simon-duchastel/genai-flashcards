@@ -6,7 +6,10 @@ import com.slack.circuit.runtime.ui.ui
 import data.api.ApiConfig
 import data.api.AuthApiClient
 import data.api.HttpClientProvider
+import data.api.ServerFlashcardApiClient
+import data.api.ServerFlashcardGenerator
 import data.auth.GoogleOAuthHandler
+import data.repository.AuthRepositoryImpl
 import data.storage.ConfigRepository
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
@@ -66,7 +69,7 @@ fun main() {
     val configRepository = getConfigRepository()
     val httpClient = HttpClientProvider.client
     val authApiClient = AuthApiClient(
-        isTest = false,
+        isTest = true,
         httpClient = httpClient,
         baseUrl = ApiConfig.BASE_URL
     )
@@ -85,23 +88,24 @@ fun main() {
         } else {
             val sessionToken = configRepository.getSessionToken()
             if (sessionToken != null) {
-                configureUserSession(token, configRepository, authApiClient)
+                configureUserSession(sessionToken, configRepository, authApiClient)
             }
-        }
-    }
-
-    // Fetch and persist user info on app start if logged in
-    GlobalScope.launch {
-        val sessionToken = configRepository.getSessionToken()
-        if (sessionToken != null) {
-
         }
     }
 
     // App initialization
     val storage = getFlashcardStorage()
-    val repository = FlashcardRepository(storage)
-    val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+    val authRepository = AuthRepositoryImpl(configRepository)
+    val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
+    val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
+    val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+    val repository = FlashcardRepository(
+        authRepository = authRepository,
+        serverClient = serverFlashcardClient,
+        localStorage = storage,
+        serverGenerator = serverGenerator,
+        koogGenerator = koogGenerator,
+    )
     val googleOAuthHandler = GoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
@@ -110,7 +114,7 @@ fun main() {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
                 is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler, authApiClient)
                 is HomeScreen -> HomePresenter(navigator, repository)
-                is CreateScreen -> CreatePresenter(screen, navigator, repository, generator)
+                is CreateScreen -> CreatePresenter(screen, navigator, repository)
                 is StudyScreen -> StudyPresenter(screen, navigator, repository)
                 else -> null
             }
