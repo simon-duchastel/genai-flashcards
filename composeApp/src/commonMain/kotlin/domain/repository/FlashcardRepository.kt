@@ -29,8 +29,6 @@ class FlashcardRepository(
             if (token != null) {
                 // Save to server
                 serverClient.saveFlashcardSet(token, set)
-                // Also cache locally for offline access
-                localStorage.saveFlashcardSet(set)
             } else {
                 // Fallback to local if token is missing
                 localStorage.saveFlashcardSet(set)
