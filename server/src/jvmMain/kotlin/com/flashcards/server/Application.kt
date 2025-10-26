@@ -25,12 +25,12 @@ fun Application.module() {
     val repository = ServerFlashcardRepository(storage)
     val authRepository = InMemoryAuthRepository()
 
-    val googleClientId = System.getenv("GOOGLE_CLIENT_ID")
-        ?: error("GOOGLE_CLIENT_ID environment variable not set")
-    val googleClientSecret = System.getenv("GOOGLE_CLIENT_SECRET")
-        ?: error("GOOGLE_CLIENT_SECRET environment variable not set")
-    val googleRedirectUri = System.getenv("GOOGLE_REDIRECT_URI")
-        ?: error("GOOGLE_REDIRECT_URI environment variable not set")
+    val googleClientId = System.getenv("GOOGLE_OAUTH_CLIENT_ID")
+        ?: error("GOOGLE_OAUTH_CLIENT_ID environment variable not set")
+    val googleClientSecret = System.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+        ?: error("GOOGLE_OAUTH_CLIENT_SECRET environment variable not set")
+    val googleRedirectUri = System.getenv("GOOGLE_OAUTH_REDIRECT_URI")
+        ?: error("GOOGLE_OAUTH_REDIRECT_URI environment variable not set")
 
     val googleOAuthService = GoogleOAuthService(
         clientId = googleClientId,
@@ -38,7 +38,8 @@ fun Application.module() {
         redirectUri = googleRedirectUri
     )
 
-    val geminiApiKey: String = System.getenv("GEMINI_API_KEY") ?: "test"
+    val geminiApiKey: String = System.getenv("GEMINI_API_KEY")
+        ?: error("GEMINI_API_KEY environment variable not set")
     val generator = KoogFlashcardGenerator(getGeminiApiKey = { geminiApiKey })
 
     configureSerialization()
