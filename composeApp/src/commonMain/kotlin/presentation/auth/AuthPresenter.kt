@@ -29,10 +29,8 @@ class AuthPresenter(
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            val currentApiKey = configRepository.getGeminiApiKey()
-            if (currentApiKey != null) {
-                apiKeyInput = currentApiKey
-            }
+            apiKeyInput = configRepository.getGeminiApiKey() ?: ""
+
             // Check if user is logged in and load persisted user info
             val sessionToken = configRepository.getSessionToken()
             if (sessionToken != null) {
@@ -142,6 +140,9 @@ class AuthPresenter(
                         isLoggedIn = false
                         currentUserName = null
                         isLoggingOut = false
+
+                        // go back to splash screen
+                        navigator.resetRoot(SplashScreen)
                     } catch (e: Exception) {
                         error = """
                             Logout failed: ${e.message}

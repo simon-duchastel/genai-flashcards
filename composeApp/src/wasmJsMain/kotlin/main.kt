@@ -69,7 +69,7 @@ fun main() {
     val configRepository = getConfigRepository()
     val httpClient = HttpClientProvider.client
     val authApiClient = AuthApiClient(
-        isTest = true,
+        isTest = false,
         httpClient = httpClient,
         baseUrl = ApiConfig.BASE_URL
     )
