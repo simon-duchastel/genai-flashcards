@@ -9,7 +9,7 @@ import androidx.compose.runtime.setValue
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import data.api.ServerFlashcardGenerator.RateLimitException
-import domain.model.Flashcard
+import domain.model.FlashcardSet
 import domain.repository.FlashcardGenerator
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
@@ -28,7 +28,7 @@ class CreatePresenter(
         var query by remember { mutableStateOf("") }
         var count by remember { mutableStateOf(10) }
         var isGenerating by remember { mutableStateOf(false) }
-        var generatedCards by remember { mutableStateOf(emptyList<Flashcard>()) }
+        var generatedCardsSet: FlashcardSet? by remember { mutableStateOf(null) }
         var error by remember { mutableStateOf<String?>(null) }
         var deleteDialog by remember { mutableStateOf<DeleteCardDialog?>(null) }
         val scope = rememberCoroutineScope()
@@ -38,7 +38,7 @@ class CreatePresenter(
             query = query,
             count = count,
             isGenerating = isGenerating,
-            generatedCards = generatedCards,
+            generatedCards = generatedCardsSet?.flashcards ?: emptyList(),
             error = error,
             deleteDialog = deleteDialog,
             onTopicChanged = { newTopic ->
@@ -82,7 +82,7 @@ class CreatePresenter(
                                 """.trimIndent()
                                 isGenerating = false
                             } else {
-                                generatedCards = flashcardSet.flashcards
+                                generatedCardsSet = flashcardSet
                                 isGenerating = false
                             }
                         } catch (e: RateLimitException) {
@@ -108,7 +108,8 @@ class CreatePresenter(
                 }
             },
             onSaveClicked = {
-                if (generatedCards.isEmpty()) {
+                val setToSave = generatedCardsSet
+                if (setToSave?.flashcards.isNullOrEmpty()) {
                     error = """
                         No flashcards to save
 
@@ -117,11 +118,7 @@ class CreatePresenter(
                 } else {
                     scope.launch {
                         try {
-                            val flashcardSet = domain.model.FlashcardSet(
-                                topic = topic,
-                                flashcards = generatedCards
-                            )
-                            repository.saveFlashcardSet(flashcardSet)
+                            repository.saveFlashcardSet(setToSave)
                             navigator.pop()
                         } catch (e: Exception) {
                             error = """
@@ -137,21 +134,29 @@ class CreatePresenter(
                 navigator.pop()
             },
             onEditCard = { cardId, front, back ->
-                generatedCards = generatedCards.map { card ->
-                    if (card.id == cardId) {
-                        card.copy(front = front, back = back)
-                    } else {
-                        card
+                val currentCards = generatedCardsSet?.flashcards ?: emptyList()
+                generatedCardsSet = generatedCardsSet?.copy(
+                    flashcards = currentCards.map { card ->
+                        if (card.id == cardId) {
+                            card.copy(front = front, back = back)
+                        } else {
+                            card
+                        }
                     }
-                }
+                )
             },
-            onDeleteCardClick = { card ->
+            onDeleteCardClick = { cardToDelete ->
                 deleteDialog = DeleteCardDialog(
-                    card = card,
+                    card = cardToDelete,
                     onCancel = { deleteDialog = null },
                     onConfirm = {
                         deleteDialog = null
-                        generatedCards = generatedCards.filter { it.id != card.id }
+                        val currentCards = generatedCardsSet?.flashcards ?: emptyList()
+                        generatedCardsSet = generatedCardsSet?.copy(
+                            flashcards = currentCards.filter { card ->
+                                card.id != cardToDelete.id
+                            }
+                        )
                     }
                 )
             }
