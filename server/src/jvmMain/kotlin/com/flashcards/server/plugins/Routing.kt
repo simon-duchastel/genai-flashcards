@@ -24,7 +24,10 @@ fun Application.configureRouting(
         }
 
         // Authentication routes
-        authRoutes(authRepository, googleOAuthService)
+        authRoutes(
+            authRepository = authRepository,
+            googleOAuthService = googleOAuthService
+        )
 
         // Protected API routes
         flashcardRoutes(repository)

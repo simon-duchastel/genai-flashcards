@@ -8,6 +8,8 @@ object ApiRoutes {
 
     // Authentication routes
     private const val AUTH_BASE = "$API_BASE/auth"
+
+    const val WEB_CLIENT = "https://flashcards.solenne.ai"
     const val AUTH_GOOGLE_LOGIN = "$AUTH_BASE/google/login"
     const val AUTH_GOOGLE_CALLBACK = "$AUTH_BASE/google/callback"
     const val AUTH_LOGOUT = "$AUTH_BASE/logout"

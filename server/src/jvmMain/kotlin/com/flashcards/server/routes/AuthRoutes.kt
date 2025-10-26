@@ -1,6 +1,5 @@
 package com.flashcards.server.routes
 
-import api.dto.AuthResponse
 import api.dto.ErrorResponse
 import api.dto.LoginUrlResponse
 import api.dto.MeResponse
@@ -8,18 +7,22 @@ import api.routes.ApiRoutes
 import com.flashcards.server.auth.AuthenticatedUser
 import com.flashcards.server.auth.GoogleOAuthService
 import com.flashcards.server.repository.AuthRepository
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.log
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 
 /**
  * Configure authentication routes.
  */
 fun Route.authRoutes(
     authRepository: AuthRepository,
-    googleOAuthService: GoogleOAuthService
+    googleOAuthService: GoogleOAuthService,
 ) {
     // GET /api/v1/auth/google/login - Get Google OAuth URL
     get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
@@ -43,9 +46,9 @@ fun Route.authRoutes(
             // Create session
             val session = authRepository.createSession(user.userId)
 
-            // Redirect to /redirect with token and optional user info in query params
+            // Redirect with token and optional user info in query params
             val redirectUrl = buildString {
-                append("/redirect?token=${session.sessionToken}")
+                append("${ApiRoutes.WEB_CLIENT}/redirect?token=${session.sessionToken}")
                 append("&email=${user.email}")
                 user.name?.let { append("&name=${it}") }
                 user.picture?.let { append("&picture=${it}") }
@@ -55,7 +58,7 @@ fun Route.authRoutes(
         } catch (e: Exception) {
             // Redirect to auth screen with error
             call.application.log.error("OAuth callback error", e)
-            call.respondRedirect("/auth?error=${e.message?.replace(" ", "_") ?: "auth_failed"}")
+            call.respondRedirect("${ApiRoutes.WEB_CLIENT}/auth?error='unable-to-create'")
         }
     }
 

@@ -1,11 +1,12 @@
 package data.api
 
-import api.dto.AuthResponse
 import api.dto.LoginUrlResponse
 import api.routes.ApiRoutes
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.post
 
 /**
  * Client for authentication-related API calls.
