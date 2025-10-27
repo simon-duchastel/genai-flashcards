@@ -7,10 +7,15 @@ import data.api.AuthApiClient
  * Platform-specific handler for Google OAuth flow.
  * Uses expect/actual pattern since OAuth implementation differs by platform.
  */
-expect class GoogleOAuthHandler(authApiClient: AuthApiClient) {
+interface GoogleOAuthHandler {
     /**
      * Start the Google OAuth flow.
      * Platform implementations will handle popup/redirect logic.
      */
     suspend fun startOAuthFlow(): AuthResponse?
 }
+
+/**
+ * Platform-specific factory function for GoogleOAuthHandler.
+ */
+expect fun getGoogleOAuthHandler(authApiClient: AuthApiClient): GoogleOAuthHandler

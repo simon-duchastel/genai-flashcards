@@ -8,7 +8,7 @@ import data.api.AuthApiClient
 import data.api.HttpClientProvider
 import data.api.ServerFlashcardApiClient
 import data.api.ServerFlashcardGenerator
-import data.auth.GoogleOAuthHandler
+import data.auth.getGoogleOAuthHandler
 import data.repository.AuthRepositoryImpl
 import data.storage.ConfigRepository
 import data.storage.getConfigRepository
@@ -106,7 +106,7 @@ fun main() {
         serverGenerator = serverGenerator,
         koogGenerator = koogGenerator,
     )
-    val googleOAuthHandler = GoogleOAuthHandler(authApiClient)
+    val googleOAuthHandler = getGoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
         .addPresenterFactory { screen, navigator, _ ->

@@ -2,6 +2,13 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.window.ComposeUIViewController
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.runtime.ui.ui
+import data.api.ApiConfig
+import data.api.AuthApiClient
+import data.api.HttpClientProvider
+import data.api.ServerFlashcardApiClient
+import data.api.ServerFlashcardGenerator
+import data.auth.getGoogleOAuthHandler
+import data.repository.AuthRepositoryImpl
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
@@ -34,18 +41,34 @@ import presentation.study.StudyUiState
  */
 fun MainViewController(): UIViewController {
     val storage = getFlashcardStorage()
-    val repository = FlashcardRepository(storage)
     val configRepository = getConfigRepository()
+    val httpClient = HttpClientProvider.client
+    val authRepository = AuthRepositoryImpl(configRepository)
+    val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
+    val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
     val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+    val flashcardRepository = FlashcardRepository(
+        authRepository = authRepository,
+        serverClient = serverFlashcardClient,
+        localStorage = storage,
+        koogGenerator = generator,
+        serverGenerator = serverGenerator,
+    )
+    val authApiClient = AuthApiClient(
+        isTest = false,
+        httpClient = httpClient,
+        baseUrl = ApiConfig.BASE_URL
+    )
+    val googleOAuthHandler = getGoogleOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
         .addPresenterFactory { screen, navigator, _ ->
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
-                is AuthScreen -> AuthPresenter(navigator, configRepository)
-                is HomeScreen -> HomePresenter(navigator, repository)
-                is CreateScreen -> CreatePresenter(screen, navigator, repository, generator)
-                is StudyScreen -> StudyPresenter(screen, navigator, repository)
+                is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler, authApiClient)
+                is HomeScreen -> HomePresenter(navigator, flashcardRepository)
+                is CreateScreen -> CreatePresenter(screen, navigator, flashcardRepository)
+                is StudyScreen -> StudyPresenter(screen, navigator, flashcardRepository)
                 else -> null
             }
         }
