@@ -9,14 +9,14 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * WASM-JS implementation of GoogleOAuthHandler using redirect flow.
  */
-actual class GoogleOAuthHandler actual constructor(
+class BrowserGoogleOAuthHandler(
     private val authApiClient: AuthApiClient
-) {
+): GoogleOAuthHandler {
     /**
      * Start the Google OAuth flow by redirecting to Google's auth page.
      * This function never returns - it's expected to redirect the entire page.
      */
-    actual suspend fun startOAuthFlow(): AuthResponse? {
+    override suspend fun startOAuthFlow(): AuthResponse? {
         val loginUrl = authApiClient.startGoogleLogin().authUrl
 
         window.location.href = loginUrl // redirect to the login url
@@ -24,4 +24,8 @@ actual class GoogleOAuthHandler actual constructor(
         delay(1.seconds)
         return null // redirect should have occurred, return an error if it hasn't
     }
+}
+
+actual fun getGoogleOAuthHandler(authApiClient: AuthApiClient): GoogleOAuthHandler {
+    return BrowserGoogleOAuthHandler(authApiClient)
 }

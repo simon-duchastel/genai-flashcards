@@ -1,7 +1,7 @@
 package data.api
 
 /**
- * API configuration for the web platform.
+ * API configuration.
  */
 object ApiConfig {
     /**
