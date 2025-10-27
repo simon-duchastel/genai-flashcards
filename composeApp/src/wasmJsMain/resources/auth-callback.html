@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - GenAI Flashcards</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Completing authentication...</h2>
+        <p>This window will close automatically.</p>
+    </div>
+
+    <script>
+        // Extract authorization code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (window.opener) {
+            if (code) {
+                // Send success message with code to parent window
+                window.opener.postMessage('oauth:success:' + code, window.location.origin);
+            } else if (error) {
+                // Send error message to parent window
+                window.opener.postMessage('oauth:error', window.location.origin);
+            } else {
+                // Send cancellation message to parent window
+                window.opener.postMessage('oauth:cancelled', window.location.origin);
+            }
+
+            // Close this popup window after a short delay
+            setTimeout(() => {
+                window.close();
+            }, 500);
+        } else {
+            // If window.opener is not available, redirect to main page
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
