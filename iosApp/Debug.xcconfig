@@ -1,0 +1,11 @@
+//
+//  Debug.xcconfig
+//  iosApp
+//
+//  Created by Simon Duchastel on 10/26/25.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+ENABLE_USER_SCRIPT_SANDBOXING = NO // Needed to allow KMP gradle scripts to run in build
+OTHER_LDFLAGS = $(inherited) -framework ComposeApp
