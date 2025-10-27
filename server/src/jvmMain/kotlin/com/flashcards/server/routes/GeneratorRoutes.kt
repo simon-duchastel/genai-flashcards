@@ -3,8 +3,11 @@ package com.flashcards.server.routes
 import api.dto.ErrorResponse
 import api.dto.GenerateRequest
 import api.dto.GenerateResponse
+import api.dto.RateLimitError
 import api.routes.ApiRoutes
 import com.flashcards.server.auth.AuthenticatedUser
+import com.flashcards.server.storage.RateLimiter
+import com.flashcards.server.storage.RateLimitResult
 import domain.generator.KoogFlashcardGenerator
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.*
@@ -16,7 +19,7 @@ import io.ktor.server.routing.post
 /**
  * Configure flashcard generation routes (protected by authentication).
  */
-fun Route.generatorRoutes(generator: KoogFlashcardGenerator) {
+fun Route.generatorRoutes(generator: KoogFlashcardGenerator, rateLimiter: RateLimiter) {
     authenticate("auth-bearer") {
         // POST /api/v1/generate - Generate flashcards
         post(ApiRoutes.GENERATE) {
@@ -25,6 +28,20 @@ fun Route.generatorRoutes(generator: KoogFlashcardGenerator) {
                     HttpStatusCode.Unauthorized,
                     ErrorResponse("Authentication required", "UNAUTHORIZED")
                 )
+
+            when (val result = rateLimiter.checkRateLimit(principal.userId)) {
+                is RateLimitResult.RateLimitExceeded -> {
+                    return@post call.respond(
+                        HttpStatusCode.TooManyRequests,
+                        RateLimitError(
+                            message = "You've exceeded your number of flashcard generations for today",
+                            tryAgainAt = result.tryAgainAt,
+                            numberOfGenerations = result.numberOfGenerations
+                        )
+                    )
+                }
+                RateLimitResult.Ok -> Unit // do nothing - continue with generation
+            }
 
             val request = call.receive<GenerateRequest>()
 
@@ -48,7 +65,7 @@ fun Route.generatorRoutes(generator: KoogFlashcardGenerator) {
                 topic = request.topic,
                 count = request.count,
                 userQuery = request.userQuery,
-            )
+            )?.copy(userId = principal.userId)
 
             if (flashcardSet == null) {
                 call.respond(
@@ -56,11 +73,11 @@ fun Route.generatorRoutes(generator: KoogFlashcardGenerator) {
                     GenerateResponse(error = "Failed to generate flashcards. Please check your API key.")
                 )
             } else {
-                // Set userId on generated flashcard set
-                val userFlashcardSet = flashcardSet.copy(userId = principal.userId)
+                rateLimiter.recordAttempt(principal.userId)
+
                 call.respond(
                     HttpStatusCode.OK,
-                    GenerateResponse(flashcardSet = userFlashcardSet)
+                    GenerateResponse(flashcardSet = flashcardSet)
                 )
             }
         }

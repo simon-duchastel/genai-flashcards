@@ -18,8 +18,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class User(
     val userId: String = Uuid.random().toString(),
-    val authId: String,
-    val email: String,
+    val authId: String = "",
+    val email: String = "",
     val name: String? = null,
     val picture: String? = null,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()

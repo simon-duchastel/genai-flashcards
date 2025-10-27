@@ -58,6 +58,16 @@ kotlin {
             implementation(libs.ktor.serialization.json)
         }
 
+        iosMain.dependencies {
+            // Ktor Darwin (iOS HTTP client)
+            implementation(libs.ktor.client.darwin)
+        }
+
+        wasmJsMain.dependencies {
+            // Ktor JS (Browser HTTP client)
+            implementation(libs.ktor.client.js)
+        }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

@@ -8,16 +8,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
-import domain.model.Flashcard
-import domain.repository.FlashcardGenerator
+import data.api.ServerFlashcardGenerator.RateLimitException
+import domain.model.FlashcardSet
 import domain.repository.FlashcardRepository
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
 class CreatePresenter(
     private val screen: CreateScreen,
     private val navigator: Navigator,
-    private val repository: FlashcardRepository,
-    private val generator: FlashcardGenerator
+    private val repository: FlashcardRepository
 ) : Presenter<CreateUiState> {
 
     @Composable
@@ -26,8 +26,9 @@ class CreatePresenter(
         var query by remember { mutableStateOf("") }
         var count by remember { mutableStateOf(10) }
         var isGenerating by remember { mutableStateOf(false) }
-        var generatedCards by remember { mutableStateOf(emptyList<Flashcard>()) }
+        var generatedCardsSet: FlashcardSet? by remember { mutableStateOf(null) }
         var error by remember { mutableStateOf<String?>(null) }
+        var deleteDialog by remember { mutableStateOf<DeleteCardDialog?>(null) }
         val scope = rememberCoroutineScope()
 
         return CreateUiState(
@@ -35,8 +36,9 @@ class CreatePresenter(
             query = query,
             count = count,
             isGenerating = isGenerating,
-            generatedCards = generatedCards,
+            generatedCards = generatedCardsSet?.flashcards ?: emptyList(),
             error = error,
+            deleteDialog = deleteDialog,
             onTopicChanged = { newTopic ->
                 topic = newTopic.take(30)
                 error = null
@@ -60,7 +62,7 @@ class CreatePresenter(
                     error = null
                     scope.launch {
                         try {
-                            val flashcardSet = generator.generate(
+                            val flashcardSet = repository.generate(
                                 topic = topic,
                                 count = count,
                                 userQuery = query.ifBlank { "Generate comprehensive flashcards" },
@@ -78,9 +80,20 @@ class CreatePresenter(
                                 """.trimIndent()
                                 isGenerating = false
                             } else {
-                                generatedCards = flashcardSet.flashcards
+                                generatedCardsSet = flashcardSet
                                 isGenerating = false
                             }
+                        } catch (e: RateLimitException) {
+                            val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
+                            error = """
+                                ${e.message}
+
+                                You've used ${e.numberOfGenerations} generations today.
+                                You can try again at $tryAgainDate
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                            isGenerating = false
                         } catch (e: Exception) {
                             error = """
                                 Error: ${e.message ?: "Failed to generate flashcards"}
@@ -93,7 +106,8 @@ class CreatePresenter(
                 }
             },
             onSaveClicked = {
-                if (generatedCards.isEmpty()) {
+                val setToSave = generatedCardsSet
+                if (setToSave?.flashcards.isNullOrEmpty()) {
                     error = """
                         No flashcards to save
 
@@ -102,11 +116,7 @@ class CreatePresenter(
                 } else {
                     scope.launch {
                         try {
-                            val flashcardSet = domain.model.FlashcardSet(
-                                topic = topic,
-                                flashcards = generatedCards
-                            )
-                            repository.saveFlashcardSet(flashcardSet)
+                            repository.saveFlashcardSet(setToSave)
                             navigator.pop()
                         } catch (e: Exception) {
                             error = """
@@ -122,16 +132,31 @@ class CreatePresenter(
                 navigator.pop()
             },
             onEditCard = { cardId, front, back ->
-                generatedCards = generatedCards.map { card ->
-                    if (card.id == cardId) {
-                        card.copy(front = front, back = back)
-                    } else {
-                        card
+                val currentCards = generatedCardsSet?.flashcards ?: emptyList()
+                generatedCardsSet = generatedCardsSet?.copy(
+                    flashcards = currentCards.map { card ->
+                        if (card.id == cardId) {
+                            card.copy(front = front, back = back)
+                        } else {
+                            card
+                        }
                     }
-                }
+                )
             },
-            onDeleteCard = { cardId ->
-                generatedCards = generatedCards.filter { it.id != cardId }
+            onDeleteCardClick = { cardToDelete ->
+                deleteDialog = DeleteCardDialog(
+                    card = cardToDelete,
+                    onCancel = { deleteDialog = null },
+                    onConfirm = {
+                        deleteDialog = null
+                        val currentCards = generatedCardsSet?.flashcards ?: emptyList()
+                        generatedCardsSet = generatedCardsSet?.copy(
+                            flashcards = currentCards.filter { card ->
+                                card.id != cardToDelete.id
+                            }
+                        )
+                    }
+                )
             }
         )
     }

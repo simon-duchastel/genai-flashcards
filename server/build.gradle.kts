@@ -37,9 +37,16 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.3")
 
                 // Logging
                 implementation(libs.logback.classic)
+
+                // Firebase Admin SDK for Firestore
+                implementation("com.google.firebase:firebase-admin:9.2.0")
+
+                // Caffeine cache for session/rate limit caching
+                implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
             }
         }
     }

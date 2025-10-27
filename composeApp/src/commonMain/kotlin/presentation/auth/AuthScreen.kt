@@ -14,5 +14,13 @@ data class AuthUiState(
     val isSaving: Boolean,
     val error: String?,
     val onApiKeyChanged: (String) -> Unit,
-    val onSaveClicked: () -> Unit
+    val onSaveClicked: () -> Unit,
+    // Google OAuth
+    val isAuthenticatingWithGoogle: Boolean,
+    val onGoogleSignInClicked: () -> Unit,
+    // Logout
+    val isLoggedIn: Boolean,
+    val isLoggingOut: Boolean,
+    val onLogoutClicked: () -> Unit,
+    val currentUserName: String? // null if signed out
 ) : CircuitUiState
