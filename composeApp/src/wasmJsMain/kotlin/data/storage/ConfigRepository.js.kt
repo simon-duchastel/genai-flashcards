@@ -8,6 +8,7 @@ import kotlinx.browser.localStorage
 class ConfigRepositoryJs : ConfigRepository {
     private val apiKeyStorageKey = "gemini_api_key"
     private val darkModeStorageKey = "dark_mode"
+    private val sessionTokenStorageKey = "session_token"
 
     override suspend fun getGeminiApiKey(): String? {
         return localStorage.getItem(apiKeyStorageKey)
@@ -23,6 +24,18 @@ class ConfigRepositoryJs : ConfigRepository {
 
     override suspend fun setDarkMode(isDark: Boolean) {
         localStorage.setItem(darkModeStorageKey, isDark.toString())
+    }
+
+    override suspend fun getSessionToken(): String? {
+        return localStorage.getItem(sessionTokenStorageKey)
+    }
+
+    override suspend fun setSessionToken(token: String) {
+        localStorage.setItem(sessionTokenStorageKey, token)
+    }
+
+    override suspend fun clearSessionToken() {
+        localStorage.removeItem(sessionTokenStorageKey)
     }
 }
 

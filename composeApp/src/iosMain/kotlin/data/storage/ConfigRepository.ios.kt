@@ -9,6 +9,7 @@ import platform.Foundation.NSUserDefaults
 class ConfigRepositoryIos : ConfigRepository {
     private val apiKeyStorageKey = "gemini_api_key"
     private val darkModeStorageKey = "dark_mode"
+    private val sessionTokenStorageKey = "session_token"
     private val userDefaults = NSUserDefaults.standardUserDefaults
 
     @OptIn(ExperimentalForeignApi::class)
@@ -30,6 +31,23 @@ class ConfigRepositoryIos : ConfigRepository {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun setDarkMode(isDark: Boolean) {
         userDefaults.setObject(isDark.toString(), forKey = darkModeStorageKey)
+        userDefaults.synchronize()
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun getSessionToken(): String? {
+        return userDefaults.stringForKey(sessionTokenStorageKey)
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun setSessionToken(token: String) {
+        userDefaults.setObject(token, forKey = sessionTokenStorageKey)
+        userDefaults.synchronize()
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun clearSessionToken() {
+        userDefaults.removeObjectForKey(sessionTokenStorageKey)
         userDefaults.synchronize()
     }
 }
