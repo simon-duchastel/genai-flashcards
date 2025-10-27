@@ -6,7 +6,21 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AuthenticationServices.*
 import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
+import platform.UIKit.UIWindow
+import platform.darwin.NSObject
 import kotlin.coroutines.resume
+
+/**
+ * Presentation context provider for ASWebAuthenticationSession.
+ */
+private class AuthenticationContextProvider : NSObject(), ASWebAuthenticationPresentationContextProvidingProtocol {
+    override fun presentationAnchorForWebAuthenticationSession(
+        session: ASWebAuthenticationSession
+    ): UIWindow {
+        return UIApplication.sharedApplication.keyWindow!!
+    }
+}
 
 /**
  * iOS implementation of GoogleOAuthHandler using SFAuthenticationSession.
@@ -85,6 +99,9 @@ class SFGoogleOAuthHandler(
 
             // Set presentation context to use ephemeral session (doesn't save cookies)
             authSession.prefersEphemeralWebBrowserSession = false
+
+            // Set presentation context provider
+            authSession.presentationContextProvider = AuthenticationContextProvider()
 
             // Start the authentication session
             if (authSession.start()) {
