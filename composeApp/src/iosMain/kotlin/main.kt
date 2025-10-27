@@ -1,6 +1,5 @@
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.window.ComposeViewport
+import androidx.compose.ui.window.ComposeUIViewController
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.runtime.ui.ui
 import data.api.ApiConfig
@@ -10,15 +9,11 @@ import data.api.ServerFlashcardApiClient
 import data.api.ServerFlashcardGenerator
 import data.auth.getGoogleOAuthHandler
 import data.repository.AuthRepositoryImpl
-import data.storage.ConfigRepository
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
 import domain.repository.FlashcardRepository
-import kotlinx.browser.window
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import platform.UIKit.UIViewController
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
 import presentation.auth.AuthUi
@@ -41,70 +36,28 @@ import presentation.study.StudyUi
 import presentation.study.StudyUiState
 
 /**
- * External interface for accessing URL search params.
+ * Main entry point for iOS app.
+ * Returns a UIViewController that contains the entire Compose UI.
  */
-external interface URLSearchParams : JsAny {
-    fun get(name: String): String?
-}
-
-/**
- * Create URLSearchParams from window.location.search
- */
-@JsFun("() => new URLSearchParams(window.location.search)")
-private external fun getURLSearchParams(): URLSearchParams
-
-/**
- * Get query parameter value from URL.
- */
-private fun getQueryParam(name: String): String? {
-    return getURLSearchParams().get(name)
-}
-
-@OptIn(
-    ExperimentalComposeUiApi::class,
-    DelicateCoroutinesApi::class,
-    ExperimentalWasmJsInterop::class,
-)
-fun main() {
+fun MainViewController(): UIViewController {
+    val storage = getFlashcardStorage()
     val configRepository = getConfigRepository()
     val httpClient = HttpClientProvider.client
+    val authRepository = AuthRepositoryImpl(configRepository)
+    val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
+    val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
+    val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+    val flashcardRepository = FlashcardRepository(
+        authRepository = authRepository,
+        serverClient = serverFlashcardClient,
+        localStorage = storage,
+        koogGenerator = generator,
+        serverGenerator = serverGenerator,
+    )
     val authApiClient = AuthApiClient(
         isTest = false,
         httpClient = httpClient,
         baseUrl = ApiConfig.BASE_URL
-    )
-
-    // check if we've been redirected to from auth sign-in
-    GlobalScope.launch {
-        if (getQueryParam("auth-redirect") == "true") {
-            val token = getQueryParam("token")
-            if (token != null) {
-                // Save session token to localStorage
-                configRepository.setSessionToken(token)
-                window.history.replaceState(null, "", "/")
-
-                configureUserSession(token, configRepository, authApiClient)
-            }
-        } else {
-            val sessionToken = configRepository.getSessionToken()
-            if (sessionToken != null) {
-                configureUserSession(sessionToken, configRepository, authApiClient)
-            }
-        }
-    }
-
-    // App initialization
-    val storage = getFlashcardStorage()
-    val authRepository = AuthRepositoryImpl(configRepository)
-    val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
-    val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
-    val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
-    val repository = FlashcardRepository(
-        authRepository = authRepository,
-        serverClient = serverFlashcardClient,
-        localStorage = storage,
-        serverGenerator = serverGenerator,
-        koogGenerator = koogGenerator,
     )
     val googleOAuthHandler = getGoogleOAuthHandler(authApiClient)
 
@@ -113,9 +66,9 @@ fun main() {
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
                 is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler, authApiClient)
-                is HomeScreen -> HomePresenter(navigator, repository)
-                is CreateScreen -> CreatePresenter(screen, navigator, repository)
-                is StudyScreen -> StudyPresenter(screen, navigator, repository)
+                is HomeScreen -> HomePresenter(navigator, flashcardRepository)
+                is CreateScreen -> CreatePresenter(screen, navigator, flashcardRepository)
+                is StudyScreen -> StudyPresenter(screen, navigator, flashcardRepository)
                 else -> null
             }
         }
@@ -141,31 +94,12 @@ fun main() {
         }
         .build()
 
-    ComposeViewport(
-        content = {
-            SelectionContainer {
-                App(
-                    configRepository = configRepository,
-                    circuit = circuit,
-                )
-            }
+    return ComposeUIViewController {
+        SelectionContainer {
+            App(
+                configRepository = configRepository,
+                circuit = circuit,
+            )
         }
-    )
-}
-
-private suspend fun configureUserSession(
-    sessionToken: String,
-    configRepository: ConfigRepository,
-    authApiClient: AuthApiClient,
-) {
-    try {
-        val meResponse = authApiClient.getMe(sessionToken)
-        configRepository.setUserEmail(meResponse.user.email)
-        meResponse.user.name?.let { configRepository.setUserName(it) }
-        meResponse.user.picture?.let { configRepository.setUserPicture(it) }
-    } catch (_: Exception) {
-        // If /me fails, clear invalid session
-        configRepository.clearSessionToken()
-        configRepository.clearUserInfo()
     }
 }
