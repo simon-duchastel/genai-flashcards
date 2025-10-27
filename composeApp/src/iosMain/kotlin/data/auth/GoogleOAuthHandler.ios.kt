@@ -1,6 +1,7 @@
 package data.auth
 
 import api.dto.AuthResponse
+import api.dto.OAuthPlatform
 import data.api.AuthApiClient
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -36,7 +37,7 @@ class SFGoogleOAuthHandler(
     override suspend fun startOAuthFlow(): AuthResponse? {
         return try {
             // Get OAuth URL from server
-            val loginUrlResponse = authApiClient.startGoogleLogin()
+            val loginUrlResponse = authApiClient.startGoogleLogin(platform = OAuthPlatform.IOS)
             val authUrl = loginUrlResponse.authUrl
 
             // Open SFAuthenticationSession for OAuth
@@ -76,8 +77,8 @@ class SFGoogleOAuthHandler(
                     return@suspendCancellableCoroutine
                 }
 
-            // Use https as the callback scheme to intercept the redirect
-            val callbackScheme = "https"
+            // Use custom URL scheme to intercept the redirect
+            val callbackScheme = "solenne-flashcards"
 
             val authSession = ASWebAuthenticationSession(
                 uRL = url,
@@ -116,7 +117,7 @@ class SFGoogleOAuthHandler(
     /**
      * Extracts session token from OAuth callback URL.
      *
-     * Expected format: https://flashcards.solenne.ai?auth-redirect=true&token=XXXXX
+     * Expected format: solenne-flashcards://callback?auth-redirect=true&token=XXXXX
      *
      * @param callbackUrl The callback URL from SFAuthenticationSession
      * @return Session token if found, null otherwise

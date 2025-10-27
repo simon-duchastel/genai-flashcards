@@ -11,8 +11,10 @@ object ApiRoutes {
 
     const val WEB_CLIENT = "https://flashcards.solenne.ai"
     const val TEST_WEB_CLIENT = "http://localhost:8080"
+    const val IOS_CLIENT = "solenne-flashcards://callback"
     const val AUTH_GOOGLE_LOGIN = "$AUTH_BASE/google/login"
     const val AUTH_GOOGLE_CALLBACK = "$AUTH_BASE/google/callback"
+    const val AUTH_GOOGLE_CALLBACK_IOS = "$AUTH_BASE/google/callback/ios"
     const val AUTH_GOOGLE_LOGIN_TEST = "$AUTH_BASE/google/test/login"
     const val AUTH_GOOGLE_CALLBACK_TEST = "$AUTH_BASE/google/test/callback"
     const val AUTH_LOGOUT = "$AUTH_BASE/logout"

@@ -2,6 +2,7 @@ package data.api
 
 import api.dto.LoginUrlResponse
 import api.dto.MeResponse
+import api.dto.OAuthPlatform
 import api.routes.ApiRoutes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -19,14 +20,20 @@ class AuthApiClient(
 ) {
     /**
      * Get the Google OAuth login URL.
+     *
+     * @param platform The platform type for OAuth redirect
      */
-    suspend fun startGoogleLogin(): LoginUrlResponse {
+    suspend fun startGoogleLogin(platform: OAuthPlatform = OAuthPlatform.WEB): LoginUrlResponse {
         val route = if (isTest) {
             ApiRoutes.AUTH_GOOGLE_LOGIN_TEST
         } else {
             ApiRoutes.AUTH_GOOGLE_LOGIN
         }
-        return httpClient.get("$baseUrl$route").body()
+        val url = when (platform) {
+            OAuthPlatform.WEB -> "$baseUrl$route"
+            OAuthPlatform.IOS -> "$baseUrl$route?platform=ios"
+        }
+        return httpClient.get(url).body()
     }
 
     /**
