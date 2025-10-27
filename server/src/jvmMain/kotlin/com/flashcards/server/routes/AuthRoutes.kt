@@ -3,6 +3,7 @@ package com.flashcards.server.routes
 import api.dto.ErrorResponse
 import api.dto.LoginUrlResponse
 import api.dto.MeResponse
+import api.dto.OAuthPlatform
 import api.routes.ApiRoutes
 import com.flashcards.server.auth.AuthenticatedUser
 import com.flashcards.server.auth.GoogleOAuthService
@@ -29,11 +30,11 @@ fun Route.authRoutes(
     /**
      * Handles OAuth login by getting authorization URL and responding with it.
      */
-    suspend fun RoutingContext.handleOAuthLogin(isTest: Boolean) {
+    suspend fun RoutingContext.handleOAuthLogin(isTest: Boolean, platform: OAuthPlatform) {
         val authUrl = if (isTest){
-            testGoogleOAuthService.getAuthorizationUrl()
+            testGoogleOAuthService.getAuthorizationUrl(platform)
         } else {
-            googleOAuthService.getAuthorizationUrl()
+            googleOAuthService.getAuthorizationUrl(platform)
         }
 
         call.respond(LoginUrlResponse(authUrl))
@@ -44,21 +45,18 @@ fun Route.authRoutes(
      */
     suspend fun RoutingContext.handleOAuthCallback(
         isTest: Boolean,
+        platform: OAuthPlatform,
+        redirectUrl: String,
     ) {
-        val webClientUrl = if (isTest) {
-            ApiRoutes.TEST_WEB_CLIENT
-        } else {
-            ApiRoutes.WEB_CLIENT
-        }
         val code = call.parameters["code"]
-            ?: return call.respondRedirect("$webClientUrl?auth-redirect=true&error=missing_code")
+            ?: return call.respondRedirect("$redirectUrl?auth-redirect=true&error=missing_code")
 
         try {
             // Exchange code for user info
             val userFromGoogle = if (isTest) {
-                testGoogleOAuthService.exchangeCodeForUser(code)
+                testGoogleOAuthService.exchangeCodeForUser(code, platform)
             } else {
-                googleOAuthService.exchangeCodeForUser(code)
+                googleOAuthService.exchangeCodeForUser(code, platform)
             }
 
             // Check if user already exists
@@ -70,35 +68,50 @@ fun Route.authRoutes(
 
             // Redirect with token and optional user info in query params
             val redirectUrl = buildString {
-                append("$webClientUrl?auth-redirect=true&token=${session.sessionToken}")
+                append("$redirectUrl?auth-redirect=true&token=${session.sessionToken}")
             }
 
             call.respondRedirect(redirectUrl)
         } catch (e: Exception) {
             // Redirect to auth screen with error
             call.application.log.error("OAuth callback error", e)
-            call.respondRedirect("$webClientUrl?auth-redirect=true&error='unable-to-create'")
+            call.respondRedirect("$redirectUrl?auth-redirect=true&error='unable-to-create'")
         }
     }
 
     // GET /api/v1/auth/google/login - Get Google OAuth URL
     get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
-        handleOAuthLogin(isTest = false)
+        val platform = if (call.request.queryParameters["platform"] == "ios") {
+            OAuthPlatform.IOS
+        } else {
+            OAuthPlatform.WEB
+        }
+        handleOAuthLogin(isTest = false, platform = platform)
     }
 
     // GET /api/v1/auth/google/test/login - Get Google OAuth URL for testing
     get(ApiRoutes.AUTH_GOOGLE_LOGIN_TEST) {
-        handleOAuthLogin(isTest = true)
+        val platform = if (call.request.queryParameters["platform"] == "ios") {
+            OAuthPlatform.IOS
+        } else {
+            OAuthPlatform.WEB
+        }
+        handleOAuthLogin(isTest = true, platform = platform)
     }
 
     // GET /api/v1/auth/google/callback?code=xxx - OAuth callback
     get(ApiRoutes.AUTH_GOOGLE_CALLBACK) {
-        handleOAuthCallback(isTest = false)
+        handleOAuthCallback(isTest = false, platform = OAuthPlatform.WEB, redirectUrl = ApiRoutes.WEB_CLIENT)
+    }
+
+    // GET /api/v1/auth/google/callback/ios?code=xxx - OAuth callback for iOS
+    get(ApiRoutes.AUTH_GOOGLE_CALLBACK_IOS) {
+        handleOAuthCallback(isTest = false, platform = OAuthPlatform.IOS, redirectUrl = ApiRoutes.IOS_CLIENT)
     }
 
     // GET /api/v1/auth/google/test/callback?code=xxx - OAuth callback for testing
     get(ApiRoutes.AUTH_GOOGLE_CALLBACK_TEST) {
-        handleOAuthCallback(isTest = true)
+        handleOAuthCallback(isTest = true, platform = OAuthPlatform.WEB, redirectUrl = ApiRoutes.TEST_WEB_CLIENT)
     }
 
     // Protected routes (require authentication)

@@ -1,18 +1,18 @@
 package com.flashcards.server.auth
 
+import api.dto.OAuthPlatform
 import com.flashcards.server.plugins.jsonParser
 import domain.model.User
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.apache.Apache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.URLBuilder
+import io.ktor.http.parameters
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.util.Base64
 
 /**
@@ -21,7 +21,8 @@ import java.util.Base64
 class GoogleOAuthService(
     private val clientId: String,
     private val clientSecret: String,
-    private val redirectUri: String
+    private val webRedirectUri: String,
+    private val iosRedirectUri: String,
 ) {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
@@ -37,8 +38,15 @@ class GoogleOAuthService(
 
     /**
      * Generate the Google OAuth authorization URL.
+     *
+     * @param platform The platform type to get the appropriate redirect URI
      */
-    fun getAuthorizationUrl(): String {
+    fun getAuthorizationUrl(platform: OAuthPlatform = OAuthPlatform.WEB): String {
+        val redirectUri = when (platform) {
+            OAuthPlatform.WEB -> webRedirectUri
+            OAuthPlatform.IOS -> iosRedirectUri
+        }
+
         return URLBuilder(GOOGLE_AUTH_URL).apply {
             parameters.append("client_id", clientId)
             parameters.append("redirect_uri", redirectUri)
@@ -52,10 +60,16 @@ class GoogleOAuthService(
      * Exchange authorization code for tokens and user info.
      *
      * @param code The authorization code from Google
+     * @param platform The platform type that was used in the authorization request
      * @return User information extracted from the ID token
      * @throws Exception if token exchange or validation fails
      */
-    suspend fun exchangeCodeForUser(code: String): User {
+    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform = OAuthPlatform.WEB): User {
+        val redirectUri = when (platform) {
+            OAuthPlatform.WEB -> webRedirectUri
+            OAuthPlatform.IOS -> iosRedirectUri
+        }
+
         // Exchange code for tokens
         val tokenResponse = httpClient.submitForm(
             url = GOOGLE_TOKEN_URL,
