@@ -33,7 +33,7 @@ class GoogleOAuthService(
     companion object {
         private const val GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
         private const val GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-        private const val SCOPES = "openid email profile"
+        private const val SCOPES = "openid"
     }
 
     /**
@@ -86,10 +86,7 @@ class GoogleOAuthService(
         val userInfo = parseIdToken(tokenResponse.idToken)
 
         return User(
-            authId = userInfo.sub,
-            email = userInfo.email,
-            name = userInfo.name,
-            picture = userInfo.picture
+            authId = "google-${userInfo.sub}",
         )
     }
 
@@ -127,14 +124,10 @@ class GoogleOAuthService(
      */
     @Serializable
     private data class GoogleIdTokenPayload(
-        val sub: String,             // Google user ID
-        val email: String,           // User email
-        val name: String? = null,    // Display name
-        val picture: String? = null, // Profile picture URL
-        @SerialName("email_verified") val emailVerified: Boolean? = null,
-        val iss: String,             // Issuer
-        val aud: String,             // Audience
-        val exp: Long,               // Expiration
-        val iat: Long                // Issued at
+        val sub: String,  // Google user ID
+        val iss: String,  // Issuer
+        val aud: String,  // Audience
+        val exp: Long,    // Expiration
+        val iat: Long     // Issued at
     )
 }

@@ -17,6 +17,9 @@ object ApiRoutes {
     const val AUTH_GOOGLE_CALLBACK_IOS = "$AUTH_BASE/google/callback/ios"
     const val AUTH_GOOGLE_LOGIN_TEST = "$AUTH_BASE/google/test/login"
     const val AUTH_GOOGLE_CALLBACK_TEST = "$AUTH_BASE/google/test/callback"
+    const val AUTH_APPLE_LOGIN = "$AUTH_BASE/apple/login"
+    const val AUTH_APPLE_CALLBACK = "$AUTH_BASE/apple/callback"
+    const val AUTH_APPLE_CALLBACK_IOS = "$AUTH_BASE/apple/callback/ios"
     const val AUTH_LOGOUT = "$AUTH_BASE/logout"
     const val AUTH_ME = "$AUTH_BASE/me"
 

@@ -47,6 +47,9 @@ kotlin {
 
                 // Caffeine cache for session/rate limit caching
                 implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
+                // JWT signing for Apple OAuth
+                implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
             }
         }
     }

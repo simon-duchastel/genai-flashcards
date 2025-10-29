@@ -1,10 +1,12 @@
 package presentation.auth
 
 import androidx.compose.runtime.*
+import api.dto.OAuthProvider
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
-import data.auth.GoogleOAuthHandler
+import data.auth.OAuthHandler
 import data.storage.ConfigRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import presentation.home.HomeScreen
 import presentation.splash.SplashScreen
@@ -12,7 +14,7 @@ import presentation.splash.SplashScreen
 class AuthPresenter(
     private val navigator: Navigator,
     private val configRepository: ConfigRepository,
-    private val googleOAuthHandler: GoogleOAuthHandler,
+    private val oauthHandler: OAuthHandler,
     private val authApiClient: data.api.AuthApiClient
 ) : Presenter<AuthUiState> {
 
@@ -22,9 +24,9 @@ class AuthPresenter(
         var apiKeyInput: String? by remember { mutableStateOf(null) }
         var isSaving by remember { mutableStateOf(false) }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
+        var isAuthenticatingWithApple by remember { mutableStateOf(false) }
         var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
-        var currentUserName by remember { mutableStateOf<String?>(null) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
 
@@ -35,12 +37,8 @@ class AuthPresenter(
             val sessionToken = configRepository.getSessionToken()
             if (sessionToken != null) {
                 isLoggedIn = true
-                val userName = configRepository.getUserName()
-                val userEmail = configRepository.getUserEmail()
-                currentUserName = userName ?: userEmail
             } else {
                 isLoggedIn = false
-                currentUserName = null
             }
         }
 
@@ -84,42 +82,21 @@ class AuthPresenter(
             },
             isAuthenticatingWithGoogle = isAuthenticatingWithGoogle,
             onGoogleSignInClicked = {
-                isAuthenticatingWithGoogle = true
-                error = null
-                scope.launch {
-                    try {
-                        val authResponse = googleOAuthHandler.startOAuthFlow()
-                        if (authResponse == null) {
-                            error = """
-                                Google sign-in failed. Please try again or enter an API key below.
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                            isAuthenticatingWithGoogle = false
-                            return@launch
-                        }
-
-                        // Save session token and user info
-                        configRepository.setSessionToken(authResponse.sessionToken)
-                        configRepository.setUserEmail(authResponse.user.email)
-                        authResponse.user.name?.let { configRepository.setUserName(it) }
-                        authResponse.user.picture?.let { configRepository.setUserPicture(it) }
-
-                        // Update state
-                        isLoggedIn = true
-                        currentUserName = authResponse.user.name ?: authResponse.user.email
-
-                        // Navigate to home
-                        navigator.resetRoot(HomeScreen)
-                    } catch (_: Exception) {
-                        error = """
-                            Google sign-in failed. Please try again or use API key below.
-
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                        isAuthenticatingWithGoogle = false
-                    }
-                }
+                scope.handleOAuthSignIn(
+                    provider = OAuthProvider.GOOGLE,
+                    setAuthenticating = { isAuthenticatingWithGoogle = it },
+                    setError = { error = it },
+                    setLoggedIn = { isLoggedIn = it },
+                )
+            },
+            isAuthenticatingWithApple = isAuthenticatingWithApple,
+            onAppleSignInClicked = {
+                scope.handleOAuthSignIn(
+                    provider = OAuthProvider.APPLE,
+                    setAuthenticating = { isAuthenticatingWithApple = it },
+                    setError = { error = it },
+                    setLoggedIn = { isLoggedIn = it },
+                )
             },
             isLoggedIn = isLoggedIn,
             isLoggingOut = isLoggingOut,
@@ -132,13 +109,11 @@ class AuthPresenter(
                         if (sessionToken != null) {
                             authApiClient.logout(sessionToken)
                         }
-                        // Clear session and user info
+                        // Clear session
                         configRepository.clearSessionToken()
-                        configRepository.clearUserInfo()
 
                         // Update state
                         isLoggedIn = false
-                        currentUserName = null
                         isLoggingOut = false
 
                         // go back to splash screen
@@ -153,7 +128,57 @@ class AuthPresenter(
                     }
                 }
             },
-            currentUserName = currentUserName
         )
+    }
+
+    /**
+     * Generic OAuth sign-in handler that works for any provider.
+     */
+    private fun CoroutineScope.handleOAuthSignIn(
+        provider: OAuthProvider,
+        setAuthenticating: (Boolean) -> Unit,
+        setError: (String?) -> Unit,
+        setLoggedIn: (Boolean) -> Unit,
+    ) {
+        setAuthenticating(true)
+        setError(null)
+        launch {
+            try {
+                val authResponse = oauthHandler.startOAuthFlow(provider)
+                if (authResponse == null) {
+                    setError(
+                        """
+                        ${
+                            provider.name.lowercase().replaceFirstChar { it.uppercase() }
+                        } sign-in failed. Please try again or enter an API key below.
+
+                        Need help? Email help@solenne.ai
+                    """.trimIndent()
+                    )
+                    setAuthenticating(false)
+                    return@launch
+                }
+
+                // Save session token
+                configRepository.setSessionToken(authResponse.sessionToken)
+
+                // Update state
+                setLoggedIn(true)
+
+                // Navigate to home
+                navigator.resetRoot(HomeScreen)
+            } catch (_: Exception) {
+                setError(
+                    """
+                    ${
+                        provider.name.lowercase().replaceFirstChar { it.uppercase() }
+                    } sign-in failed. Please try again or use API key below.
+
+                    Need help? Email help@solenne.ai
+                """.trimIndent()
+                )
+                setAuthenticating(false)
+            }
+        }
     }
 }

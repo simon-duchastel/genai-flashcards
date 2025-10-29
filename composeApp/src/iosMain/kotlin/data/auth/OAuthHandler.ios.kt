@@ -2,6 +2,7 @@ package data.auth
 
 import api.dto.AuthResponse
 import api.dto.OAuthPlatform
+import api.dto.OAuthProvider
 import data.api.AuthApiClient
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,23 +25,29 @@ private class AuthenticationContextProvider : NSObject(), ASWebAuthenticationPre
 }
 
 /**
- * iOS implementation of GoogleOAuthHandler using SFAuthenticationSession.
+ * iOS implementation of OAuthHandler using ASWebAuthenticationSession.
+ * Handles both Google and Apple OAuth flows.
  */
 @OptIn(ExperimentalForeignApi::class)
-class SFGoogleOAuthHandler(
+class SFOAuthHandler(
     private val authApiClient: AuthApiClient
-): GoogleOAuthHandler {
+): OAuthHandler {
     /**
-     * Start the Google OAuth flow using SFAuthenticationSession.
+     * Start the OAuth flow using ASWebAuthenticationSession.
      * Opens a secure Safari view for user authentication.
+     *
+     * @param provider The OAuth provider (GOOGLE or APPLE)
      */
-    override suspend fun startOAuthFlow(): AuthResponse? {
+    override suspend fun startOAuthFlow(provider: OAuthProvider): AuthResponse? {
         return try {
-            // Get OAuth URL from server
-            val loginUrlResponse = authApiClient.startGoogleLogin(platform = OAuthPlatform.IOS)
+            // Get OAuth URL from server based on provider
+            val loginUrlResponse = when (provider) {
+                OAuthProvider.GOOGLE -> authApiClient.startGoogleLogin(platform = OAuthPlatform.IOS)
+                OAuthProvider.APPLE -> authApiClient.startAppleLogin(platform = OAuthPlatform.IOS)
+            }
             val authUrl = loginUrlResponse.authUrl
 
-            // Open SFAuthenticationSession for OAuth
+            // Open ASWebAuthenticationSession for OAuth
             val callbackUrl = performOAuthFlow(authUrl)
                 ?: return null
 
@@ -57,16 +64,16 @@ class SFGoogleOAuthHandler(
                 user = meResponse.user
             )
         } catch (e: Exception) {
-            println("OAuth flow failed: ${e.message}")
+            println("OAuth flow failed for $provider: ${e.message}")
             null
         }
     }
 
     /**
-     * Performs OAuth flow using SFAuthenticationSession.
+     * Performs OAuth flow using ASWebAuthenticationSession.
      * Opens a secure Safari view for user authentication.
      *
-     * @param authUrl The Google OAuth authorization URL
+     * @param authUrl The OAuth authorization URL
      * @return Callback URL if successful, null if cancelled
      */
     private suspend fun performOAuthFlow(authUrl: String): String? =
@@ -119,7 +126,7 @@ class SFGoogleOAuthHandler(
      *
      * Expected format: solenne-flashcards://callback?auth-redirect=true&token=XXXXX
      *
-     * @param callbackUrl The callback URL from SFAuthenticationSession
+     * @param callbackUrl The callback URL from ASWebAuthenticationSession
      * @return Session token if found, null otherwise
      */
     private fun extractTokenFromCallbackUrl(callbackUrl: String): String? {
@@ -138,6 +145,6 @@ class SFGoogleOAuthHandler(
     }
 }
 
-actual fun getGoogleOAuthHandler(authApiClient: AuthApiClient): GoogleOAuthHandler {
-    return SFGoogleOAuthHandler(authApiClient)
+actual fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler {
+    return SFOAuthHandler(authApiClient)
 }

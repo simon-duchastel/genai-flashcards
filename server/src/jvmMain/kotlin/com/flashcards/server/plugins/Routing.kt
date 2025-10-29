@@ -1,5 +1,6 @@
 package com.flashcards.server.plugins
 
+import com.flashcards.server.auth.AppleOAuthService
 import com.flashcards.server.auth.GoogleOAuthService
 import com.flashcards.server.repository.AuthRepository
 import com.flashcards.server.repository.ServerFlashcardRepository
@@ -18,7 +19,8 @@ fun Application.configureRouting(
     rateLimiter: RateLimiter,
     authRepository: AuthRepository,
     googleOAuthService: GoogleOAuthService,
-    testGoogleOAuthService: GoogleOAuthService
+    testGoogleOAuthService: GoogleOAuthService,
+    appleOAuthService: AppleOAuthService
 ) {
     routing {
         // Health check endpoint (public)
@@ -30,7 +32,8 @@ fun Application.configureRouting(
         authRoutes(
             authRepository = authRepository,
             googleOAuthService = googleOAuthService,
-            testGoogleOAuthService = testGoogleOAuthService
+            testGoogleOAuthService = testGoogleOAuthService,
+            appleOAuthService = appleOAuthService
         )
 
         // Protected API routes
