@@ -23,7 +23,7 @@ class AuthApiClient(
      *
      * @param platform The platform type for OAuth redirect
      */
-    suspend fun startGoogleLogin(platform: OAuthPlatform = OAuthPlatform.WEB): LoginUrlResponse {
+    suspend fun startGoogleLogin(platform: OAuthPlatform): LoginUrlResponse {
         val route = if (isTest) {
             ApiRoutes.AUTH_GOOGLE_LOGIN_TEST
         } else {
@@ -32,6 +32,19 @@ class AuthApiClient(
         val url = when (platform) {
             OAuthPlatform.WEB -> "$baseUrl$route"
             OAuthPlatform.IOS -> "$baseUrl$route?platform=ios"
+        }
+        return httpClient.get(url).body()
+    }
+
+    /**
+     * Get the Apple OAuth login URL.
+     *
+     * @param platform The platform type for OAuth redirect
+     */
+    suspend fun startAppleLogin(platform: OAuthPlatform): LoginUrlResponse {
+        val url = when (platform) {
+            OAuthPlatform.WEB -> "$baseUrl${ApiRoutes.AUTH_APPLE_LOGIN}"
+            OAuthPlatform.IOS -> "$baseUrl${ApiRoutes.AUTH_APPLE_LOGIN}?platform=ios"
         }
         return httpClient.get(url).body()
     }

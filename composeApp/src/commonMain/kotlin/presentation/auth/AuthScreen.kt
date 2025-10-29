@@ -18,9 +18,11 @@ data class AuthUiState(
     // Google OAuth
     val isAuthenticatingWithGoogle: Boolean,
     val onGoogleSignInClicked: () -> Unit,
+    // Apple OAuth
+    val isAuthenticatingWithApple: Boolean,
+    val onAppleSignInClicked: () -> Unit,
     // Logout
     val isLoggedIn: Boolean,
     val isLoggingOut: Boolean,
     val onLogoutClicked: () -> Unit,
-    val currentUserName: String? // null if signed out
 ) : CircuitUiState

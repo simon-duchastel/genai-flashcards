@@ -1,5 +1,6 @@
 package presentation.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,6 +32,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +40,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import genai_flashcards.composeapp.generated.resources.Res
+import genai_flashcards.composeapp.generated.resources.apple_logo
+import org.jetbrains.compose.resources.painterResource
 import presentation.components.HelpText
 import presentation.components.textWithHelpEmail
 
@@ -85,13 +90,13 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = if (state.currentUserName != null) {
-                        "Signed in as ${state.currentUserName}"
+                    text = if (state.isLoggedIn) {
+                        "Signed in"
                     } else {
                         "Signed out"
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.currentUserName != null) {
+                    color = if (state.isLoggedIn) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
@@ -134,7 +139,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 } else {
                     Button(
                         onClick = state.onGoogleSignInClicked,
-                        enabled = !state.isAuthenticatingWithGoogle && !state.isSaving,
+                        enabled = !state.isAuthenticatingWithGoogle && !state.isSaving && !state.isAuthenticatingWithApple,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
@@ -162,6 +167,46 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 )
                                 Text(
                                     text = "Sign in with Google",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = state.onAppleSignInClicked,
+                        enabled = !state.isAuthenticatingWithApple && !state.isSaving && !state.isAuthenticatingWithGoogle,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder
+                    ) {
+                        if (state.isAuthenticatingWithApple) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(Res.drawable.apple_logo),
+                                    contentDescription = "Apple logo",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .padding(end = 12.dp),
+                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                                )
+                                Text(
+                                    text = "Sign in with Apple",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )

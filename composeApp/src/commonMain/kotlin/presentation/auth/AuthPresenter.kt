@@ -3,6 +3,7 @@ package presentation.auth
 import androidx.compose.runtime.*
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
+import data.auth.AppleOAuthHandler
 import data.auth.GoogleOAuthHandler
 import data.storage.ConfigRepository
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ class AuthPresenter(
     private val navigator: Navigator,
     private val configRepository: ConfigRepository,
     private val googleOAuthHandler: GoogleOAuthHandler,
+    private val appleOAuthHandler: AppleOAuthHandler,
     private val authApiClient: data.api.AuthApiClient
 ) : Presenter<AuthUiState> {
 
@@ -22,9 +24,9 @@ class AuthPresenter(
         var apiKeyInput: String? by remember { mutableStateOf(null) }
         var isSaving by remember { mutableStateOf(false) }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
+        var isAuthenticatingWithApple by remember { mutableStateOf(false) }
         var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
-        var currentUserName by remember { mutableStateOf<String?>(null) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
 
@@ -35,12 +37,8 @@ class AuthPresenter(
             val sessionToken = configRepository.getSessionToken()
             if (sessionToken != null) {
                 isLoggedIn = true
-                val userName = configRepository.getUserName()
-                val userEmail = configRepository.getUserEmail()
-                currentUserName = userName ?: userEmail
             } else {
                 isLoggedIn = false
-                currentUserName = null
             }
         }
 
@@ -101,13 +99,9 @@ class AuthPresenter(
 
                         // Save session token and user info
                         configRepository.setSessionToken(authResponse.sessionToken)
-                        configRepository.setUserEmail(authResponse.user.email)
-                        authResponse.user.name?.let { configRepository.setUserName(it) }
-                        authResponse.user.picture?.let { configRepository.setUserPicture(it) }
 
                         // Update state
                         isLoggedIn = true
-                        currentUserName = authResponse.user.name ?: authResponse.user.email
 
                         // Navigate to home
                         navigator.resetRoot(HomeScreen)
@@ -118,6 +112,41 @@ class AuthPresenter(
                             Need help? Email help@solenne.ai
                         """.trimIndent()
                         isAuthenticatingWithGoogle = false
+                    }
+                }
+            },
+            isAuthenticatingWithApple = isAuthenticatingWithApple,
+            onAppleSignInClicked = {
+                isAuthenticatingWithApple = true
+                error = null
+                scope.launch {
+                    try {
+                        val authResponse = appleOAuthHandler.startOAuthFlow()
+                        if (authResponse == null) {
+                            error = """
+                                Apple sign-in failed. Please try again or enter an API key below.
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                            isAuthenticatingWithApple = false
+                            return@launch
+                        }
+
+                        // Save session token and user info
+                        configRepository.setSessionToken(authResponse.sessionToken)
+
+                        // Update state
+                        isLoggedIn = true
+
+                        // Navigate to home
+                        navigator.resetRoot(HomeScreen)
+                    } catch (_: Exception) {
+                        error = """
+                            Apple sign-in failed. Please try again or use API key below.
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                        isAuthenticatingWithApple = false
                     }
                 }
             },
@@ -132,13 +161,11 @@ class AuthPresenter(
                         if (sessionToken != null) {
                             authApiClient.logout(sessionToken)
                         }
-                        // Clear session and user info
+                        // Clear session
                         configRepository.clearSessionToken()
-                        configRepository.clearUserInfo()
 
                         // Update state
                         isLoggedIn = false
-                        currentUserName = null
                         isLoggingOut = false
 
                         // go back to splash screen
@@ -153,7 +180,6 @@ class AuthPresenter(
                     }
                 }
             },
-            currentUserName = currentUserName
         )
     }
 }
