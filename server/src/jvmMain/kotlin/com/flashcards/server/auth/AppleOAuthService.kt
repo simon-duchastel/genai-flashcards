@@ -5,7 +5,6 @@ import com.flashcards.server.plugins.jsonParser
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.ECDSASigner
-import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import domain.model.User
@@ -206,8 +205,6 @@ class AppleOAuthService(
     @Serializable
     private data class AppleIdTokenPayload(
         val sub: String,             // Apple user ID (unique per service ID)
-        val email: String,           // User email
-        @SerialName("email_verified") val emailVerified: Boolean? = null,
         val iss: String,             // Issuer (https://appleid.apple.com)
         val aud: String,             // Audience (your service ID)
         val exp: Long,               // Expiration

@@ -1,11 +1,12 @@
 package presentation.auth
 
 import androidx.compose.runtime.*
+import api.dto.OAuthProvider
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
-import data.auth.AppleOAuthHandler
-import data.auth.GoogleOAuthHandler
+import data.auth.OAuthHandler
 import data.storage.ConfigRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import presentation.home.HomeScreen
 import presentation.splash.SplashScreen
@@ -13,8 +14,7 @@ import presentation.splash.SplashScreen
 class AuthPresenter(
     private val navigator: Navigator,
     private val configRepository: ConfigRepository,
-    private val googleOAuthHandler: GoogleOAuthHandler,
-    private val appleOAuthHandler: AppleOAuthHandler,
+    private val oauthHandler: OAuthHandler,
     private val authApiClient: data.api.AuthApiClient
 ) : Presenter<AuthUiState> {
 
@@ -82,73 +82,21 @@ class AuthPresenter(
             },
             isAuthenticatingWithGoogle = isAuthenticatingWithGoogle,
             onGoogleSignInClicked = {
-                isAuthenticatingWithGoogle = true
-                error = null
-                scope.launch {
-                    try {
-                        val authResponse = googleOAuthHandler.startOAuthFlow()
-                        if (authResponse == null) {
-                            error = """
-                                Google sign-in failed. Please try again or enter an API key below.
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                            isAuthenticatingWithGoogle = false
-                            return@launch
-                        }
-
-                        // Save session token and user info
-                        configRepository.setSessionToken(authResponse.sessionToken)
-
-                        // Update state
-                        isLoggedIn = true
-
-                        // Navigate to home
-                        navigator.resetRoot(HomeScreen)
-                    } catch (_: Exception) {
-                        error = """
-                            Google sign-in failed. Please try again or use API key below.
-
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                        isAuthenticatingWithGoogle = false
-                    }
-                }
+                scope.handleOAuthSignIn(
+                    provider = OAuthProvider.GOOGLE,
+                    setAuthenticating = { isAuthenticatingWithGoogle = it },
+                    setError = { error = it },
+                    setLoggedIn = { isLoggedIn = it },
+                )
             },
             isAuthenticatingWithApple = isAuthenticatingWithApple,
             onAppleSignInClicked = {
-                isAuthenticatingWithApple = true
-                error = null
-                scope.launch {
-                    try {
-                        val authResponse = appleOAuthHandler.startOAuthFlow()
-                        if (authResponse == null) {
-                            error = """
-                                Apple sign-in failed. Please try again or enter an API key below.
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                            isAuthenticatingWithApple = false
-                            return@launch
-                        }
-
-                        // Save session token and user info
-                        configRepository.setSessionToken(authResponse.sessionToken)
-
-                        // Update state
-                        isLoggedIn = true
-
-                        // Navigate to home
-                        navigator.resetRoot(HomeScreen)
-                    } catch (_: Exception) {
-                        error = """
-                            Apple sign-in failed. Please try again or use API key below.
-
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                        isAuthenticatingWithApple = false
-                    }
-                }
+                scope.handleOAuthSignIn(
+                    provider = OAuthProvider.APPLE,
+                    setAuthenticating = { isAuthenticatingWithApple = it },
+                    setError = { error = it },
+                    setLoggedIn = { isLoggedIn = it },
+                )
             },
             isLoggedIn = isLoggedIn,
             isLoggingOut = isLoggingOut,
@@ -181,5 +129,56 @@ class AuthPresenter(
                 }
             },
         )
+    }
+
+    /**
+     * Generic OAuth sign-in handler that works for any provider.
+     */
+    private fun CoroutineScope.handleOAuthSignIn(
+        provider: OAuthProvider,
+        setAuthenticating: (Boolean) -> Unit,
+        setError: (String?) -> Unit,
+        setLoggedIn: (Boolean) -> Unit,
+    ) {
+        setAuthenticating(true)
+        setError(null)
+        launch {
+            try {
+                val authResponse = oauthHandler.startOAuthFlow(provider)
+                if (authResponse == null) {
+                    setError(
+                        """
+                        ${
+                            provider.name.lowercase().replaceFirstChar { it.uppercase() }
+                        } sign-in failed. Please try again or enter an API key below.
+
+                        Need help? Email help@solenne.ai
+                    """.trimIndent()
+                    )
+                    setAuthenticating(false)
+                    return@launch
+                }
+
+                // Save session token
+                configRepository.setSessionToken(authResponse.sessionToken)
+
+                // Update state
+                setLoggedIn(true)
+
+                // Navigate to home
+                navigator.resetRoot(HomeScreen)
+            } catch (_: Exception) {
+                setError(
+                    """
+                    ${
+                        provider.name.lowercase().replaceFirstChar { it.uppercase() }
+                    } sign-in failed. Please try again or use API key below.
+
+                    Need help? Email help@solenne.ai
+                """.trimIndent()
+                )
+                setAuthenticating(false)
+            }
+        }
     }
 }

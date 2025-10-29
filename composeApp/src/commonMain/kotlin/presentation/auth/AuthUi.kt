@@ -200,11 +200,10 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 Image(
                                     painter = painterResource(Res.drawable.apple_logo),
                                     contentDescription = "Apple logo",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .padding(end = 12.dp),
+                                    modifier = Modifier.size(20.dp),
                                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
                                 )
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = "Sign in with Apple",
                                     style = MaterialTheme.typography.bodyLarge,

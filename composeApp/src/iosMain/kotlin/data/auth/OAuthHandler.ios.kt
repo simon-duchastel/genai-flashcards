@@ -2,6 +2,7 @@ package data.auth
 
 import api.dto.AuthResponse
 import api.dto.OAuthPlatform
+import api.dto.OAuthProvider
 import data.api.AuthApiClient
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -15,7 +16,7 @@ import kotlin.coroutines.resume
 /**
  * Presentation context provider for ASWebAuthenticationSession.
  */
-private class AppleAuthenticationContextProvider : NSObject(), ASWebAuthenticationPresentationContextProvidingProtocol {
+private class AuthenticationContextProvider : NSObject(), ASWebAuthenticationPresentationContextProvidingProtocol {
     override fun presentationAnchorForWebAuthenticationSession(
         session: ASWebAuthenticationSession
     ): UIWindow {
@@ -24,20 +25,26 @@ private class AppleAuthenticationContextProvider : NSObject(), ASWebAuthenticati
 }
 
 /**
- * iOS implementation of AppleOAuthHandler using ASWebAuthenticationSession.
+ * iOS implementation of OAuthHandler using ASWebAuthenticationSession.
+ * Handles both Google and Apple OAuth flows.
  */
 @OptIn(ExperimentalForeignApi::class)
-class SFAppleOAuthHandler(
+class SFOAuthHandler(
     private val authApiClient: AuthApiClient
-): AppleOAuthHandler {
+): OAuthHandler {
     /**
-     * Start the Apple OAuth flow using ASWebAuthenticationSession.
+     * Start the OAuth flow using ASWebAuthenticationSession.
      * Opens a secure Safari view for user authentication.
+     *
+     * @param provider The OAuth provider (GOOGLE or APPLE)
      */
-    override suspend fun startOAuthFlow(): AuthResponse? {
+    override suspend fun startOAuthFlow(provider: OAuthProvider): AuthResponse? {
         return try {
-            // Get OAuth URL from server
-            val loginUrlResponse = authApiClient.startAppleLogin(platform = OAuthPlatform.IOS)
+            // Get OAuth URL from server based on provider
+            val loginUrlResponse = when (provider) {
+                OAuthProvider.GOOGLE -> authApiClient.startGoogleLogin(platform = OAuthPlatform.IOS)
+                OAuthProvider.APPLE -> authApiClient.startAppleLogin(platform = OAuthPlatform.IOS)
+            }
             val authUrl = loginUrlResponse.authUrl
 
             // Open ASWebAuthenticationSession for OAuth
@@ -57,7 +64,7 @@ class SFAppleOAuthHandler(
                 user = meResponse.user
             )
         } catch (e: Exception) {
-            println("Apple OAuth flow failed: ${e.message}")
+            println("OAuth flow failed for $provider: ${e.message}")
             null
         }
     }
@@ -66,7 +73,7 @@ class SFAppleOAuthHandler(
      * Performs OAuth flow using ASWebAuthenticationSession.
      * Opens a secure Safari view for user authentication.
      *
-     * @param authUrl The Apple OAuth authorization URL
+     * @param authUrl The OAuth authorization URL
      * @return Callback URL if successful, null if cancelled
      */
     private suspend fun performOAuthFlow(authUrl: String): String? =
@@ -86,7 +93,7 @@ class SFAppleOAuthHandler(
             ) { callbackUrl, error ->
                 when {
                     error != null -> {
-                        println("Apple OAuth error: $error")
+                        println("OAuth error: $error")
                         continuation.resume(null)
                     }
                     callbackUrl != null -> {
@@ -102,7 +109,7 @@ class SFAppleOAuthHandler(
             authSession.prefersEphemeralWebBrowserSession = false
 
             // Set presentation context provider
-            authSession.presentationContextProvider = AppleAuthenticationContextProvider()
+            authSession.presentationContextProvider = AuthenticationContextProvider()
 
             // Start the authentication session
             if (authSession.start()) {
@@ -138,6 +145,6 @@ class SFAppleOAuthHandler(
     }
 }
 
-actual fun getAppleOAuthHandler(authApiClient: AuthApiClient): AppleOAuthHandler {
-    return SFAppleOAuthHandler(authApiClient)
+actual fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler {
+    return SFOAuthHandler(authApiClient)
 }

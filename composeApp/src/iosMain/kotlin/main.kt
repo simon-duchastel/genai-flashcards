@@ -7,8 +7,7 @@ import data.api.AuthApiClient
 import data.api.HttpClientProvider
 import data.api.ServerFlashcardApiClient
 import data.api.ServerFlashcardGenerator
-import data.auth.getAppleOAuthHandler
-import data.auth.getGoogleOAuthHandler
+import data.auth.getOAuthHandler
 import data.repository.AuthRepositoryImpl
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
@@ -60,14 +59,13 @@ fun MainViewController(): UIViewController {
         httpClient = httpClient,
         baseUrl = ApiConfig.BASE_URL
     )
-    val googleOAuthHandler = getGoogleOAuthHandler(authApiClient)
-    val appleOAuthHandler = getAppleOAuthHandler(authApiClient)
+    val oauthHandler = getOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
         .addPresenterFactory { screen, navigator, _ ->
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
-                is AuthScreen -> AuthPresenter(navigator, configRepository, googleOAuthHandler, appleOAuthHandler, authApiClient)
+                is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
                 is HomeScreen -> HomePresenter(navigator, flashcardRepository)
                 is CreateScreen -> CreatePresenter(screen, navigator, flashcardRepository)
                 is StudyScreen -> StudyPresenter(screen, navigator, flashcardRepository)
