@@ -48,7 +48,7 @@ class AppleOAuthService(
     companion object {
         private const val APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize"
         private const val APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
-        private const val SCOPES = "name"
+        private const val SCOPES = ""
         private const val CLIENT_SECRET_EXPIRY_MINUTES = 5L
     }
 
@@ -80,7 +80,7 @@ class AppleOAuthService(
      * @return User information extracted from the ID token
      * @throws Exception if token exchange or validation fails
      */
-    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform = OAuthPlatform.WEB): User {
+    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform): User {
         val redirectUri = when (platform) {
             OAuthPlatform.WEB -> webRedirectUri
             OAuthPlatform.IOS -> iosRedirectUri
