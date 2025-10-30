@@ -34,6 +34,7 @@ class AppleOAuthService(
     private val privateKeyPem: String,
     private val webRedirectUri: String,
     private val iosRedirectUri: String,
+    private val androidRedirectUri: String,
 ) {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
@@ -57,10 +58,11 @@ class AppleOAuthService(
      *
      * @param platform The platform type to get the appropriate redirect URI
      */
-    fun getAuthorizationUrl(platform: OAuthPlatform = OAuthPlatform.WEB): String {
+    fun getAuthorizationUrl(platform: OAuthPlatform): String {
         val redirectUri = when (platform) {
             OAuthPlatform.WEB -> webRedirectUri
             OAuthPlatform.IOS -> iosRedirectUri
+            OAuthPlatform.ANDROID -> androidRedirectUri
         }
 
         return URLBuilder(APPLE_AUTH_URL).apply {
@@ -84,6 +86,7 @@ class AppleOAuthService(
         val redirectUri = when (platform) {
             OAuthPlatform.WEB -> webRedirectUri
             OAuthPlatform.IOS -> iosRedirectUri
+            OAuthPlatform.ANDROID -> androidRedirectUri
         }
 
         // Generate client secret JWT

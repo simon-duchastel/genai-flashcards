@@ -13,6 +13,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import androidx.core.net.toUri
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Android implementation of OAuthHandler using Chrome Custom Tabs.
@@ -24,7 +25,6 @@ class ChromeCustomTabsOAuthHandler(
 ) : OAuthHandler {
 
     companion object {
-        private const val CALLBACK_SCHEME = "solenne-flashcards"
         private const val OAUTH_TIMEOUT_MS = 5 * 60 * 1000L // 5 minutes
 
         @Volatile
@@ -35,14 +35,6 @@ class ChromeCustomTabsOAuthHandler(
          */
         fun handleOAuthCallback(callbackUrl: String) {
             currentContinuation?.resume(callbackUrl)
-            currentContinuation = null
-        }
-
-        /**
-         * Called when OAuth flow is cancelled.
-         */
-        fun cancelOAuthFlow() {
-            currentContinuation?.resume(null)
             currentContinuation = null
         }
     }
@@ -93,7 +85,7 @@ class ChromeCustomTabsOAuthHandler(
      * @return Callback URL if successful, null if cancelled or timed out
      */
     private suspend fun performOAuthFlow(authUrl: String): String? =
-        withTimeout(OAUTH_TIMEOUT_MS) {
+        withTimeoutOrNull(OAUTH_TIMEOUT_MS) {
             suspendCancellableCoroutine { continuation ->
                 // Store continuation for callback
                 currentContinuation = continuation

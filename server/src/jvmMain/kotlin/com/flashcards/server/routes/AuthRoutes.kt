@@ -81,20 +81,20 @@ fun Route.authRoutes(
 
     // GET /api/v1/auth/google/login - Get Google OAuth URL
     get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
-        val platform = if (call.request.queryParameters["platform"] == "ios") {
-            OAuthPlatform.IOS
-        } else {
-            OAuthPlatform.WEB
+        val platform = when (call.request.queryParameters["platform"]) {
+            "ios" -> OAuthPlatform.IOS
+            "android" -> OAuthPlatform.ANDROID
+            else -> OAuthPlatform.WEB
         }
         handleOAuthLogin(isTest = false, platform = platform)
     }
 
     // GET /api/v1/auth/google/test/login - Get Google OAuth URL for testing
     get(ApiRoutes.AUTH_GOOGLE_LOGIN_TEST) {
-        val platform = if (call.request.queryParameters["platform"] == "ios") {
-            OAuthPlatform.IOS
-        } else {
-            OAuthPlatform.WEB
+        val platform = when (call.request.queryParameters["platform"]) {
+            "ios" -> OAuthPlatform.IOS
+            "android" -> OAuthPlatform.ANDROID
+            else -> OAuthPlatform.WEB
         }
         handleOAuthLogin(isTest = true, platform = platform)
     }
@@ -113,7 +113,16 @@ fun Route.authRoutes(
         handleOAuthCallback(
             exchangeCodeForUser = { code, platform -> googleOAuthService.exchangeCodeForUser(code, platform) },
             platform = OAuthPlatform.IOS,
-            redirectUrl = ApiRoutes.IOS_CLIENT
+            redirectUrl = ApiRoutes.MOBILE_CLIENTS
+        )
+    }
+
+    // GET /api/v1/auth/google/callback/android?code=xxx - OAuth callback for iOS
+    get(ApiRoutes.AUTH_GOOGLE_CALLBACK_ANDROID) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> googleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.ANDROID,
+            redirectUrl = ApiRoutes.MOBILE_CLIENTS
         )
     }
 
@@ -151,7 +160,16 @@ fun Route.authRoutes(
         handleOAuthCallback(
             exchangeCodeForUser = { code, platform -> appleOAuthService.exchangeCodeForUser(code, platform) },
             platform = OAuthPlatform.IOS,
-            redirectUrl = ApiRoutes.IOS_CLIENT
+            redirectUrl = ApiRoutes.MOBILE_CLIENTS
+        )
+    }
+
+    // GET /api/v1/auth/apple/callback/android?code=xxx - OAuth callback for Apple Android
+    get(ApiRoutes.AUTH_APPLE_CALLBACK_ANDROID) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> appleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.ANDROID,
+            redirectUrl = ApiRoutes.MOBILE_CLIENTS
         )
     }
 

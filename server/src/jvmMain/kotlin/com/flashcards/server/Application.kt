@@ -23,12 +23,15 @@ object OAuthConfig {
     // Google OAuth redirect URIs
     const val GOOGLE_WEB_REDIRECT_URI = "$API_BASE/google/callback"
     const val GOOGLE_IOS_REDIRECT_URI = "$API_BASE/google/callback/ios"
+    const val GOOGLE_ANDROID_REDIRECT_URI = "$API_BASE/google/callback/android"
     const val GOOGLE_TEST_WEB_REDIRECT_URI = "$API_BASE/google/test/callback"
     const val GOOGLE_TEST_IOS_REDIRECT_URI = "$API_BASE/google/test/callback"
+    const val GOOGLE_TEST_ANDROID_REDIRECT_URI = "$API_BASE/google/test/callback"
 
     // Apple OAuth redirect URIs
     const val APPLE_WEB_REDIRECT_URI = "$API_BASE/apple/callback"
     const val APPLE_IOS_REDIRECT_URI = "$API_BASE/apple/callback/ios"
+    const val APPLE_ANDROID_REDIRECT_URI = "$API_BASE/apple/callback/android"
 }
 
 fun main() {
@@ -59,7 +62,8 @@ fun Application.module() {
         clientId = googleClientId,
         clientSecret = googleClientSecret,
         webRedirectUri = OAuthConfig.GOOGLE_WEB_REDIRECT_URI,
-        iosRedirectUri = OAuthConfig.GOOGLE_IOS_REDIRECT_URI
+        iosRedirectUri = OAuthConfig.GOOGLE_IOS_REDIRECT_URI,
+        androidRedirectUri = OAuthConfig.GOOGLE_ANDROID_REDIRECT_URI,
     )
 
     val testGoogleClientId = System.getenv("GOOGLE_OAUTH_TEST_CLIENT_ID")
@@ -71,7 +75,8 @@ fun Application.module() {
         clientId = testGoogleClientId,
         clientSecret = testGoogleClientSecret,
         webRedirectUri = OAuthConfig.GOOGLE_TEST_WEB_REDIRECT_URI,
-        iosRedirectUri = OAuthConfig.GOOGLE_TEST_IOS_REDIRECT_URI
+        iosRedirectUri = OAuthConfig.GOOGLE_TEST_IOS_REDIRECT_URI,
+        androidRedirectUri = OAuthConfig.GOOGLE_TEST_ANDROID_REDIRECT_URI,
     )
 
     val appleTeamId = System.getenv("APPLE_TEAM_ID")
@@ -89,7 +94,8 @@ fun Application.module() {
         keyId = appleKeyId,
         privateKeyPem = applePrivateKeyPem,
         webRedirectUri = OAuthConfig.APPLE_WEB_REDIRECT_URI,
-        iosRedirectUri = OAuthConfig.APPLE_IOS_REDIRECT_URI
+        iosRedirectUri = OAuthConfig.APPLE_IOS_REDIRECT_URI,
+        androidRedirectUri = OAuthConfig.APPLE_ANDROID_REDIRECT_URI,
     )
 
     val geminiApiKey: String = System.getenv("GEMINI_API_KEY")

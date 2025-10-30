@@ -2,12 +2,13 @@
 
 # Exit on error
 set -e
+PROJECT_ID=$(gcloud config get-value project)
 
 echo "Building and publishing Docker image..."
-./gradlew :server-docker:publishImage
+GCP_PROJECT_NAME=$PROJECT_ID ./gradlew :server-docker:publishImage
 
 echo "Deploying to Cloud Run..."
-PROJECT_ID=$(gcloud config get-value project)
+
 
 gcloud run deploy flashcards-server \
     --image gcr.io/$PROJECT_ID/flashcards-server \
