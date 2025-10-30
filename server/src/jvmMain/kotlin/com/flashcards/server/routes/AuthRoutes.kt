@@ -137,10 +137,10 @@ fun Route.authRoutes(
 
     // GET /api/v1/auth/apple/login - Get Apple OAuth URL
     get(ApiRoutes.AUTH_APPLE_LOGIN) {
-        val platform = if (call.request.queryParameters["platform"] == "ios") {
-            OAuthPlatform.IOS
-        } else {
-            OAuthPlatform.WEB
+        val platform = when (call.request.queryParameters["platform"]) {
+            "ios" -> OAuthPlatform.IOS
+            "android" -> OAuthPlatform.ANDROID
+            else -> OAuthPlatform.WEB
         }
         val authUrl = appleOAuthService.getAuthorizationUrl(platform)
         call.respond(LoginUrlResponse(authUrl))

@@ -54,7 +54,7 @@ class GoogleOAuthService(
             parameters.append("redirect_uri", redirectUri)
             parameters.append("response_type", "code")
             parameters.append("scope", SCOPES)
-            parameters.append("access_type", "offline")
+            parameters.append("prompt", "consent")
         }.buildString()
     }
 

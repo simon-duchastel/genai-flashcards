@@ -1,6 +1,18 @@
 import io.ktor.plugin.features.DockerImageRegistry
 import io.ktor.plugin.features.DockerPortMappingProtocol
 
+buildscript {
+    dependencies {
+        classpath("commons-codec:commons-codec:1.16.1")
+    }
+    configurations.all {
+        resolutionStrategy {
+            force("org.apache.commons:commons-compress:1.26.0")
+            force("commons-codec:commons-codec:1.16.1")
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktorPlugin)

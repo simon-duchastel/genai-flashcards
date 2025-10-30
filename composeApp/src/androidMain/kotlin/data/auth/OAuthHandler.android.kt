@@ -2,18 +2,16 @@ package data.auth
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.net.toUri
 import api.dto.AuthResponse
 import api.dto.OAuthPlatform
 import api.dto.OAuthProvider
 import data.api.AuthApiClient
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
-import androidx.core.net.toUri
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Android implementation of OAuthHandler using Chrome Custom Tabs.

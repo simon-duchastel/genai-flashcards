@@ -1,3 +1,15 @@
+buildscript {
+    dependencies {
+        classpath("commons-codec:commons-codec:1.16.1")
+    }
+    configurations.all {
+        resolutionStrategy {
+            force("org.apache.commons:commons-compress:1.26.0")
+            force("commons-codec:commons-codec:1.16.1")
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kotlinJvm) apply false
