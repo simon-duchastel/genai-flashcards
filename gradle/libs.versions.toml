@@ -1,4 +1,8 @@
 [versions]
+activityCompose = "1.11.0"
+browser = "1.8.0"
+coreKtx = "1.17.0"
+datastorePreferences = "1.1.7"
 kotlin = "2.2.20"
 composeMultiplatform = "1.9.0"
 composeHotReload = "1.0.0-beta07"
@@ -9,12 +13,16 @@ serialization = "1.7.3"
 datetime = "0.6.1"
 koog = "0.5.1"
 ktor = "3.0.3"
-ktorPlugin = "3.3.1"
 logback = "1.4.14"
 compose-material-icons-extended = "1.6.10"
+agp = "8.13.0"
 
 [libraries]
 # Kotlin
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 # Compose
@@ -38,6 +46,7 @@ koog-ktor = { module = "ai.koog:koog-ktor", version.ref = "koog" }
 # Ktor (for Koog and HTTP client)
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
@@ -59,5 +68,8 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktorPlugin = { id = "io.ktor.plugin", version.ref = "ktorPlugin" }
+kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+ktorPlugin = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

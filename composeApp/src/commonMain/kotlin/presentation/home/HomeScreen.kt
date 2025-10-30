@@ -1,10 +1,12 @@
 package presentation.home
 
+import parcel.Parcelize
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.screen.Screen
 import domain.model.FlashcardSetWithMeta
 import kotlinx.serialization.Serializable
 
+@Parcelize
 @Serializable
 data object HomeScreen : Screen
 

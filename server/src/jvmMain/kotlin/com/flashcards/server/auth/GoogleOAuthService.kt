@@ -23,6 +23,7 @@ class GoogleOAuthService(
     private val clientSecret: String,
     private val webRedirectUri: String,
     private val iosRedirectUri: String,
+    private val androidRedirectUri: String,
 ) {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
@@ -41,10 +42,11 @@ class GoogleOAuthService(
      *
      * @param platform The platform type to get the appropriate redirect URI
      */
-    fun getAuthorizationUrl(platform: OAuthPlatform = OAuthPlatform.WEB): String {
+    fun getAuthorizationUrl(platform: OAuthPlatform): String {
         val redirectUri = when (platform) {
             OAuthPlatform.WEB -> webRedirectUri
             OAuthPlatform.IOS -> iosRedirectUri
+            OAuthPlatform.ANDROID -> androidRedirectUri
         }
 
         return URLBuilder(GOOGLE_AUTH_URL).apply {
@@ -52,7 +54,7 @@ class GoogleOAuthService(
             parameters.append("redirect_uri", redirectUri)
             parameters.append("response_type", "code")
             parameters.append("scope", SCOPES)
-            parameters.append("access_type", "offline")
+            parameters.append("prompt", "consent")
         }.buildString()
     }
 
@@ -64,10 +66,11 @@ class GoogleOAuthService(
      * @return User information extracted from the ID token
      * @throws Exception if token exchange or validation fails
      */
-    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform = OAuthPlatform.WEB): User {
+    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform): User {
         val redirectUri = when (platform) {
             OAuthPlatform.WEB -> webRedirectUri
             OAuthPlatform.IOS -> iosRedirectUri
+            OAuthPlatform.ANDROID -> androidRedirectUri
         }
 
         // Exchange code for tokens

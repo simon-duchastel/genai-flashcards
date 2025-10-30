@@ -1,16 +1,11 @@
 package data.storage
 
-import domain.model.FlashcardSet
+import domain.storage.Storage
 
 /**
  * Platform-specific storage for flashcard sets.
- * Uses localStorage on JS/Browser platform.
+ * Uses DataStore on Android, localStorage on JS/Browser platform.
  */
-interface FlashcardStorage {
-    suspend fun saveFlashcardSet(set: FlashcardSet)
-    suspend fun getAllFlashcardSets(): List<FlashcardSet>
-    suspend fun getFlashcardSet(id: String): FlashcardSet?
-    suspend fun deleteFlashcardSet(id: String)
-}
+typealias FlashcardStorage = Storage
 
 expect fun getFlashcardStorage(): FlashcardStorage

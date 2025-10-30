@@ -19,7 +19,7 @@ class FlashcardStorageIos : FlashcardStorage {
     private val userDefaults = NSUserDefaults.standardUserDefaults
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun saveFlashcardSet(set: FlashcardSet) {
+    override suspend fun save(set: FlashcardSet) {
         // Save the flashcard set
         val key = "flashcard_set_${set.id}"
         val jsonString = json.encodeToString(set)
@@ -33,11 +33,11 @@ class FlashcardStorageIos : FlashcardStorage {
         userDefaults.synchronize()
     }
 
-    override suspend fun getAllFlashcardSets(): List<FlashcardSet> {
+    override suspend fun getAll(): List<FlashcardSet> {
         val setIds = getAllSetIds()
         return setIds.mapNotNull { id ->
             try {
-                getFlashcardSet(id)
+                getById(id)
             } catch (e: Exception) {
                 println("Failed to load flashcard set $id: $e")
                 null
@@ -46,7 +46,7 @@ class FlashcardStorageIos : FlashcardStorage {
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun getFlashcardSet(id: String): FlashcardSet? {
+    override suspend fun getById(id: String): FlashcardSet? {
         val key = "flashcard_set_$id"
         val jsonString = userDefaults.stringForKey(key) ?: return null
         return try {
@@ -58,7 +58,7 @@ class FlashcardStorageIos : FlashcardStorage {
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun deleteFlashcardSet(id: String) {
+    override suspend fun delete(id: String) {
         // Remove the flashcard set
         val key = "flashcard_set_$id"
         userDefaults.removeObjectForKey(key)

@@ -5,5 +5,6 @@ package api.dto
  */
 enum class OAuthPlatform {
     WEB,
-    IOS
+    IOS,
+    ANDROID
 }
