@@ -28,6 +28,9 @@ class AuthPresenter(
         var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
+        var isDangerousModeEnabled by remember { mutableStateOf(false) }
+        var showDeleteAccountDialog by remember { mutableStateOf(false) }
+        var isDeletingAccount by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
@@ -128,6 +131,49 @@ class AuthPresenter(
                     }
                 }
             },
+            isDangerousModeEnabled = isDangerousModeEnabled,
+            onDangerousModeToggled = {
+                isDangerousModeEnabled = !isDangerousModeEnabled
+            },
+            showDeleteAccountDialog = showDeleteAccountDialog,
+            onDeleteAccountClicked = {
+                showDeleteAccountDialog = true
+            },
+            onDeleteAccountConfirmed = {
+                showDeleteAccountDialog = false
+                isDeletingAccount = true
+                error = null
+                scope.launch {
+                    try {
+                        val sessionToken = configRepository.getSessionToken()
+                        if (sessionToken != null) {
+                            authApiClient.deleteAccount(sessionToken)
+                        } else {
+                            throw IllegalStateException("Session token is null")
+                        }
+                        // Clear session
+                        configRepository.clearSessionToken()
+
+                        // Update state
+                        isLoggedIn = false
+                        isDeletingAccount = false
+
+                        // go back to splash screen
+                        navigator.resetRoot(SplashScreen)
+                    } catch (e: Exception) {
+                        error = """
+                            Account deletion failed: ${e.message}
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                        isDeletingAccount = false
+                    }
+                }
+            },
+            onDeleteAccountCancelled = {
+                showDeleteAccountDialog = false
+            },
+            isDeletingAccount = isDeletingAccount,
         )
     }
 

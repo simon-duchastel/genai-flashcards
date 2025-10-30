@@ -114,6 +114,7 @@ fun Application.module() {
         authRepository = authRepository,
         googleOAuthService = googleOAuthService,
         testGoogleOAuthService = testGoogleOAuthService,
-        appleOAuthService = appleOAuthService
+        appleOAuthService = appleOAuthService,
+        storage = storage
     )
 }

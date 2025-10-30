@@ -18,6 +18,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 
@@ -29,6 +30,7 @@ fun Route.authRoutes(
     googleOAuthService: GoogleOAuthService,
     testGoogleOAuthService: GoogleOAuthService,
     appleOAuthService: AppleOAuthService,
+    storage: com.flashcards.server.storage.FirestoreStorage,
 ) {
     /**
      * Handles OAuth login by getting authorization URL and responding with it.
@@ -207,6 +209,30 @@ fun Route.authRoutes(
                 )
 
             call.respond(HttpStatusCode.OK, MeResponse(user))
+        }
+
+        // DELETE /api/v1/auth/account - Delete current user account
+        delete(ApiRoutes.AUTH_DELETE_ACCOUNT) {
+            val principal = call.principal<AuthenticatedUser>()
+                ?: return@delete call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Authentication required", "UNAUTHORIZED")
+                )
+
+            val userId = principal.userId
+
+            try {
+                storage.deleteAllByUserId(userId)
+                authRepository.deleteUserAccount(userId)
+
+                call.respond(HttpStatusCode.NoContent)
+            } catch (e: Exception) {
+                call.application.log.error("Failed to delete user account: $userId", e)
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    ErrorResponse("Failed to delete account", "DELETE_FAILED")
+                )
+            }
         }
     }
 }

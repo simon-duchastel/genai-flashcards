@@ -7,6 +7,7 @@ import api.routes.ApiRoutes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 
@@ -65,6 +66,16 @@ class AuthApiClient(
      */
     suspend fun logout(sessionToken: String) {
         httpClient.post("$baseUrl${ApiRoutes.AUTH_LOGOUT}") {
+            bearerAuth(sessionToken)
+        }
+    }
+
+    /**
+     * Delete the current user's account.
+     * This will delete all user data including flashcard sets, sessions, and the user account itself.
+     */
+    suspend fun deleteAccount(sessionToken: String) {
+        httpClient.delete("$baseUrl${ApiRoutes.AUTH_DELETE_ACCOUNT}") {
             bearerAuth(sessionToken)
         }
     }

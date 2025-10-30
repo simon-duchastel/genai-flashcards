@@ -27,4 +27,12 @@ data class AuthUiState(
     val isLoggedIn: Boolean,
     val isLoggingOut: Boolean,
     val onLogoutClicked: () -> Unit,
+    // Delete Account
+    val isDangerousModeEnabled: Boolean,
+    val onDangerousModeToggled: () -> Unit,
+    val showDeleteAccountDialog: Boolean,
+    val onDeleteAccountClicked: () -> Unit,
+    val onDeleteAccountConfirmed: () -> Unit,
+    val onDeleteAccountCancelled: () -> Unit,
+    val isDeletingAccount: Boolean,
 ) : CircuitUiState

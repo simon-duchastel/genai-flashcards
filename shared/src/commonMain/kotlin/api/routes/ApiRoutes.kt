@@ -24,6 +24,7 @@ object ApiRoutes {
     const val AUTH_APPLE_CALLBACK_ANDROID = "$AUTH_BASE/apple/callback/android"
     const val AUTH_LOGOUT = "$AUTH_BASE/logout"
     const val AUTH_ME = "$AUTH_BASE/me"
+    const val AUTH_DELETE_ACCOUNT = "$AUTH_BASE/account"
 
     // Flashcard routes
     const val FLASHCARD_SETS = "$API_BASE/flashcards/sets"

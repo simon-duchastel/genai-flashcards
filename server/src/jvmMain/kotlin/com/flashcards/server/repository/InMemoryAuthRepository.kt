@@ -80,4 +80,20 @@ class InMemoryAuthRepository : AuthRepository {
             }
         }
     }
+
+    override suspend fun deleteUserAccount(userId: String) {
+        mutex.withLock {
+            // Get user to retrieve authId
+            val user = users[userId] ?: return@withLock
+
+            // 1. Delete all sessions for this user
+            sessions.entries.removeIf { it.value.userId == userId }
+
+            // 2. Delete authId -> userId mapping
+            authIdToUserId.remove(user.authId)
+
+            // 3. Delete user
+            users.remove(userId)
+        }
+    }
 }

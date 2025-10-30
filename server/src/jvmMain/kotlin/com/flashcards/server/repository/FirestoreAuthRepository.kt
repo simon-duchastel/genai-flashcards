@@ -163,4 +163,34 @@ class FirestoreAuthRepository(
         // Update cache
         sessionCache.put(token, updatedSession)
     }
+
+    override suspend fun deleteUserAccount(userId: String) {
+        // Get user to retrieve authId
+        val user = getUserById(userId) ?: return
+
+        // 1. Delete all sessions for this user
+        val sessionsQuery = sessionsCollection
+            .whereEqualTo("userId", userId)
+            .get()
+            .await()
+
+        sessionsQuery.documents.forEach { doc ->
+            // Remove from cache
+            sessionCache.invalidate(doc.id)
+            // Delete from Firestore
+            doc.reference.delete().await()
+        }
+
+        // 2. Delete authId -> userId mapping
+        authIdMappingCollection
+            .document(user.authId)
+            .delete()
+            .await()
+
+        // 3. Delete user document
+        usersCollection
+            .document(userId)
+            .delete()
+            .await()
+    }
 }
