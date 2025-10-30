@@ -44,8 +44,7 @@ fun MainViewController(): UIViewController {
     val storage = getFlashcardStorage()
     val configRepository = getConfigRepository()
     val httpClient = HttpClientProvider.client
-    val authApiClient = data.api.AuthApiClient(isTest = ApiConfig.IS_TEST, httpClient = httpClient, baseUrl = ApiConfig.BASE_URL)
-    val authRepository = AuthRepositoryImpl(configRepository, authApiClient)
+    val authRepository = AuthRepositoryImpl(configRepository)
     val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
     val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
     val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)

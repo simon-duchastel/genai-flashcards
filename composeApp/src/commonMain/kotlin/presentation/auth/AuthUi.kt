@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
@@ -90,10 +92,11 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .width(contentWidth)
-                    .align(Alignment.Center)
+                    .align(Alignment.TopCenter)
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
                 Text(
                     text = if (state.isLoggedIn) {
