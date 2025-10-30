@@ -20,7 +20,7 @@ class FlashcardStorageAndroid(private val context: Context) : FlashcardStorage {
 
     private val indexKey = stringPreferencesKey("flashcard_sets_index")
 
-    override suspend fun saveFlashcardSet(set: FlashcardSet) {
+    override suspend fun save(set: FlashcardSet) {
         // Save the flashcard set
         val key = stringPreferencesKey("flashcard_set_${set.id}")
         context.flashcardDataStore.edit { preferences ->
@@ -35,11 +35,11 @@ class FlashcardStorageAndroid(private val context: Context) : FlashcardStorage {
         }
     }
 
-    override suspend fun getAllFlashcardSets(): List<FlashcardSet> {
+    override suspend fun getAll(): List<FlashcardSet> {
         val setIds = getAllSetIds()
         return setIds.mapNotNull { id ->
             try {
-                getFlashcardSet(id)
+                getById(id)
             } catch (e: Exception) {
                 println("Failed to load flashcard set $id: $e")
                 null
@@ -47,7 +47,7 @@ class FlashcardStorageAndroid(private val context: Context) : FlashcardStorage {
         }
     }
 
-    override suspend fun getFlashcardSet(id: String): FlashcardSet? {
+    override suspend fun getById(id: String): FlashcardSet? {
         val key = stringPreferencesKey("flashcard_set_$id")
         val jsonString = context.flashcardDataStore.data.map { preferences ->
             preferences[key]
@@ -63,7 +63,7 @@ class FlashcardStorageAndroid(private val context: Context) : FlashcardStorage {
         }
     }
 
-    override suspend fun deleteFlashcardSet(id: String) {
+    override suspend fun delete(id: String) {
         // Remove the flashcard set
         val key = stringPreferencesKey("flashcard_set_$id")
         context.flashcardDataStore.edit { preferences ->

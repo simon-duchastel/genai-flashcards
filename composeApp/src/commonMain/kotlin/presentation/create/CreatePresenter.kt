@@ -10,14 +10,21 @@ import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import data.api.ServerFlashcardGenerator.RateLimitException
 import domain.model.FlashcardSet
-import domain.repository.FlashcardRepository
+import domain.repository.AuthRepository
+import domain.repository.ClientFlashcardRepository
+import domain.repository.FlashcardGenerator
+import domain.repository.LocalFlashcardRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
 class CreatePresenter(
     private val screen: CreateScreen,
     private val navigator: Navigator,
-    private val repository: FlashcardRepository
+    private val authRepository: AuthRepository,
+    private val clientRepository: ClientFlashcardRepository,
+    private val localRepository: LocalFlashcardRepository,
+    private val serverGenerator: FlashcardGenerator,
+    private val koogGenerator: FlashcardGenerator
 ) : Presenter<CreateUiState> {
 
     @Composable
@@ -62,7 +69,14 @@ class CreatePresenter(
                     error = null
                     scope.launch {
                         try {
-                            val flashcardSet = repository.generate(
+                            // Use server generator if authenticated, otherwise use local (Koog)
+                            val generator = if (authRepository.isSignedIn()) {
+                                serverGenerator
+                            } else {
+                                koogGenerator
+                            }
+
+                            val flashcardSet = generator.generate(
                                 topic = topic,
                                 count = count,
                                 userQuery = query.ifBlank { "Generate comprehensive flashcards" },
@@ -116,7 +130,18 @@ class CreatePresenter(
                 } else {
                     scope.launch {
                         try {
-                            repository.saveFlashcardSet(setToSave)
+                            // Save to server if authenticated, otherwise save locally
+                            if (authRepository.isSignedIn()) {
+                                try {
+                                    clientRepository.saveFlashcardSet(setToSave)
+                                    runCatching { localRepository.deleteFlashcardSet(setToSave.id) }
+                                } catch (e: Exception) {
+                                    println("Failed to save to server, saving locally: $e")
+                                    localRepository.saveFlashcardSet(setToSave)
+                                }
+                            } else {
+                                localRepository.saveFlashcardSet(setToSave)
+                            }
                             navigator.pop()
                         } catch (e: Exception) {
                             error = """

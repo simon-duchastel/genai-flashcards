@@ -13,7 +13,7 @@ import domain.model.FlashcardSet
  * Documents contain: id, userId, topic, flashcards[], createdAt
  */
 class FirestoreStorage(
-    private val firestore: Firestore
+    firestore: Firestore
 ) : Storage {
     private val collection = firestore.collection("flashcard_sets")
 

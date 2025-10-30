@@ -21,7 +21,8 @@ import data.storage.getFlashcardStorage
 import data.storage.initConfigRepository
 import data.storage.initFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
-import domain.repository.FlashcardRepository
+import domain.repository.ClientFlashcardRepository
+import domain.repository.LocalFlashcardRepository
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
 import presentation.auth.AuthUi
@@ -61,14 +62,16 @@ class MainActivity : ComponentActivity() {
         val authRepository = AuthRepositoryImpl(configRepository)
         val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
         val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
-        val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
-        val flashcardRepository = FlashcardRepository(
+        val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+
+        val clientRepository = ClientFlashcardRepository(
             authRepository = authRepository,
-            serverClient = serverFlashcardClient,
-            localStorage = storage,
-            koogGenerator = generator,
-            serverGenerator = serverGenerator,
+            serverClient = serverFlashcardClient
         )
+        val localRepository = LocalFlashcardRepository(
+            storage = storage
+        )
+
         val authApiClient = AuthApiClient(
             isTest = false,
             httpClient = httpClient,
@@ -81,9 +84,9 @@ class MainActivity : ComponentActivity() {
                 when (screen) {
                     is SplashScreen -> SplashPresenter(navigator, configRepository)
                     is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
-                    is HomeScreen -> HomePresenter(navigator, flashcardRepository)
-                    is CreateScreen -> CreatePresenter(screen, navigator, flashcardRepository)
-                    is StudyScreen -> StudyPresenter(screen, navigator, flashcardRepository)
+                    is HomeScreen -> HomePresenter(navigator, authRepository, clientRepository, localRepository)
+                    is CreateScreen -> CreatePresenter(screen, navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
+                    is StudyScreen -> StudyPresenter(screen, navigator, authRepository, clientRepository, localRepository)
                     else -> null
                 }
             }
