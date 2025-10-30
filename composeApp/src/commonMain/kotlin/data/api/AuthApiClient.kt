@@ -32,6 +32,7 @@ class AuthApiClient(
         val url = when (platform) {
             OAuthPlatform.WEB -> "$baseUrl$route"
             OAuthPlatform.IOS -> "$baseUrl$route?platform=ios"
+            OAuthPlatform.ANDROID -> "$baseUrl$route?platform=android"
         }
         return httpClient.get(url).body()
     }
@@ -45,6 +46,7 @@ class AuthApiClient(
         val url = when (platform) {
             OAuthPlatform.WEB -> "$baseUrl${ApiRoutes.AUTH_APPLE_LOGIN}"
             OAuthPlatform.IOS -> "$baseUrl${ApiRoutes.AUTH_APPLE_LOGIN}?platform=ios"
+            OAuthPlatform.ANDROID -> "$baseUrl${ApiRoutes.AUTH_APPLE_LOGIN}?platform=android"
         }
         return httpClient.get(url).body()
     }

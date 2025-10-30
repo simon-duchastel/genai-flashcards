@@ -15,7 +15,7 @@ class FlashcardStorageJs: FlashcardStorage {
 
     private val indexKey = "flashcard_sets_index"
 
-    override suspend fun saveFlashcardSet(set: FlashcardSet) {
+    override suspend fun save(set: FlashcardSet) {
         // Save the flashcard set
         val key = "flashcard_set_${set.id}"
         localStorage.setItem(key, json.encodeToString(set))
@@ -26,11 +26,11 @@ class FlashcardStorageJs: FlashcardStorage {
         localStorage.setItem(indexKey, json.encodeToString(currentIndex.toList()))
     }
 
-    override suspend fun getAllFlashcardSets(): List<FlashcardSet> {
+    override suspend fun getAll(): List<FlashcardSet> {
         val setIds = getAllSetIds()
         return setIds.mapNotNull { id ->
             try {
-                getFlashcardSet(id)
+                getById(id)
             } catch (e: Exception) {
                 println("Failed to load flashcard set $id: $e")
                 null
@@ -38,7 +38,7 @@ class FlashcardStorageJs: FlashcardStorage {
         }
     }
 
-    override suspend fun getFlashcardSet(id: String): FlashcardSet? {
+    override suspend fun getById(id: String): FlashcardSet? {
         val key = "flashcard_set_$id"
         val jsonString = localStorage.getItem(key) ?: return null
         return try {
@@ -49,7 +49,7 @@ class FlashcardStorageJs: FlashcardStorage {
         }
     }
 
-    override suspend fun deleteFlashcardSet(id: String) {
+    override suspend fun delete(id: String) {
         // Remove the flashcard set
         val key = "flashcard_set_$id"
         localStorage.removeItem(key)

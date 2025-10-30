@@ -22,6 +22,7 @@ import domain.model.FlashcardSetWithMeta
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,8 +239,11 @@ private fun FlashcardSetItem(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 private fun formatDate(timestamp: Long): String {
-    val instant = Instant.fromEpochMilliseconds(timestamp)
-    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${dateTime.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${dateTime.dayOfMonth}, ${dateTime.year}"
+//    val instant = Instant.fromEpochMilliseconds(timestamp)
+//    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+//    val date = dateTime.date
+//    return "${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}, ${date.year}"
+    return "${timestamp}"
 }

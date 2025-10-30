@@ -37,8 +37,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -56,6 +54,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import clipboard.clipboardPlainText
 import domain.model.Flashcard
 import kotlinx.coroutines.launch
 
@@ -200,7 +199,7 @@ private fun FlashcardView(
                     onLongClick = {
                         val text = if (isFlipped) card.back else card.front
                         scope.launch {
-                            clipboardManager.setClipEntry(ClipEntry.withPlainText(text))
+                            clipboardManager.setClipEntry(clipboardPlainText(text))
                             snackbarHostState.showSnackbar("Text copied to clipboard")
                         }
                     }

@@ -4,13 +4,17 @@ import androidx.compose.runtime.*
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
 import domain.model.Flashcard
-import domain.repository.FlashcardRepository
+import domain.repository.AuthRepository
+import domain.repository.ClientFlashcardRepository
+import domain.repository.LocalFlashcardRepository
 import kotlinx.coroutines.launch
 
 class StudyPresenter(
     private val screen: StudyScreen,
     private val navigator: Navigator,
-    private val repository: FlashcardRepository
+    private val authRepository: AuthRepository,
+    private val clientRepository: ClientFlashcardRepository,
+    private val localRepository: LocalFlashcardRepository
 ) : Presenter<StudyUiState> {
 
     @Composable
@@ -24,11 +28,10 @@ class StudyPresenter(
         // Load and shuffle flashcards
         LaunchedEffect(screen.setId) {
             scope.launch {
-                val cards = repository.getRandomizedFlashcards(screen.setId)
-                if (cards != null) {
-                    flashcards = cards
-                    val set = repository.getFlashcardSet(screen.setId)
-                    topic = set?.topic ?: ""
+                val set = getFlashcardSet(screen.setId)
+                if (set != null) {
+                    flashcards = set.flashcards.shuffled()
+                    topic = set.topic
                 } else {
                     // Handle error - set not found
                     navigator.pop()
@@ -63,12 +66,25 @@ class StudyPresenter(
                 currentIndex = 0
                 isFlipped = false
                 scope.launch {
-                    val cards = repository.getRandomizedFlashcards(screen.setId)
-                    if (cards != null) {
-                        flashcards = cards
+                    val set = getFlashcardSet(screen.setId)
+                    if (set != null) {
+                        flashcards = set.flashcards.shuffled()
                     }
                 }
             }
         )
     }
+
+    private suspend fun getFlashcardSet(id: String) =
+        // Try server first if authenticated
+        if (authRepository.isSignedIn()) {
+            try {
+                clientRepository.getFlashcardSet(id)
+            } catch (e: Exception) {
+                println("Failed to load from server, trying local: $e")
+                localRepository.getFlashcardSet(id)
+            }
+        } else {
+            localRepository.getFlashcardSet(id)
+        } ?: localRepository.getFlashcardSet(id) // Final fallback
 }

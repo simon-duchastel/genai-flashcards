@@ -1,8 +1,8 @@
 package domain.model
 
-import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration.Companion.days
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Represents an authenticated session.
@@ -12,6 +12,7 @@ import kotlin.time.Duration.Companion.days
  * @property createdAt Timestamp when session was created
  * @property lastAccessedAt Timestamp of last session access (for idle timeout)
  */
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class Session(
     val sessionToken: String = "",

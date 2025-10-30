@@ -14,7 +14,8 @@ import data.storage.ConfigRepository
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
-import domain.repository.FlashcardRepository
+import domain.repository.ClientFlashcardRepository
+import domain.repository.LocalFlashcardRepository
 import kotlinx.browser.window
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -99,13 +100,15 @@ fun main() {
     val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
     val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
     val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
-    val repository = FlashcardRepository(
+
+    val clientRepository = ClientFlashcardRepository(
         authRepository = authRepository,
-        serverClient = serverFlashcardClient,
-        localStorage = storage,
-        serverGenerator = serverGenerator,
-        koogGenerator = koogGenerator,
+        serverClient = serverFlashcardClient
     )
+    val localRepository = LocalFlashcardRepository(
+        storage = storage
+    )
+
     val oauthHandler = getOAuthHandler(authApiClient)
 
     val circuit = Circuit.Builder()
@@ -113,9 +116,9 @@ fun main() {
             when (screen) {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
                 is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
-                is HomeScreen -> HomePresenter(navigator, repository)
-                is CreateScreen -> CreatePresenter(screen, navigator, repository)
-                is StudyScreen -> StudyPresenter(screen, navigator, repository)
+                is HomeScreen -> HomePresenter(navigator, authRepository, clientRepository, localRepository)
+                is CreateScreen -> CreatePresenter(screen, navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
+                is StudyScreen -> StudyPresenter(screen, navigator, authRepository, clientRepository, localRepository)
                 else -> null
             }
         }
