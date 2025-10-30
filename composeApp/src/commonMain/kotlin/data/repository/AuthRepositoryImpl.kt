@@ -7,7 +7,7 @@ import domain.repository.AuthRepository
  * Implementation of AuthRepository that wraps ConfigRepository.
  */
 class AuthRepositoryImpl(
-    private val configRepository: ConfigRepository
+    private val configRepository: ConfigRepository,
 ) : AuthRepository {
 
     override suspend fun isSignedIn(): Boolean {

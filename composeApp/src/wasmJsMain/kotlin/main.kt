@@ -96,7 +96,7 @@ fun main() {
 
     // App initialization
     val storage = getFlashcardStorage()
-    val authRepository = AuthRepositoryImpl(configRepository)
+    val authRepository = AuthRepositoryImpl(configRepository, authApiClient)
     val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
     val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
     val koogGenerator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)

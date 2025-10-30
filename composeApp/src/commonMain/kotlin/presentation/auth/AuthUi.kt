@@ -1,6 +1,7 @@
 package presentation.auth
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,8 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -27,11 +31,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
@@ -118,7 +124,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 if (state.isLoggedIn) {
                     Button(
                         onClick = state.onLogoutClicked,
-                        enabled = !state.isLoggingOut,
+                        enabled = !state.isLoggingOut && !state.isDeletingAccount,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -286,8 +292,108 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 HelpText(modifier = Modifier.fillMaxWidth())
+
+                // Dangerous actions section (only shown if logged in)
+                if (state.isLoggedIn) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Danger Zone",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Checkbox to enable dangerous actions
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { state.onDangerousModeToggled() }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.isDangerousModeEnabled,
+                            onCheckedChange = { state.onDangerousModeToggled() }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "I'd like to perform a dangerous action",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Delete account section - greyed out when dangerous mode not enabled
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(if (state.isDangerousModeEnabled) 1f else 0.4f)
+                    ) {
+                        TextButton(
+                            onClick = state.onDeleteAccountClicked,
+                            enabled = state.isDangerousModeEnabled && !state.isDeletingAccount && !state.isLoggingOut,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            if (state.isDeletingAccount) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.error,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = "Warning",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Delete Account")
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    // Delete account confirmation dialog
+    if (state.showDeleteAccountDialog) {
+        AlertDialog(
+            onDismissRequest = state.onDeleteAccountCancelled,
+            title = { Text("Delete Account") },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete your account? This action is IRREVERSIBLE and your flashcards will be gone FOREVER",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = state.onDeleteAccountConfirmed,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Yes, delete my account")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = state.onDeleteAccountCancelled) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

@@ -54,4 +54,20 @@ class FirestoreStorage(
             .delete()
             .await()
     }
+
+    /**
+     * Delete all flashcard sets for a specific user.
+     * Used when deleting a user account.
+     */
+    suspend fun deleteAllByUserId(userId: String) {
+        val querySnapshot = collection
+            .whereEqualTo("userId", userId)
+            .get()
+            .await()
+
+        // Delete all matching documents
+        querySnapshot.documents.forEach { doc ->
+            doc.reference.delete().await()
+        }
+    }
 }

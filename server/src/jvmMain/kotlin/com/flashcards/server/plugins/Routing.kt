@@ -20,7 +20,8 @@ fun Application.configureRouting(
     authRepository: AuthRepository,
     googleOAuthService: GoogleOAuthService,
     testGoogleOAuthService: GoogleOAuthService,
-    appleOAuthService: AppleOAuthService
+    appleOAuthService: AppleOAuthService,
+    storage: com.flashcards.server.storage.FirestoreStorage
 ) {
     routing {
         // Health check endpoint (public)
@@ -33,7 +34,8 @@ fun Application.configureRouting(
             authRepository = authRepository,
             googleOAuthService = googleOAuthService,
             testGoogleOAuthService = testGoogleOAuthService,
-            appleOAuthService = appleOAuthService
+            appleOAuthService = appleOAuthService,
+            storage = storage
         )
 
         // Protected API routes

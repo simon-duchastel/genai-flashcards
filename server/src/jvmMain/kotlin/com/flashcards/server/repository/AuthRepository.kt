@@ -61,4 +61,17 @@ interface AuthRepository {
      * @param token The session token
      */
     suspend fun updateSessionAccess(token: String)
+
+    /**
+     * Delete a user account and all associated data.
+     * This will delete:
+     * - All sessions for the user
+     * - The authId -> userId mapping
+     * - The user document
+     *
+     * Note: Flashcard sets must be deleted separately via Storage.deleteAllByUserId()
+     *
+     * @param userId The user ID to delete
+     */
+    suspend fun deleteUserAccount(userId: String)
 }
