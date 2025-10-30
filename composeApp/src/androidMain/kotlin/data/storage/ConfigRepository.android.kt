@@ -13,6 +13,7 @@ private val Context.dataStore by preferencesDataStore(name = "config")
 class ConfigRepositoryAndroid(private val context: Context) : ConfigRepository {
     private val apiKeyKey = stringPreferencesKey("gemini_api_key")
     private val darkModeKey = booleanPreferencesKey("dark_mode")
+    private val sessionTokenKey = stringPreferencesKey("session_token")
 
     override suspend fun getGeminiApiKey(): String? {
         return context.dataStore.data.map { preferences ->
@@ -35,6 +36,24 @@ class ConfigRepositoryAndroid(private val context: Context) : ConfigRepository {
     override suspend fun setDarkMode(isDark: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[darkModeKey] = isDark
+        }
+    }
+
+    override suspend fun getSessionToken(): String? {
+        return context.dataStore.data.map { preferences ->
+            preferences[sessionTokenKey]
+        }.first()
+    }
+
+    override suspend fun setSessionToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[sessionTokenKey] = token
+        }
+    }
+
+    override suspend fun clearSessionToken() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(sessionTokenKey)
         }
     }
 }

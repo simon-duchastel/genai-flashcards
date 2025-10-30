@@ -1,6 +1,7 @@
 package ai.solenne.flashcards
 
 import App
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,13 +9,19 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.text.selection.SelectionContainer
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.runtime.ui.ui
+import data.api.ApiConfig
+import data.api.AuthApiClient
+import data.api.HttpClientProvider
+import data.api.ServerFlashcardApiClient
+import data.api.ServerFlashcardGenerator
+import data.auth.ChromeCustomTabsOAuthHandler
+import data.repository.AuthRepositoryImpl
 import data.storage.getConfigRepository
 import data.storage.getFlashcardStorage
 import data.storage.initConfigRepository
 import data.storage.initFlashcardStorage
 import domain.generator.KoogFlashcardGenerator
 import domain.repository.FlashcardRepository
-import domain.repository.FlashcardRepositoryImpl
 import presentation.auth.AuthPresenter
 import presentation.auth.AuthScreen
 import presentation.auth.AuthUi
@@ -41,23 +48,42 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Handle OAuth callback if present
+        handleOAuthCallbackIfNeeded(intent)
+
         // Initialize storage repositories
         initFlashcardStorage(applicationContext)
         initConfigRepository(applicationContext)
 
         val storage = getFlashcardStorage()
-        val repository = FlashcardRepositoryImpl(storage)
         val configRepository = getConfigRepository()
+        val httpClient = HttpClientProvider.client
+        val authRepository = AuthRepositoryImpl(configRepository)
+        val serverFlashcardClient = ServerFlashcardApiClient(httpClient, ApiConfig.BASE_URL)
+        val serverGenerator = ServerFlashcardGenerator(httpClient, ApiConfig.BASE_URL, configRepository)
         val generator = KoogFlashcardGenerator(getGeminiApiKey = configRepository::getGeminiApiKey)
+        val flashcardRepository = FlashcardRepository(
+            authRepository = authRepository,
+            serverClient = serverFlashcardClient,
+            localStorage = storage,
+            koogGenerator = generator,
+            serverGenerator = serverGenerator,
+        )
+        val authApiClient = AuthApiClient(
+            isTest = false,
+            httpClient = httpClient,
+            baseUrl = ApiConfig.BASE_URL
+        )
+        val oauthHandler = data.auth.getOAuthHandler(applicationContext, authApiClient)
 
         val circuit = Circuit.Builder()
             .addPresenterFactory { screen, navigator, _ ->
                 when (screen) {
                     is SplashScreen -> SplashPresenter(navigator, configRepository)
-                    is AuthScreen -> AuthPresenter(navigator, configRepository)
-                    is HomeScreen -> HomePresenter(navigator, repository)
-                    is CreateScreen -> CreatePresenter(screen, navigator, repository, generator)
-                    is StudyScreen -> StudyPresenter(screen, navigator, repository)
+                    is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
+                    is HomeScreen -> HomePresenter(navigator, flashcardRepository)
+                    is CreateScreen -> CreatePresenter(screen, navigator, flashcardRepository)
+                    is StudyScreen -> StudyPresenter(screen, navigator, flashcardRepository)
                     else -> null
                 }
             }
@@ -89,6 +115,19 @@ class MainActivity : ComponentActivity() {
                     configRepository = configRepository,
                     circuit = circuit,
                 )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleOAuthCallbackIfNeeded(intent)
+    }
+
+    private fun handleOAuthCallbackIfNeeded(intent: Intent?) {
+        intent?.data?.let { uri ->
+            if (uri.scheme == "solenne-flashcards" && uri.host == "callback") {
+                ChromeCustomTabsOAuthHandler.handleOAuthCallback(uri.toString())
             }
         }
     }

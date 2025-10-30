@@ -97,6 +97,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.browser)
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ktor.client.okhttp)

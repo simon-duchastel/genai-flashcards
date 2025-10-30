@@ -2,11 +2,9 @@ package domain.repository
 
 import data.api.ServerFlashcardApiClient
 import data.storage.FlashcardStorage
-import domain.generator.FlashcardGenerator
 import domain.model.Flashcard
 import domain.model.FlashcardSet
 import domain.model.FlashcardSetWithMeta
-import domain.repository.AuthRepository
 
 /**
  * Repository for managing flashcard sets.
