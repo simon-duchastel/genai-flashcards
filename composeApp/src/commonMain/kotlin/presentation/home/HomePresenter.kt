@@ -16,7 +16,7 @@ class HomePresenter(
 
     @Composable
     override fun present(): HomeUiState {
-        var flashcardSets by remember { mutableStateOf(emptyList<domain.model.FlashcardSet>()) }
+        var flashcardSets by remember { mutableStateOf(emptyList<domain.model.FlashcardSetWithMeta>()) }
         var isLoading by remember { mutableStateOf(true) }
         var deleteDialog by remember { mutableStateOf<DeleteSetDialog?>(null) }
         val scope = rememberCoroutineScope()
@@ -45,7 +45,7 @@ class HomePresenter(
                     onConfirm = {
                         deleteDialog = null
                         scope.launch {
-                            repository.deleteFlashcardSet(set.id)
+                            repository.deleteFlashcardSet(set.flashcardSet.id)
                             loadFlashcardSets { sets ->
                                 flashcardSets = sets
                             }
@@ -68,7 +68,7 @@ class HomePresenter(
         )
     }
 
-    private suspend fun loadFlashcardSets(onLoaded: (List<domain.model.FlashcardSet>) -> Unit) {
+    private suspend fun loadFlashcardSets(onLoaded: (List<domain.model.FlashcardSetWithMeta>) -> Unit) {
         val sets = repository.getAllFlashcardSets()
         onLoaded(sets)
     }

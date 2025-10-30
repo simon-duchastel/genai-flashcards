@@ -39,6 +39,18 @@ kotlin {
         binaries.executable()
     }
 
+    // iOS targets
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(project(":shared"))
@@ -67,6 +79,16 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.json)
+        }
+
+        iosMain.dependencies {
+            // Ktor Darwin (iOS HTTP client)
+            implementation(libs.ktor.client.darwin)
+        }
+
+        wasmJsMain.dependencies {
+            // Ktor JS (Browser HTTP client)
+            implementation(libs.ktor.client.js)
         }
 
         commonTest.dependencies {

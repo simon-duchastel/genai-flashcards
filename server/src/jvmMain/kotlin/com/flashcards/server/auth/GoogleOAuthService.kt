@@ -1,17 +1,18 @@
 package com.flashcards.server.auth
 
+import api.dto.OAuthPlatform
+import com.flashcards.server.plugins.jsonParser
 import domain.model.User
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.apache.Apache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.URLBuilder
+import io.ktor.http.parameters
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.util.Base64
 
 /**
@@ -20,26 +21,32 @@ import java.util.Base64
 class GoogleOAuthService(
     private val clientId: String,
     private val clientSecret: String,
-    private val redirectUri: String
+    private val webRedirectUri: String,
+    private val iosRedirectUri: String,
 ) {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-            })
+            json(jsonParser)
         }
     }
 
     companion object {
         private const val GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
         private const val GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-        private const val SCOPES = "openid email profile"
+        private const val SCOPES = "openid"
     }
 
     /**
      * Generate the Google OAuth authorization URL.
+     *
+     * @param platform The platform type to get the appropriate redirect URI
      */
-    fun getAuthorizationUrl(): String {
+    fun getAuthorizationUrl(platform: OAuthPlatform = OAuthPlatform.WEB): String {
+        val redirectUri = when (platform) {
+            OAuthPlatform.WEB -> webRedirectUri
+            OAuthPlatform.IOS -> iosRedirectUri
+        }
+
         return URLBuilder(GOOGLE_AUTH_URL).apply {
             parameters.append("client_id", clientId)
             parameters.append("redirect_uri", redirectUri)
@@ -53,10 +60,16 @@ class GoogleOAuthService(
      * Exchange authorization code for tokens and user info.
      *
      * @param code The authorization code from Google
+     * @param platform The platform type that was used in the authorization request
      * @return User information extracted from the ID token
      * @throws Exception if token exchange or validation fails
      */
-    suspend fun exchangeCodeForUser(code: String): User {
+    suspend fun exchangeCodeForUser(code: String, platform: OAuthPlatform = OAuthPlatform.WEB): User {
+        val redirectUri = when (platform) {
+            OAuthPlatform.WEB -> webRedirectUri
+            OAuthPlatform.IOS -> iosRedirectUri
+        }
+
         // Exchange code for tokens
         val tokenResponse = httpClient.submitForm(
             url = GOOGLE_TOKEN_URL,
@@ -73,10 +86,7 @@ class GoogleOAuthService(
         val userInfo = parseIdToken(tokenResponse.idToken)
 
         return User(
-            authId = userInfo.sub,
-            email = userInfo.email,
-            name = userInfo.name,
-            picture = userInfo.picture
+            authId = "google-${userInfo.sub}",
         )
     }
 
@@ -93,7 +103,7 @@ class GoogleOAuthService(
 
         // Decode payload (second part of JWT)
         val payload = String(Base64.getUrlDecoder().decode(parts[1]))
-        return Json.decodeFromString<GoogleIdTokenPayload>(payload)
+        return jsonParser.decodeFromString<GoogleIdTokenPayload>(payload)
     }
 
     /**
@@ -114,14 +124,10 @@ class GoogleOAuthService(
      */
     @Serializable
     private data class GoogleIdTokenPayload(
-        val sub: String,             // Google user ID
-        val email: String,           // User email
-        val name: String? = null,    // Display name
-        val picture: String? = null, // Profile picture URL
-        @SerialName("email_verified") val emailVerified: Boolean? = null,
-        val iss: String,             // Issuer
-        val aud: String,             // Audience
-        val exp: Long,               // Expiration
-        val iat: Long                // Issued at
+        val sub: String,  // Google user ID
+        val iss: String,  // Issuer
+        val aud: String,  // Audience
+        val exp: Long,    // Expiration
+        val iat: Long     // Issued at
     )
 }

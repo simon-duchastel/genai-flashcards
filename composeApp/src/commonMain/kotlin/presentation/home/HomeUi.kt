@@ -18,11 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import domain.model.FlashcardSet
+import domain.model.FlashcardSetWithMeta
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,7 +83,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             else -> {
                 FlashcardSetList(
                     sets = state.flashcardSets,
-                    onSetClick = { state.onOpenSet(it.id) },
+                    onSetClick = { state.onOpenSet(it.flashcardSet.id) },
                     onDeleteClick = state.onDeleteSetClick,
                     modifier = Modifier.fillMaxSize().padding(padding)
                 )
@@ -96,7 +96,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             AlertDialog(
                 onDismissRequest = dialog.onCancel,
                 title = { Text("Remove Set") },
-                text = { Text("Are you sure you want to remove \"${dialog.set.topic}\"?") },
+                text = { Text("Are you sure you want to remove \"${dialog.set.flashcardSet.topic}\"?") },
                 confirmButton = {
                     Button(onClick = dialog.onConfirm) {
                         Text("Remove")
@@ -142,9 +142,9 @@ private fun EmptyState(
 
 @Composable
 private fun FlashcardSetList(
-    sets: List<FlashcardSet>,
-    onSetClick: (FlashcardSet) -> Unit,
-    onDeleteClick: (FlashcardSet) -> Unit,
+    sets: List<FlashcardSetWithMeta>,
+    onSetClick: (FlashcardSetWithMeta) -> Unit,
+    onDeleteClick: (FlashcardSetWithMeta) -> Unit,
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -158,11 +158,11 @@ private fun FlashcardSetList(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(sets, key = { it.id }) { set ->
+            items(sets, key = { it.flashcardSet.id }) { setWithMeta ->
                 FlashcardSetItem(
-                    set = set,
-                    onClick = { onSetClick(set) },
-                    onDeleteClick = { onDeleteClick(set) }
+                    setWithMeta = setWithMeta,
+                    onClick = { onSetClick(setWithMeta) },
+                    onDeleteClick = { onDeleteClick(setWithMeta) }
                 )
             }
         }
@@ -171,11 +171,13 @@ private fun FlashcardSetList(
 
 @Composable
 private fun FlashcardSetItem(
-    set: FlashcardSet,
+    setWithMeta: FlashcardSetWithMeta,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val set = setWithMeta.flashcardSet
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -190,11 +192,31 @@ private fun FlashcardSetItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = set.topic,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = set.topic,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (setWithMeta.isLocalOnly) {
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    text = "Local Only",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${set.cardCount} cards",

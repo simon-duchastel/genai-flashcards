@@ -15,8 +15,8 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 @Serializable
 data class Session(
-    val sessionToken: String,
-    val userId: String,
+    val sessionToken: String = "",
+    val userId: String = "",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val lastAccessedAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {

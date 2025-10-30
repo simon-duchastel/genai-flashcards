@@ -1,73 +1,165 @@
 package com.flashcards.server.routes
 
-import api.dto.AuthResponse
 import api.dto.ErrorResponse
 import api.dto.LoginUrlResponse
 import api.dto.MeResponse
+import api.dto.OAuthPlatform
 import api.routes.ApiRoutes
+import com.flashcards.server.auth.AppleOAuthService
 import com.flashcards.server.auth.AuthenticatedUser
 import com.flashcards.server.auth.GoogleOAuthService
 import com.flashcards.server.repository.AuthRepository
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import domain.model.User
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.log
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 
 /**
  * Configure authentication routes.
  */
 fun Route.authRoutes(
     authRepository: AuthRepository,
-    googleOAuthService: GoogleOAuthService
+    googleOAuthService: GoogleOAuthService,
+    testGoogleOAuthService: GoogleOAuthService,
+    appleOAuthService: AppleOAuthService,
 ) {
-    // GET /api/v1/auth/google/login - Get Google OAuth URL
-    get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
-        val authUrl = googleOAuthService.getAuthorizationUrl()
-        call.respond(HttpStatusCode.OK, LoginUrlResponse(authUrl))
+    /**
+     * Handles OAuth login by getting authorization URL and responding with it.
+     */
+    suspend fun RoutingContext.handleOAuthLogin(isTest: Boolean, platform: OAuthPlatform) {
+        val authUrl = if (isTest){
+            testGoogleOAuthService.getAuthorizationUrl(platform)
+        } else {
+            googleOAuthService.getAuthorizationUrl(platform)
+        }
+
+        call.respond(LoginUrlResponse(authUrl))
     }
 
-    // GET /api/v1/auth/google/callback?code=xxx - OAuth callback
-    get(ApiRoutes.AUTH_GOOGLE_CALLBACK) {
+    /**
+     * Handles OAuth callback by exchanging code for user info and creating session.
+     * Generic function that works for any OAuth provider.
+     */
+    suspend fun RoutingContext.handleOAuthCallback(
+        exchangeCodeForUser: suspend (String, OAuthPlatform) -> User,
+        platform: OAuthPlatform,
+        redirectUrl: String,
+    ) {
         val code = call.parameters["code"]
-            ?: return@get call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse("Missing authorization code", "MISSING_CODE")
-            )
+            ?: return call.respondRedirect("$redirectUrl?auth-redirect=true&error=missing_code")
 
         try {
-            // Exchange code for user info
-            val userFromGoogle = googleOAuthService.exchangeCodeForUser(code)
+            // Exchange code for user info using the provided function
+            val userFromOAuth = exchangeCodeForUser(code, platform)
 
             // Check if user already exists
-            val user = authRepository.getUserByAuthId(userFromGoogle.authId)
-                ?: authRepository.createUser(userFromGoogle)
+            val user = authRepository.getUserByAuthId(userFromOAuth.authId)
+                ?: authRepository.createUser(userFromOAuth)
 
             // Create session
             val session = authRepository.createSession(user.userId)
 
-            // Return session token and user
-            call.respond(
-                HttpStatusCode.OK,
-                AuthResponse(
-                    sessionToken = session.sessionToken,
-                    user = user
-                )
-            )
+            // Redirect with token and optional user info in query params
+            val redirectUrl = buildString {
+                append("$redirectUrl?auth-redirect=true&token=${session.sessionToken}")
+            }
+
+            call.respondRedirect(redirectUrl)
         } catch (e: Exception) {
+            // Redirect to auth screen with error
             call.application.log.error("OAuth callback error", e)
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse("Authentication failed: ${e.message}", "AUTH_FAILED")
-            )
+            call.respondRedirect("$redirectUrl?auth-redirect=true&error='unable-to-create'")
         }
+    }
+
+    // GET /api/v1/auth/google/login - Get Google OAuth URL
+    get(ApiRoutes.AUTH_GOOGLE_LOGIN) {
+        val platform = if (call.request.queryParameters["platform"] == "ios") {
+            OAuthPlatform.IOS
+        } else {
+            OAuthPlatform.WEB
+        }
+        handleOAuthLogin(isTest = false, platform = platform)
+    }
+
+    // GET /api/v1/auth/google/test/login - Get Google OAuth URL for testing
+    get(ApiRoutes.AUTH_GOOGLE_LOGIN_TEST) {
+        val platform = if (call.request.queryParameters["platform"] == "ios") {
+            OAuthPlatform.IOS
+        } else {
+            OAuthPlatform.WEB
+        }
+        handleOAuthLogin(isTest = true, platform = platform)
+    }
+
+    // GET /api/v1/auth/google/callback?code=xxx - OAuth callback
+    get(ApiRoutes.AUTH_GOOGLE_CALLBACK) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> googleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.WEB,
+            redirectUrl = ApiRoutes.WEB_CLIENT
+        )
+    }
+
+    // GET /api/v1/auth/google/callback/ios?code=xxx - OAuth callback for iOS
+    get(ApiRoutes.AUTH_GOOGLE_CALLBACK_IOS) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> googleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.IOS,
+            redirectUrl = ApiRoutes.IOS_CLIENT
+        )
+    }
+
+    // GET /api/v1/auth/google/test/callback?code=xxx - OAuth callback for testing
+    get(ApiRoutes.AUTH_GOOGLE_CALLBACK_TEST) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> testGoogleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.WEB,
+            redirectUrl = ApiRoutes.TEST_WEB_CLIENT
+        )
+    }
+
+    // GET /api/v1/auth/apple/login - Get Apple OAuth URL
+    get(ApiRoutes.AUTH_APPLE_LOGIN) {
+        val platform = if (call.request.queryParameters["platform"] == "ios") {
+            OAuthPlatform.IOS
+        } else {
+            OAuthPlatform.WEB
+        }
+        val authUrl = appleOAuthService.getAuthorizationUrl(platform)
+        call.respond(LoginUrlResponse(authUrl))
+    }
+
+    // GET /api/v1/auth/apple/callback?code=xxx - OAuth callback for Apple
+    get(ApiRoutes.AUTH_APPLE_CALLBACK) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> appleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.WEB,
+            redirectUrl = ApiRoutes.WEB_CLIENT
+        )
+    }
+
+    // GET /api/v1/auth/apple/callback/ios?code=xxx - OAuth callback for Apple iOS
+    get(ApiRoutes.AUTH_APPLE_CALLBACK_IOS) {
+        handleOAuthCallback(
+            exchangeCodeForUser = { code, platform -> appleOAuthService.exchangeCodeForUser(code, platform) },
+            platform = OAuthPlatform.IOS,
+            redirectUrl = ApiRoutes.IOS_CLIENT
+        )
     }
 
     // Protected routes (require authentication)
     authenticate("auth-bearer") {
         // POST /api/v1/auth/logout - Logout
         post(ApiRoutes.AUTH_LOGOUT) {
-            val principal = call.principal<AuthenticatedUser>()
+            call.principal<AuthenticatedUser>()
                 ?: return@post call.respond(
                     HttpStatusCode.Unauthorized,
                     ErrorResponse("Authentication required", "UNAUTHORIZED")
