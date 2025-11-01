@@ -38,7 +38,7 @@ class HomePresenter(
             isLoading = isLoading,
             deleteDialog = deleteDialog,
             onCreateNewSet = {
-                navigator.goTo(CreateScreen())
+                navigator.goTo(CreateScreen)
             },
             onOpenSet = { setId ->
                 navigator.goTo(StudyScreen(setId = setId))

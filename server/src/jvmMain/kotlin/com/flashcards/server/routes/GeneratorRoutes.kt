@@ -4,6 +4,7 @@ import api.dto.ErrorResponse
 import api.dto.GenerateRequest
 import api.dto.GenerateResponse
 import api.dto.RateLimitError
+import api.dto.RegenerateRequest
 import api.routes.ApiRoutes
 import com.flashcards.server.auth.AuthenticatedUser
 import com.flashcards.server.storage.RateLimiter
@@ -71,6 +72,59 @@ fun Route.generatorRoutes(generator: KoogFlashcardGenerator, rateLimiter: RateLi
                 call.respond(
                     HttpStatusCode.InternalServerError,
                     GenerateResponse(error = "Failed to generate flashcards. Please check your API key.")
+                )
+            } else {
+                rateLimiter.recordAttempt(principal.userId)
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    GenerateResponse(flashcardSet = flashcardSet)
+                )
+            }
+        }
+
+        // POST /api/v1/regenerate - Regenerate flashcards
+        post(ApiRoutes.REGENERATE) {
+            val principal = call.principal<AuthenticatedUser>()
+                ?: return@post call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Authentication required", "UNAUTHORIZED")
+                )
+
+            when (val result = rateLimiter.checkRateLimit(principal.userId)) {
+                is RateLimitResult.RateLimitExceeded -> {
+                    return@post call.respond(
+                        HttpStatusCode.TooManyRequests,
+                        RateLimitError(
+                            message = "You've exceeded your number of flashcard generations for today",
+                            tryAgainAt = result.tryAgainAt,
+                            numberOfGenerations = result.numberOfGenerations
+                        )
+                    )
+                }
+                RateLimitResult.Ok -> Unit // do nothing - continue with generation
+            }
+
+            val request = call.receive<RegenerateRequest>()
+
+            // Validate request
+            if (request.flashcardSet.flashcards.isEmpty()) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    GenerateResponse(error = "Must provide existing flashcards to regenerate")
+                )
+            }
+
+            // Regenerate flashcards
+            val flashcardSet = generator.regenerate(
+                existingSet = request.flashcardSet,
+                regenerationPrompt = request.regenerationPrompt,
+            )?.copy(userId = principal.userId)
+
+            if (flashcardSet == null) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    GenerateResponse(error = "Failed to regenerate flashcards. Please check your API key.")
                 )
             } else {
                 rateLimiter.recordAttempt(principal.userId)

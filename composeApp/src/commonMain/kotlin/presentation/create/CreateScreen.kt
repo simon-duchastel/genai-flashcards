@@ -8,9 +8,7 @@ import parcel.Parcelize
 
 @Serializable
 @Parcelize
-data class CreateScreen(
-    val topicHint: String? = null
-) : Screen
+data object CreateScreen: Screen
 
 // UI State
 data class CreateUiState(
@@ -21,6 +19,8 @@ data class CreateUiState(
     val generatedCards: List<Flashcard>,
     val error: String?,
     val deleteDialog: DeleteCardDialog? = null,
+    val regenerationPrompt: String,
+    val isRegenerating: Boolean,
     val onTopicChanged: (String) -> Unit,
     val onQueryChanged: (String) -> Unit,
     val onCountChanged: (Int) -> Unit,
@@ -28,7 +28,9 @@ data class CreateUiState(
     val onSaveClicked: () -> Unit,
     val onBackClicked: () -> Unit,
     val onEditCard: (String, String, String) -> Unit,
-    val onDeleteCardClick: (Flashcard) -> Unit
+    val onDeleteCardClick: (Flashcard) -> Unit,
+    val onRegenerationPromptChanged: (String) -> Unit,
+    val onRerollClicked: () -> Unit
 ) : CircuitUiState
 
 data class DeleteCardDialog(
