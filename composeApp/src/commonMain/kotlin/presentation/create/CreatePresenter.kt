@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
 class CreatePresenter(
-    private val screen: CreateScreen,
     private val navigator: Navigator,
     private val authRepository: AuthRepository,
     private val clientRepository: ClientFlashcardRepository,
@@ -29,13 +28,15 @@ class CreatePresenter(
 
     @Composable
     override fun present(): CreateUiState {
-        var topic by remember { mutableStateOf(screen.topicHint ?: "") }
+        var topic by remember { mutableStateOf("") }
         var query by remember { mutableStateOf("") }
         var count by remember { mutableStateOf(10) }
         var isGenerating by remember { mutableStateOf(false) }
         var generatedCardsSet: FlashcardSet? by remember { mutableStateOf(null) }
         var error by remember { mutableStateOf<String?>(null) }
         var deleteDialog by remember { mutableStateOf<DeleteCardDialog?>(null) }
+        var regenerationPrompt by remember { mutableStateOf("") }
+        var isRegenerating by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
         return CreateUiState(
@@ -46,6 +47,8 @@ class CreatePresenter(
             generatedCards = generatedCardsSet?.flashcards ?: emptyList(),
             error = error,
             deleteDialog = deleteDialog,
+            regenerationPrompt = regenerationPrompt,
+            isRegenerating = isRegenerating,
             onTopicChanged = { newTopic ->
                 topic = newTopic.take(30)
                 error = null
@@ -182,6 +185,63 @@ class CreatePresenter(
                         )
                     }
                 )
+            },
+            onRegenerationPromptChanged = { newPrompt ->
+                regenerationPrompt = newPrompt
+                error = null
+            },
+            onRerollClicked = {
+                val setToRegenerate = generatedCardsSet
+                if (setToRegenerate == null) {
+                    error = "No flashcards to regenerate"
+                } else {
+                    isRegenerating = true
+                    error = null
+                    scope.launch {
+                        try {
+                            // Use server generator if authenticated, otherwise use local (Koog)
+                            val generator = if (authRepository.isSignedIn()) {
+                                serverGenerator
+                            } else {
+                                koogGenerator
+                            }
+
+                            val newSet = generator.regenerate(
+                                existingSet = setToRegenerate,
+                                regenerationPrompt = regenerationPrompt.ifBlank { "" }
+                            )
+
+                            if (newSet == null) {
+                                error = """
+                                    Failed to regenerate flashcards. Please try again.
+
+                                    Need help? Email help@solenne.ai
+                                """.trimIndent()
+                            } else {
+                                generatedCardsSet = newSet
+                                regenerationPrompt = "" // Clear after successful regeneration
+                            }
+                        } catch (e: RateLimitException) {
+                            val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
+                            error = """
+                                ${e.message}
+
+                                You've used ${e.numberOfGenerations} generations today.
+                                You can try again at $tryAgainDate
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                        } catch (e: Exception) {
+                            error = """
+                                Error regenerating: ${e.message ?: "Unknown error"}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                        } finally {
+                            isRegenerating = false
+                        }
+                    }
+                }
             }
         )
     }

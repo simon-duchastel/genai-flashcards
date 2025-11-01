@@ -123,4 +123,47 @@ class KoogFlashcardGenerator(
             null
         }
     }
+
+    /**
+     * Regenerate flashcards based on an existing set.
+     *
+     * @param existingSet The current flashcard set to improve upon
+     * @param regenerationPrompt User's custom instruction for regeneration
+     * @param count Number of flashcards to generate
+     * @return FlashcardSet with regenerated cards, or null if generation fails
+     */
+    override suspend fun regenerate(existingSet: FlashcardSet, regenerationPrompt: String): FlashcardSet? {
+        return try {
+            val apiKey = getGeminiApiKey() ?: return null
+            val agent = createAgent(apiKey)
+
+            val prompt = markdown {
+                +"Please regenerate exactly ${existingSet.cardCount} flashcards on the topic of '${existingSet.topic}'."
+                +"Create NEW questions and answers that cover similar concepts but are worded differently."
+
+                h2("Existing Flashcards")
+                existingSet.flashcards.forEachIndexed { index, card ->
+                    h3("Card ${index + 1}")
+                    +"**Front:** ${card.front}"
+                    +"**Back:** ${card.back}"
+                    +""
+                }
+
+                if (regenerationPrompt.isNotBlank()) {
+                    h2("Additional User Instructions")
+                    +regenerationPrompt
+                }
+
+                +""
+                +"Remember: Generate ${existingSet.cardCount} FRESH flashcards with new wording that test understanding of '${existingSet.topic}' in different ways."
+            }
+
+            val rawSet = agent.run(prompt) ?: return null
+            rawSet.toFlashcardSet()
+        } catch (e: Exception) {
+            println("Failed to regenerate flashcards: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
 }
