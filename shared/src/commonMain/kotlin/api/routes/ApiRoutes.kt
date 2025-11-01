@@ -33,4 +33,5 @@ object ApiRoutes {
 
     // Generator routes
     const val GENERATE = "$API_BASE/generate"
+    const val REGENERATE = "$API_BASE/regenerate"
 }

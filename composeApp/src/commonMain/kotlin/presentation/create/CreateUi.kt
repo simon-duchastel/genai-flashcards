@@ -14,6 +14,10 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.foundation.layout.size
+import org.jetbrains.compose.resources.painterResource
+import genai_flashcards.composeapp.generated.resources.Res
+import genai_flashcards.composeapp.generated.resources.dice_icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -198,6 +202,36 @@ private fun PreviewCards(state: CreateUiState) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Re-roll section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = state.regenerationPrompt,
+                onValueChange = state.onRegenerationPromptChanged,
+                placeholder = { Text("Not happy? Add instructions and re-roll (e.g., 'make them easier')") },
+                modifier = Modifier.weight(1f),
+                enabled = !state.isRegenerating,
+                singleLine = true
+            )
+            IconButton(
+                onClick = state.onRerollClicked,
+                enabled = !state.isRegenerating
+            ) {
+                if (state.isRegenerating) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                } else {
+                    Icon(
+                        painter = painterResource(Res.drawable.dice_icon),
+                        contentDescription = "Re-roll flashcards"
+                    )
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         LazyColumn(

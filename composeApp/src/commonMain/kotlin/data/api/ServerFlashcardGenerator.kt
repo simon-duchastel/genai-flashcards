@@ -3,8 +3,10 @@ package data.api
 import api.dto.GenerateRequest
 import api.dto.GenerateResponse
 import api.dto.RateLimitError
+import api.dto.RegenerateRequest
 import api.routes.ApiRoutes
 import data.storage.ConfigRepository
+import domain.model.Flashcard
 import domain.model.FlashcardSet
 import domain.repository.FlashcardGenerator
 import io.ktor.client.HttpClient
@@ -74,6 +76,48 @@ class ServerFlashcardGenerator(
             throw e
         } catch (e: Exception) {
             println("Failed to generate flashcards: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override suspend fun regenerate(existingSet: FlashcardSet, regenerationPrompt: String): FlashcardSet? {
+        return try {
+            val token = configRepository.getSessionToken()
+                ?: throw IllegalStateException("Not authenticated")
+
+            val response: HttpResponse = httpClient.post("$baseUrl${ApiRoutes.REGENERATE}") {
+                contentType(ContentType.Application.Json)
+                bearerAuth(token)
+                setBody(RegenerateRequest(
+                    flashcardSet = existingSet,
+                    regenerationPrompt = regenerationPrompt,
+                ))
+            }
+
+            when (response.status) {
+                HttpStatusCode.OK -> {
+                    val generateResponse: GenerateResponse = response.body()
+                    generateResponse.flashcardSet
+                }
+                HttpStatusCode.TooManyRequests -> {
+                    val rateLimitError: RateLimitError = response.body()
+                    throw RateLimitException(
+                        tryAgainAt = rateLimitError.tryAgainAt,
+                        numberOfGenerations = rateLimitError.numberOfGenerations,
+                        message = rateLimitError.message
+                    )
+                }
+                else -> {
+                    val errorResponse: GenerateResponse = response.body()
+                    throw Exception(errorResponse.error ?: "Failed to regenerate flashcards")
+                }
+            }
+        } catch (e: RateLimitException) {
+            // Re-throw rate limit exceptions so they can be handled by the UI
+            throw e
+        } catch (e: Exception) {
+            println("Failed to regenerate flashcards: ${e.message}")
             e.printStackTrace()
             null
         }
