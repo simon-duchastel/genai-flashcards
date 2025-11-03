@@ -33,4 +33,9 @@ interface AndroidAppGraph : AppGraph {
     @Provides
     fun provideOAuthHandler(context: Context, authApiClient: AuthApiClient): OAuthHandler =
         ChromeCustomTabsOAuthHandler(context, authApiClient)
+
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(@Provides appContext: Context): AndroidAppGraph
+    }
 }
