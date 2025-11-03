@@ -58,7 +58,7 @@ kotlin {
 // Create a run task for the server
 tasks.register<JavaExec>("run") {
     group = "application"
-    mainClass.set("com.flashcards.server.ApplicationKt")
+    mainClass.set("ai.solenne.flashcards.server.ApplicationKt")
 
     val mainCompilation = kotlin.jvm().compilations.getByName("main")
     classpath = files(

@@ -29,7 +29,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
             freeCompilerArgs.addAll(
                 "-P",
-                "plugin:org.jetbrains.kotlin.parcelize:additionalAnnotation=parcel.Parcelize",
+                "plugin:org.jetbrains.kotlin.parcelize:additionalAnnotation=ai.solenne.flashcards.app.parcel.Parcelize",
             )
         }
     }
