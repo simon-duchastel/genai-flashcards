@@ -1,15 +1,15 @@
 package ai.solenne.flashcards
 
-import App
+import ai.solenne.flashcards.app.App
+import ai.solenne.flashcards.app.data.auth.ChromeCustomTabsOAuthHandler
+import ai.solenne.flashcards.app.di.AndroidAppGraph
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.text.selection.SelectionContainer
-import data.auth.ChromeCustomTabsOAuthHandler
 import dev.zacsweers.metro.createGraphFactory
-import di.AndroidAppGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

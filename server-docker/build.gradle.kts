@@ -18,11 +18,11 @@ plugins {
     alias(libs.plugins.ktorPlugin)
 }
 
-group = "com.flashcards"
+group = "ai.solenne.flashcards"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.flashcards.server.DockerApplicationKt")
+    mainClass.set("ai.solenne.flashcards.server.DockerApplicationKt")
 }
 
 dependencies {

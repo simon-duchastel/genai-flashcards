@@ -1,0 +1,13 @@
+package ai.solenne.flashcards.app.presentation.splash
+
+import com.slack.circuit.runtime.CircuitUiState
+import com.slack.circuit.runtime.screen.Screen
+import kotlinx.serialization.Serializable
+import ai.solenne.flashcards.app.parcel.Parcelize
+
+@Serializable
+@Parcelize
+data object SplashScreen : Screen
+
+// UI State - simple, just shows loading
+data object SplashUiState : CircuitUiState
