@@ -4,6 +4,7 @@ browser = "1.8.0"
 coreKtx = "1.17.0"
 datastorePreferences = "1.1.7"
 kotlin = "2.2.20"
+ksp = "2.2.20-2.0.3"
 composeMultiplatform = "1.9.0"
 composeHotReload = "1.0.0-beta07"
 androidx-lifecycle = "2.9.4"
@@ -16,6 +17,7 @@ ktor = "3.0.3"
 logback = "1.4.14"
 compose-material-icons-extended = "1.6.10"
 agp = "8.13.0"
+metro = "0.7.3"
 
 [libraries]
 # Kotlin
@@ -62,6 +64,9 @@ ktor-client-apache = { module = "io.ktor:ktor-client-apache", version.ref = "kto
 # Logging
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
+# Metro DI
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
+
 [plugins]
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
@@ -73,3 +78,5 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 ktorPlugin = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
