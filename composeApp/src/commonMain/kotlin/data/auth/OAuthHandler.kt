@@ -18,8 +18,3 @@ interface OAuthHandler {
      */
     suspend fun startOAuthFlow(provider: OAuthProvider): AuthResponse?
 }
-
-/**
- * Platform-specific factory function for OAuthHandler.
- */
-expect fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler

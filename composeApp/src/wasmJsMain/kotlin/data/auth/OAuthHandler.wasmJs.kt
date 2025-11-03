@@ -33,6 +33,3 @@ class WebOAuthHandler(
     }
 }
 
-actual fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler {
-    return WebOAuthHandler(authApiClient)
-}

@@ -131,17 +131,3 @@ class ChromeCustomTabsOAuthHandler(
         return callbackUrl.substring(tokenStart, tokenEnd)
     }
 }
-
-actual fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler {
-    throw IllegalStateException(
-        "getOAuthHandler must be called with a Context on Android. " +
-        "Use getOAuthHandler(context, authApiClient) instead."
-    )
-}
-
-/**
- * Android-specific factory function for OAuthHandler that requires a Context.
- */
-fun getOAuthHandler(context: Context, authApiClient: AuthApiClient): OAuthHandler {
-    return ChromeCustomTabsOAuthHandler(context, authApiClient)
-}

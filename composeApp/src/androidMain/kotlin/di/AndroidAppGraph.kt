@@ -2,8 +2,8 @@ package di
 
 import android.content.Context
 import data.api.AuthApiClient
+import data.auth.ChromeCustomTabsOAuthHandler
 import data.auth.OAuthHandler
-import data.auth.getOAuthHandler
 import data.storage.ConfigRepository
 import data.storage.ConfigRepositoryAndroid
 import data.storage.FlashcardStorage
@@ -32,5 +32,5 @@ interface AndroidAppGraph : AppGraph {
 
     @Provides
     fun provideOAuthHandler(context: Context, authApiClient: AuthApiClient): OAuthHandler =
-        getOAuthHandler(context, authApiClient)
+        ChromeCustomTabsOAuthHandler(context, authApiClient)
 }

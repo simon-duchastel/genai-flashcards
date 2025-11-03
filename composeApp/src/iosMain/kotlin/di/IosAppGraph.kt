@@ -2,7 +2,7 @@ package di
 
 import data.api.AuthApiClient
 import data.auth.OAuthHandler
-import data.auth.getOAuthHandler
+import data.auth.SFOAuthHandler
 import data.storage.ConfigRepository
 import data.storage.ConfigRepositoryIos
 import data.storage.FlashcardStorage
@@ -29,5 +29,5 @@ interface IosAppGraph : AppGraph {
 
     @Provides
     fun provideOAuthHandler(authApiClient: AuthApiClient): OAuthHandler =
-        getOAuthHandler(authApiClient)
+       SFOAuthHandler(authApiClient)
 }

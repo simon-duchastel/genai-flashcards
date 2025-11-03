@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val appGraph = createGraphFactory<AndroidAppGraph.Factory>().create(applicationContext)
+        val appGraph = createGraphFactory<AndroidAppGraph>().create(applicationContext)
 
         setContent {
             SelectionContainer {
