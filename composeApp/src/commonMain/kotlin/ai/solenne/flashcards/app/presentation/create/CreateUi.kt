@@ -1,0 +1,400 @@
+package ai.solenne.flashcards.app.presentation.create
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FlipToBack
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.foundation.layout.size
+import org.jetbrains.compose.resources.painterResource
+import genai_flashcards.composeapp.generated.resources.Res
+import genai_flashcards.composeapp.generated.resources.dice_icon
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import ai.solenne.flashcards.shared.domain.model.Flashcard
+import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
+    Scaffold(
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Create Flashcards") },
+                navigationIcon = {
+                    IconButton(onClick = state.onBackClicked) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            val maxContentWidth = 840.dp
+            val contentWidth = minOf(maxWidth, maxContentWidth)
+
+            Column(
+                modifier = Modifier
+                    .width(contentWidth)
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp)
+            ) {
+                if (state.generatedCards.isEmpty()) {
+                    CreateForm(state)
+                } else {
+                    PreviewCards(state)
+                }
+            }
+        }
+    }
+
+    state.deleteDialog?.let { dialog ->
+        AlertDialog(
+            onDismissRequest = dialog.onCancel,
+            title = { Text("Remove Flashcard") },
+            text = { Text("Are you sure you want to remove this flashcard?") },
+            confirmButton = {
+                Button(onClick = dialog.onConfirm) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = dialog.onCancel) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CreateForm(state: CreateUiState) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            "What would you like to study?",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        OutlinedTextField(
+            value = state.topic,
+            onValueChange = state.onTopicChanged,
+            label = { Text("Topic") },
+            placeholder = { Text("ex.  \"Cats\", \"Sirens in Greek Mythology\", \"16th Century Witchcraft\"") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isGenerating,
+            singleLine = true,
+            supportingText = {
+                Text(
+                    "${state.topic.length}/30",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        )
+
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = state.onQueryChanged,
+            label = { Text("Additional Details (Optional)") },
+            placeholder = { Text("Describe what you want to focus on, any specific areas, difficulty level, etc.") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isGenerating,
+            singleLine = false,
+            minLines = 3,
+            maxLines = 5
+        )
+
+        Text(
+            "How many flashcards?",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("${state.count} cards")
+            Slider(
+                value = state.count.toFloat(),
+                onValueChange = { state.onCountChanged(it.toInt()) },
+                valueRange = 5f..50f,
+                steps = 44,
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                enabled = !state.isGenerating
+            )
+        }
+
+        if (state.error != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = textWithHelpEmail(state.error, MaterialTheme.colorScheme.onErrorContainer),
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = state.onGenerateClicked,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isGenerating && state.topic.isNotBlank()
+        ) {
+            if (state.isGenerating) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Generating...")
+            } else {
+                Text("Generate Flashcards")
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewCards(state: CreateUiState) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            "Generated ${state.generatedCards.size} flashcards",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Review and edit before saving",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Re-roll section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = state.regenerationPrompt,
+                onValueChange = state.onRegenerationPromptChanged,
+                placeholder = { Text("Not happy? Add instructions and re-roll (e.g., 'make them easier')") },
+                modifier = Modifier.weight(1f),
+                enabled = !state.isRegenerating,
+                singleLine = true
+            )
+            IconButton(
+                onClick = state.onRerollClicked,
+                enabled = !state.isRegenerating
+            ) {
+                if (state.isRegenerating) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                } else {
+                    Icon(
+                        painter = painterResource(Res.drawable.dice_icon),
+                        contentDescription = "Re-roll flashcards"
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(state.generatedCards, key = { it.id }) { card ->
+                FlashcardPreviewItem(
+                    card = card,
+                    onEdit = { front, back -> state.onEditCard(card.id, front, back) },
+                    onDeleteClick = { state.onDeleteCardClick(card) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = state.onBackClicked,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Cancel")
+            }
+            Button(
+                onClick = state.onSaveClicked,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save Set")
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlashcardPreviewItem(
+    card: Flashcard,
+    onEdit: (String, String) -> Unit,
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showEditDialog by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    "Front:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Row {
+                    IconButton(
+                        onClick = { showEditDialog = true },
+                        modifier = Modifier.size(24.dp).offset(y = (-8).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit"
+                        )
+                    }
+                    IconButton(
+                        onClick = onDeleteClick,
+                        modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                    }
+                }
+            }
+            Text(
+                text = card.front,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                "Back:",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = card.back,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+
+    if (showEditDialog) {
+        EditCardDialog(
+            front = card.front,
+            back = card.back,
+            onDismiss = { showEditDialog = false },
+            onSave = { newFront, newBack ->
+                onEdit(newFront, newBack)
+                showEditDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditCardDialog(
+    front: String,
+    back: String,
+    onDismiss: () -> Unit,
+    onSave: (String, String) -> Unit
+) {
+    var editedFront by remember { mutableStateOf(front) }
+    var editedBack by remember { mutableStateOf(back) }
+    val scrollState = rememberScrollState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Flashcard") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = editedFront,
+                    onValueChange = { editedFront = it },
+                    label = { Text("Front") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 5
+                )
+                OutlinedTextField(
+                    value = editedBack,
+                    onValueChange = { editedBack = it },
+                    label = { Text("Back") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 5
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(editedFront, editedBack) },
+                enabled = editedFront.isNotBlank() && editedBack.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
