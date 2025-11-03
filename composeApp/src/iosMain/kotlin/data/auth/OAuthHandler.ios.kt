@@ -144,7 +144,3 @@ class SFOAuthHandler(
         return callbackUrl.substring(tokenStart, tokenEnd)
     }
 }
-
-actual fun getOAuthHandler(authApiClient: AuthApiClient): OAuthHandler {
-    return SFOAuthHandler(authApiClient)
-}
