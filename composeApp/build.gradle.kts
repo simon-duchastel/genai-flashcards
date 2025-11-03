@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinParcelize)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.metro)
 }
 
 kotlin {
@@ -60,6 +62,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":shared"))
+
+            // Metro DI
+            implementation(libs.metro.runtime)
 
             // Compose
             implementation(compose.runtime)
