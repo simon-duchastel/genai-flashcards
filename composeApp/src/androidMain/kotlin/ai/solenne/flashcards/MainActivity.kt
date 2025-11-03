@@ -8,15 +8,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.text.selection.SelectionContainer
 import data.auth.ChromeCustomTabsOAuthHandler
-import dev.zacsweers.metro.createGraph
-import di.AppGraph
+import dev.zacsweers.metro.createGraphFactory
+import di.AndroidAppGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val appGraph = createGraph<AppGraph>()
+        val appGraph = createGraphFactory<AndroidAppGraph.Factory>().create(applicationContext)
 
         setContent {
             SelectionContainer {

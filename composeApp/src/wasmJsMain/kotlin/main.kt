@@ -3,7 +3,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import data.api.AuthApiClient
 import data.storage.ConfigRepository
-import di.AppGraph
+import di.WasmAppGraph
 import di.createGraphFactory
 import kotlinx.browser.window
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -36,7 +36,7 @@ private fun getQueryParam(name: String): String? {
     ExperimentalWasmJsInterop::class,
 )
 fun main() {
-    val appGraph = createGraphFactory<AppGraph.Factory>().create()
+    val appGraph = createGraphFactory<WasmAppGraph.Factory>().create()
 
     // check if we've been redirected to from auth sign-in
     GlobalScope.launch {

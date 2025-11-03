@@ -11,10 +11,9 @@ import data.auth.OAuthHandler
 import data.repository.AuthRepositoryImpl
 import data.storage.ConfigRepository
 import data.storage.FlashcardStorage
-import dev.zacsweers.metro.AppScope
-import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.AppScope
 import domain.generator.KoogFlashcardGenerator
 import domain.repository.AuthRepository
 import domain.repository.ClientFlashcardRepository
@@ -42,21 +41,20 @@ import presentation.study.StudyUi
 import presentation.study.StudyUiState
 
 /**
- * Main dependency graph for the application.
- * Metro will generate the implementation of this interface with KSP.
+ * Base dependency graph for the application.
+ * Platform-specific graphs should extend this interface and add @DependencyGraph annotation.
+ * This allows each platform to provide its own platform-specific dependencies.
  */
-@DependencyGraph(AppScope::class)
 interface AppGraph {
     val circuit: Circuit
     val configRepository: ConfigRepository
     val authApiClient: AuthApiClient
 
     @Provides
-    fun provideOAuthHandler(authApiClient: AuthApiClient): OAuthHandler =
-        providePlatformOAuthHandler(authApiClient)
+    fun provideHttpClient(): HttpClient = HttpClientProvider.client
 
     @Provides
-    fun provideHttpClient(): HttpClient = HttpClientProvider.client
+    fun provideBaseUrl(): String = ApiConfig.BASE_URL
 
     @Provides
     fun provideAuthRepository(configRepository: ConfigRepository): AuthRepository =

@@ -1,6 +1,6 @@
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.window.ComposeUIViewController
-import di.AppGraph
+import di.IosAppGraph
 import di.createGraphFactory
 import platform.UIKit.UIViewController
 
@@ -10,7 +10,7 @@ import platform.UIKit.UIViewController
  */
 fun MainViewController(): UIViewController {
     // Create the DI graph using Metro
-    val appGraph = createGraphFactory<AppGraph.Factory>().create()
+    val appGraph = createGraphFactory<IosAppGraph.Factory>().create()
 
     return ComposeUIViewController {
         SelectionContainer {
