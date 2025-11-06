@@ -23,10 +23,8 @@ class AuthPresenter(
     override fun present(): AuthUiState {
         val canGoBack = remember { navigator.peekBackStack().size > 1 }
         var apiKeyInput: String? by remember { mutableStateOf(null) }
-        var isSaving by remember { mutableStateOf(false) }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
         var isAuthenticatingWithApple by remember { mutableStateOf(false) }
-        var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
         var isDangerousModeEnabled by remember { mutableStateOf(false) }
@@ -39,142 +37,157 @@ class AuthPresenter(
 
             // Check if user is logged in and load persisted user info
             val sessionToken = configRepository.getSessionToken()
-            if (sessionToken != null) {
-                isLoggedIn = true
-            } else {
-                isLoggedIn = false
-            }
+            isLoggedIn = sessionToken != null
         }
 
-        return AuthUiState(
-            apiKeyInput = apiKeyInput,
-            onBackClicked = if (canGoBack) { { navigator.pop() } } else null,
-            isSaving = isSaving,
-            error = error,
-            onApiKeyChanged = { newValue ->
-                apiKeyInput = newValue
-                error = null
-            },
-            onSaveClicked = {
-                val apiKeyToSubmit = apiKeyInput
-                when {
-                    apiKeyToSubmit.isNullOrBlank() -> {
-                        error = """
-                            Please enter an API key.
+        val apiKey = apiKeyInput
+        val apiKeyState = when {
+            apiKey == null -> ApiKeyState.Loading
+            apiKey.isBlank() -> ApiKeyState.Empty
+            else -> ApiKeyState.Loaded(
+                apiKey = apiKey,
+                onApiKeyChanged = { newValue ->
+                    apiKeyInput = newValue
+                    error = null
+                },
+                onSaveClicked = {
+                    val apiKeyToSubmit = apiKeyInput
+                    when {
+                        apiKeyToSubmit.isNullOrBlank() -> {
+                            error = """
+                                Please enter an API key.
 
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                    }
-                    else -> {
-                        isSaving = true
-                        error = null
-                        scope.launch {
-                            try {
-                                configRepository.setGeminiApiKey(apiKeyToSubmit.trim())
-                                navigator.resetRoot(SplashScreen)
-                            } catch (e: Exception) {
-                                error = """
-                                    Failed to save API key: ${e.message}
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                        }
+                        else -> {
+                            error = null
+                            scope.launch {
+                                try {
+                                    configRepository.setGeminiApiKey(apiKeyToSubmit.trim())
+                                    navigator.resetRoot(SplashScreen)
+                                } catch (e: Exception) {
+                                    error = """
+                                        Failed to save API key: ${e.message}
 
-                                    Need help? Email help@solenne.ai
-                                """.trimIndent()
-                                isSaving = false
+                                        Need help? Email help@solenne.ai
+                                    """.trimIndent()
+                                }
                             }
                         }
                     }
                 }
-            },
-            isAuthenticatingWithGoogle = isAuthenticatingWithGoogle,
-            onGoogleSignInClicked = {
-                scope.handleOAuthSignIn(
-                    provider = OAuthProvider.GOOGLE,
-                    setAuthenticating = { isAuthenticatingWithGoogle = it },
-                    setError = { error = it },
-                    setLoggedIn = { isLoggedIn = it },
-                )
-            },
-            isAuthenticatingWithApple = isAuthenticatingWithApple,
-            onAppleSignInClicked = {
-                scope.handleOAuthSignIn(
-                    provider = OAuthProvider.APPLE,
-                    setAuthenticating = { isAuthenticatingWithApple = it },
-                    setError = { error = it },
-                    setLoggedIn = { isLoggedIn = it },
-                )
-            },
-            isLoggedIn = isLoggedIn,
-            isLoggingOut = isLoggingOut,
-            onLogoutClicked = {
-                isLoggingOut = true
-                error = null
-                scope.launch {
-                    try {
-                        val sessionToken = configRepository.getSessionToken()
-                        if (sessionToken != null) {
-                            authApiClient.logout(sessionToken)
+            )
+        }
+
+        val dangerousModeState = if (isDangerousModeEnabled) {
+            DangerousModeState.Enabled(
+                onDangerousModeToggled = { isDangerousModeEnabled = !isDangerousModeEnabled },
+                onDeleteAccountClicked = { showDeleteAccountDialog = true }
+            )
+        } else {
+            DangerousModeState.Disabled(
+                onDangerousModeToggled = { isDangerousModeEnabled = !isDangerousModeEnabled }
+            )
+        }
+
+        val logInState = when {
+            isAuthenticatingWithGoogle || isAuthenticatingWithApple -> LogInState.Loading(
+                loadingGoogle = isAuthenticatingWithGoogle,
+                loadingApple = isAuthenticatingWithApple,
+            )
+            isLoggedIn -> LogInState.LoggedIn(
+                onLogoutClicked = {
+                    error = null
+                    scope.launch {
+                        try {
+                            val sessionToken = configRepository.getSessionToken()
+                            if (sessionToken != null) {
+                                authApiClient.logout(sessionToken)
+                            }
+                            configRepository.clearSessionToken()
+                            isLoggedIn = false
+
+                            // go back to splash screen
+                            navigator.resetRoot(SplashScreen)
+                        } catch (e: Exception) {
+                            error = """
+                                Logout failed: ${e.message}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
                         }
-                        // Clear session
-                        configRepository.clearSessionToken()
-
-                        // Update state
-                        isLoggedIn = false
-                        isLoggingOut = false
-
-                        // go back to splash screen
-                        navigator.resetRoot(SplashScreen)
-                    } catch (e: Exception) {
-                        error = """
-                            Logout failed: ${e.message}
-
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                        isLoggingOut = false
                     }
                 }
-            },
-            isDangerousModeEnabled = isDangerousModeEnabled,
-            onDangerousModeToggled = {
-                isDangerousModeEnabled = !isDangerousModeEnabled
-            },
-            showDeleteAccountDialog = showDeleteAccountDialog,
-            onDeleteAccountClicked = {
-                showDeleteAccountDialog = true
-            },
-            onDeleteAccountConfirmed = {
-                showDeleteAccountDialog = false
-                isDeletingAccount = true
-                error = null
-                scope.launch {
-                    try {
-                        val sessionToken = configRepository.getSessionToken()
-                        if (sessionToken != null) {
-                            authApiClient.deleteAccount(sessionToken)
-                        } else {
-                            throw IllegalStateException("Session token is null")
+            )
+            else -> LogInState.LoggedOut(
+                onGoogleSignInClicked = {
+                    scope.handleOAuthSignIn(
+                        provider = OAuthProvider.GOOGLE,
+                        setAuthenticating = { isAuthenticatingWithGoogle = it },
+                        setError = { error = it },
+                        setLoggedIn = { isLoggedIn = it },
+                    )
+                },
+                onAppleSignInClicked = {
+                    scope.handleOAuthSignIn(
+                        provider = OAuthProvider.APPLE,
+                        setAuthenticating = { isAuthenticatingWithApple = it },
+                        setError = { error = it },
+                        setLoggedIn = { isLoggedIn = it },
+                    )
+                },
+                dangerousModeState = dangerousModeState,
+                onDeleteAccountClicked = { showDeleteAccountDialog = true }
+            )
+        }
+
+        val deleteAccountModal = if (showDeleteAccountDialog) {
+            DeleteAccountModal.Visible(
+                onDeleteAccountConfirmed = {
+                    showDeleteAccountDialog = false
+                    isDeletingAccount = true
+                    error = null
+                    scope.launch {
+                        try {
+                            val sessionToken = configRepository.getSessionToken()
+                            if (sessionToken != null) {
+                                authApiClient.deleteAccount(sessionToken)
+                            } else {
+                                throw IllegalStateException("Session token is null")
+                            }
+                            configRepository.clearSessionToken()
+
+                            isLoggedIn = false
+                            isDeletingAccount = false
+
+                            navigator.resetRoot(SplashScreen)
+                        } catch (e: Exception) {
+                            error = """
+                                Account deletion failed: ${e.message}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                            isDeletingAccount = false
                         }
-                        // Clear session
-                        configRepository.clearSessionToken()
-
-                        // Update state
-                        isLoggedIn = false
-                        isDeletingAccount = false
-
-                        // go back to splash screen
-                        navigator.resetRoot(SplashScreen)
-                    } catch (e: Exception) {
-                        error = """
-                            Account deletion failed: ${e.message}
-
-                            Need help? Email help@solenne.ai
-                        """.trimIndent()
-                        isDeletingAccount = false
                     }
-                }
-            },
-            onDeleteAccountCancelled = {
-                showDeleteAccountDialog = false
-            },
-            isDeletingAccount = isDeletingAccount,
+                },
+                onDeleteAccountCancelled = {
+                    showDeleteAccountDialog = false
+                },
+                isDeletingAccount = isDeletingAccount
+            )
+        } else {
+            DeleteAccountModal.Hidden
+        }
+
+        return AuthUiState(
+            apiKeyState = apiKeyState,
+            logInState = logInState,
+            dangerousModeState = dangerousModeState,
+            deleteAccountModal = deleteAccountModal,
+            onBackClicked = if (canGoBack) { { navigator.pop() } } else null,
+            error = error,
         )
     }
 

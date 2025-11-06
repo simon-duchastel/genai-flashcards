@@ -11,28 +11,58 @@ data object AuthScreen : Screen
 
 // UI State
 data class AuthUiState(
-    val apiKeyInput: String?,
+    val apiKeyState: ApiKeyState,
+    val logInState: LogInState,
+    val dangerousModeState: DangerousModeState,
+    val deleteAccountModal: DeleteAccountModal,
     val onBackClicked: (() -> Unit)?, // null if back button is not available
-    val isSaving: Boolean,
     val error: String?,
-    val onApiKeyChanged: (String) -> Unit,
-    val onSaveClicked: () -> Unit,
-    // Google OAuth
-    val isAuthenticatingWithGoogle: Boolean,
-    val onGoogleSignInClicked: () -> Unit,
-    // Apple OAuth
-    val isAuthenticatingWithApple: Boolean,
-    val onAppleSignInClicked: () -> Unit,
-    // Logout
-    val isLoggedIn: Boolean,
-    val isLoggingOut: Boolean,
-    val onLogoutClicked: () -> Unit,
-    // Delete Account
-    val isDangerousModeEnabled: Boolean,
-    val onDangerousModeToggled: () -> Unit,
-    val showDeleteAccountDialog: Boolean,
-    val onDeleteAccountClicked: () -> Unit,
-    val onDeleteAccountConfirmed: () -> Unit,
-    val onDeleteAccountCancelled: () -> Unit,
-    val isDeletingAccount: Boolean,
 ) : CircuitUiState
+
+sealed interface ApiKeyState {
+    data object Loading : ApiKeyState
+    data object Empty : ApiKeyState
+    data class Loaded(
+        val apiKey: String,
+        val onApiKeyChanged: (String) -> Unit,
+        val onSaveClicked: () -> Unit,
+    ) : ApiKeyState
+}
+
+sealed interface LogInState {
+    data class Loading(
+        val loadingGoogle: Boolean,
+        val loadingApple: Boolean,
+    ) : LogInState
+
+    data class LoggedOut(
+        val onGoogleSignInClicked: () -> Unit,
+        val onAppleSignInClicked: () -> Unit,
+        val dangerousModeState: DangerousModeState,
+        val onDeleteAccountClicked: () -> Unit,
+    ) : LogInState
+
+    data class LoggedIn(
+        val onLogoutClicked: () -> Unit,
+    ) : LogInState
+}
+
+sealed interface DangerousModeState {
+    data class Disabled(
+        val onDangerousModeToggled: () -> Unit,
+    ) : DangerousModeState
+
+    data class Enabled(
+        val onDangerousModeToggled: () -> Unit,
+        val onDeleteAccountClicked: () -> Unit,
+    ) : DangerousModeState
+}
+
+sealed interface DeleteAccountModal {
+    data object Hidden : DeleteAccountModal
+    data class Visible(
+        val onDeleteAccountConfirmed: () -> Unit,
+        val onDeleteAccountCancelled: () -> Unit,
+        val isDeletingAccount: Boolean,
+    ) : DeleteAccountModal
+}
