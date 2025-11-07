@@ -14,6 +14,7 @@ import ai.solenne.flashcards.app.domain.repository.AuthRepository
 import ai.solenne.flashcards.app.domain.repository.ClientFlashcardRepository
 import ai.solenne.flashcards.shared.domain.repository.FlashcardGenerator
 import ai.solenne.flashcards.app.domain.repository.LocalFlashcardRepository
+import ai.solenne.flashcards.shared.domain.model.Flashcard
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
@@ -34,214 +35,256 @@ class CreatePresenter(
         var isGenerating by remember { mutableStateOf(false) }
         var generatedCardsSet: FlashcardSet? by remember { mutableStateOf(null) }
         var error by remember { mutableStateOf<String?>(null) }
-        var deleteDialog by remember { mutableStateOf<DeleteCardDialog?>(null) }
+        var deleteDialogCard by remember { mutableStateOf<Flashcard?>(null) }
         var regenerationPrompt by remember { mutableStateOf("") }
         var isRegenerating by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
-        return CreateUiState(
-            topic = topic,
-            query = query,
-            count = count,
-            isGenerating = isGenerating,
-            generatedCards = generatedCardsSet?.flashcards ?: emptyList(),
-            error = error,
-            deleteDialog = deleteDialog,
-            regenerationPrompt = regenerationPrompt,
-            isRegenerating = isRegenerating,
-            onTopicChanged = { newTopic ->
-                topic = newTopic.take(30)
+        val onTopicChanged: (String) -> Unit = { newTopic ->
+            topic = newTopic.take(30)
+            error = null
+        }
+
+        val onQueryChanged: (String) -> Unit = { newQuery ->
+            query = newQuery
+            error = null
+        }
+
+        val onCountChanged: (Int) -> Unit = { newCount ->
+            count = newCount.coerceIn(5, 50)
+        }
+
+        val onGenerateClicked: () -> Unit = {
+            if (topic.isBlank()) {
+                error = """
+                Please enter a topic.
+
+                Need help? Email help@solenne.ai
+                """.trimIndent()
+            } else {
+                isGenerating = true
                 error = null
-            },
-            onQueryChanged = { newQuery ->
-                query = newQuery
-                error = null
-            },
-            onCountChanged = { newCount ->
-                count = newCount.coerceIn(5, 50)
-            },
-            onGenerateClicked = {
-                if (topic.isBlank()) {
-                    error = """
-                    Please enter a topic.
-                    
-                    Need help? Email help@solenne.ai
-                    """.trimIndent()
+                scope.launch {
+                    try {
+                        // Use server generator if authenticated, otherwise use local (Koog)
+                        val generator = if (authRepository.isSignedIn()) {
+                            serverGenerator
+                        } else {
+                            koogGenerator
+                        }
+
+                        val flashcardSet = generator.generate(
+                            topic = topic,
+                            count = count,
+                            userQuery = query.ifBlank { "Generate comprehensive flashcards" },
+                        )
+
+                        if (flashcardSet == null) {
+                            error = """
+                                Failed to generate flashcards. Please try again later.
+
+                                Common issues to check for:
+                                - Internet issues
+                                - API key (did you forget to set it?)
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
+                            isGenerating = false
+                        } else {
+                            generatedCardsSet = flashcardSet
+                            isGenerating = false
+                        }
+                    } catch (e: RateLimitException) {
+                        val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
+                        error = """
+                            ${e.message}
+
+                            You've used ${e.numberOfGenerations} generations today.
+                            You can try again at $tryAgainDate
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                        isGenerating = false
+                    } catch (e: Exception) {
+                        error = """
+                            Error: ${e.message ?: "Failed to generate flashcards"}
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                        isGenerating = false
+                    }
+                }
+            }
+        }
+
+        val currentSet = generatedCardsSet
+        val currentError = error
+        val contentState: ContentState = when {
+            isGenerating -> ContentState.Generating(
+                topic = topic,
+                query = query,
+                count = count
+            )
+            currentError != null -> ContentState.Error(
+                message = currentError,
+                topic = topic,
+                query = query,
+                count = count,
+                onTopicChanged = onTopicChanged,
+                onQueryChanged = onQueryChanged,
+                onCountChanged = onCountChanged,
+                onRetry = onGenerateClicked
+            )
+            currentSet != null -> {
+                val regenerationState: RegenerationState = if (isRegenerating) {
+                    RegenerationState.Regenerating(
+                        regenerationPrompt = regenerationPrompt
+                    )
                 } else {
-                    isGenerating = true
-                    error = null
-                    scope.launch {
-                        try {
-                            // Use server generator if authenticated, otherwise use local (Koog)
-                            val generator = if (authRepository.isSignedIn()) {
-                                serverGenerator
-                            } else {
-                                koogGenerator
+                    RegenerationState.Idle(
+                        regenerationPrompt = regenerationPrompt,
+                        onRegenerationPromptChanged = { newPrompt ->
+                            regenerationPrompt = newPrompt
+                            error = null
+                        },
+                        onRerollClicked = {
+                            isRegenerating = true
+                            error = null
+                            scope.launch {
+                                try {
+                                    // Use server generator if authenticated, otherwise use local
+                                    val generator = if (authRepository.isSignedIn()) {
+                                        serverGenerator
+                                    } else {
+                                        koogGenerator
+                                    }
+
+                                    val newSet = generator.regenerate(
+                                        existingSet = currentSet,
+                                        regenerationPrompt = regenerationPrompt.ifBlank { "" }
+                                    )
+
+                                    if (newSet == null) {
+                                        error = """
+                                            Failed to regenerate flashcards. Please try again.
+
+                                            Need help? Email help@solenne.ai
+                                        """.trimIndent()
+                                    } else {
+                                        generatedCardsSet = newSet
+                                        regenerationPrompt = "" // Clear after successful regeneration
+                                    }
+                                } catch (e: RateLimitException) {
+                                    val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
+                                    error = """
+                                        ${e.message}
+
+                                        You've used ${e.numberOfGenerations} generations today.
+                                        You can try again at $tryAgainDate
+
+                                        Need help? Email help@solenne.ai
+                                    """.trimIndent()
+                                } catch (e: Exception) {
+                                    error = """
+                                        Error regenerating: ${e.message ?: "Unknown error"}
+
+                                        Need help? Email help@solenne.ai
+                                    """.trimIndent()
+                                } finally {
+                                    isRegenerating = false
+                                }
                             }
+                        }
+                    )
+                }
 
-                            val flashcardSet = generator.generate(
-                                topic = topic,
-                                count = count,
-                                userQuery = query.ifBlank { "Generate comprehensive flashcards" },
-                            )
-
-                            if (flashcardSet == null) {
-                                error = """
-                                    Failed to generate flashcards. Please try again later.
-
-                                    Common issues to check for:
-                                    - Internet issues
-                                    - API key (did you forget to set it?)
+                ContentState.Generated(
+                    topic = currentSet.topic,
+                    generatedCards = currentSet.flashcards,
+                    regenerationState = regenerationState,
+                    onSaveClicked = remember(generatedCardsSet) {
+                        {
+                            scope.launch {
+                                try {
+                                    // Save to server if authenticated, otherwise save locally
+                                    if (authRepository.isSignedIn()) {
+                                        try {
+                                            clientRepository.saveFlashcardSet(currentSet)
+                                            runCatching {
+                                                localRepository.deleteFlashcardSet(
+                                                    currentSet.id
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            println("Failed to save to server, saving locally: $e")
+                                            localRepository.saveFlashcardSet(currentSet)
+                                        }
+                                    } else {
+                                        localRepository.saveFlashcardSet(currentSet)
+                                    }
+                                    navigator.pop()
+                                } catch (e: Exception) {
+                                    error = """
+                                    Failed to save flashcards: ${e.message}
 
                                     Need help? Email help@solenne.ai
                                 """.trimIndent()
-                                isGenerating = false
-                            } else {
-                                generatedCardsSet = flashcardSet
-                                isGenerating = false
-                            }
-                        } catch (e: RateLimitException) {
-                            val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
-                            error = """
-                                ${e.message}
-
-                                You've used ${e.numberOfGenerations} generations today.
-                                You can try again at $tryAgainDate
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                            isGenerating = false
-                        } catch (e: Exception) {
-                            error = """
-                                Error: ${e.message ?: "Failed to generate flashcards"}
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                            isGenerating = false
-                        }
-                    }
-                }
-            },
-            onSaveClicked = {
-                val setToSave = generatedCardsSet
-                if (setToSave?.flashcards.isNullOrEmpty()) {
-                    error = """
-                        No flashcards to save
-
-                        Need help? Email help@solenne.ai
-                    """.trimIndent()
-                } else {
-                    scope.launch {
-                        try {
-                            // Save to server if authenticated, otherwise save locally
-                            if (authRepository.isSignedIn()) {
-                                try {
-                                    clientRepository.saveFlashcardSet(setToSave)
-                                    runCatching { localRepository.deleteFlashcardSet(setToSave.id) }
-                                } catch (e: Exception) {
-                                    println("Failed to save to server, saving locally: $e")
-                                    localRepository.saveFlashcardSet(setToSave)
                                 }
-                            } else {
-                                localRepository.saveFlashcardSet(setToSave)
                             }
-                            navigator.pop()
-                        } catch (e: Exception) {
-                            error = """
-                                Failed to save flashcards: ${e.message}
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
                         }
-                    }
-                }
-            },
-            onBackClicked = {
-                navigator.pop()
-            },
-            onEditCard = { cardId, front, back ->
-                val currentCards = generatedCardsSet?.flashcards ?: emptyList()
-                generatedCardsSet = generatedCardsSet?.copy(
-                    flashcards = currentCards.map { card ->
-                        if (card.id == cardId) {
-                            card.copy(front = front, back = back)
-                        } else {
-                            card
-                        }
-                    }
-                )
-            },
-            onDeleteCardClick = { cardToDelete ->
-                deleteDialog = DeleteCardDialog(
-                    card = cardToDelete,
-                    onCancel = { deleteDialog = null },
-                    onConfirm = {
-                        deleteDialog = null
-                        val currentCards = generatedCardsSet?.flashcards ?: emptyList()
-                        generatedCardsSet = generatedCardsSet?.copy(
-                            flashcards = currentCards.filter { card ->
-                                card.id != cardToDelete.id
+                    },
+                    onEditCard = { cardId, front, back ->
+                        val currentCards = currentSet.flashcards
+                        generatedCardsSet = currentSet.copy(
+                            flashcards = currentCards.map { card ->
+                                if (card.id == cardId) {
+                                    card.copy(front = front, back = back)
+                                } else {
+                                    card
+                                }
                             }
                         )
+                    },
+                    onDeleteCardClick = { cardToDelete ->
+                        deleteDialogCard = cardToDelete
                     }
                 )
-            },
-            onRegenerationPromptChanged = { newPrompt ->
-                regenerationPrompt = newPrompt
-                error = null
-            },
-            onRerollClicked = {
-                val setToRegenerate = generatedCardsSet
-                if (setToRegenerate == null) {
-                    error = "No flashcards to regenerate"
-                } else {
-                    isRegenerating = true
-                    error = null
-                    scope.launch {
-                        try {
-                            // Use server generator if authenticated, otherwise use local (Koog)
-                            val generator = if (authRepository.isSignedIn()) {
-                                serverGenerator
-                            } else {
-                                koogGenerator
-                            }
+            }
+            else -> ContentState.Idle(
+                topic = topic,
+                query = query,
+                count = count,
+                onTopicChanged = onTopicChanged,
+                onQueryChanged = onQueryChanged,
+                onCountChanged = onCountChanged,
+                onGenerateClicked = onGenerateClicked
+            )
+        }
 
-                            val newSet = generator.regenerate(
-                                existingSet = setToRegenerate,
-                                regenerationPrompt = regenerationPrompt.ifBlank { "" }
-                            )
-
-                            if (newSet == null) {
-                                error = """
-                                    Failed to regenerate flashcards. Please try again.
-
-                                    Need help? Email help@solenne.ai
-                                """.trimIndent()
-                            } else {
-                                generatedCardsSet = newSet
-                                regenerationPrompt = "" // Clear after successful regeneration
-                            }
-                        } catch (e: RateLimitException) {
-                            val tryAgainDate = fromEpochMilliseconds(e.tryAgainAt)
-                            error = """
-                                ${e.message}
-
-                                You've used ${e.numberOfGenerations} generations today.
-                                You can try again at $tryAgainDate
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                        } catch (e: Exception) {
-                            error = """
-                                Error regenerating: ${e.message ?: "Unknown error"}
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                        } finally {
-                            isRegenerating = false
+        val deleteCard = deleteDialogCard
+        val deleteDialogState: DeleteDialogState = if (deleteCard != null) {
+            DeleteDialogState.Visible(
+                card = deleteCard,
+                onCancel = { deleteDialogCard = null },
+                onConfirm = {
+                    deleteDialogCard = null
+                    val currentCards = generatedCardsSet?.flashcards ?: emptyList()
+                    generatedCardsSet = generatedCardsSet?.copy(
+                        flashcards = currentCards.filter { card ->
+                            card.id != deleteCard.id
                         }
-                    }
+                    )
                 }
+            )
+        } else {
+            DeleteDialogState.Hidden
+        }
+
+        return CreateUiState(
+            contentState = contentState,
+            deleteDialogState = deleteDialogState,
+            onBackClicked = {
+                navigator.pop()
             }
         )
     }

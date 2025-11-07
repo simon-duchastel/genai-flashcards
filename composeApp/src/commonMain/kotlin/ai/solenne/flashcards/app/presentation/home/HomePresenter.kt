@@ -23,49 +23,104 @@ class HomePresenter(
     override fun present(): HomeUiState {
         var flashcardSets by remember { mutableStateOf(emptyList<FlashcardSetWithMeta>()) }
         var isLoading by remember { mutableStateOf(true) }
-        var deleteDialog by remember { mutableStateOf<DeleteSetDialog?>(null) }
+        var error by remember { mutableStateOf<String?>(null) }
+        var deleteDialogSet by remember { mutableStateOf<FlashcardSetWithMeta?>(null) }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            loadFlashcardSets { sets ->
-                flashcardSets = sets
-                isLoading = false
-            }
+            loadFlashcardSets(
+                onLoaded = { sets ->
+                    flashcardSets = sets
+                    isLoading = false
+                    error = null
+                },
+                onError = { errorMsg ->
+                    error = errorMsg
+                    isLoading = false
+                }
+            )
+        }
+
+        val currentError = error
+        val contentState: ContentState = when {
+            isLoading -> ContentState.Loading
+            currentError != null -> ContentState.Error(
+                message = currentError,
+                onRetry = {
+                    scope.launch {
+                        isLoading = true
+                        error = null
+                        loadFlashcardSets(
+                            onLoaded = { sets ->
+                                flashcardSets = sets
+                                isLoading = false
+                                error = null
+                            },
+                            onError = { errorMsg ->
+                                error = errorMsg
+                                isLoading = false
+                            }
+                        )
+                    }
+                }
+            )
+            else -> ContentState.Loaded(
+                flashcardSets = flashcardSets,
+                onOpenSet = { setId ->
+                    navigator.goTo(StudyScreen(setId = setId))
+                },
+                onDeleteSetClick = { set ->
+                    deleteDialogSet = set
+                },
+                onRefresh = {
+                    isLoading = true
+                    scope.launch {
+                        loadFlashcardSets(
+                            onLoaded = { sets ->
+                                flashcardSets = sets
+                                isLoading = false
+                                error = null
+                            },
+                            onError = { errorMsg ->
+                                error = errorMsg
+                                isLoading = false
+                            }
+                        )
+                    }
+                }
+            )
+        }
+
+        val deleteSet = deleteDialogSet
+        val deleteDialogState: DeleteDialogState = if (deleteSet != null) {
+            DeleteDialogState.Visible(
+                set = deleteSet,
+                onCancel = { deleteDialogSet = null },
+                onConfirm = {
+                    deleteDialogSet = null
+                    scope.launch {
+                        deleteFlashcardSet(deleteSet.flashcardSet.id)
+                        loadFlashcardSets(
+                            onLoaded = { sets ->
+                                flashcardSets = sets
+                                error = null
+                            },
+                            onError = { errorMsg ->
+                                error = errorMsg
+                            }
+                        )
+                    }
+                }
+            )
+        } else {
+            DeleteDialogState.Hidden
         }
 
         return HomeUiState(
-            flashcardSets = flashcardSets,
-            isLoading = isLoading,
-            deleteDialog = deleteDialog,
+            contentState = contentState,
+            deleteDialogState = deleteDialogState,
             onCreateNewSet = {
                 navigator.goTo(CreateScreen)
-            },
-            onOpenSet = { setId ->
-                navigator.goTo(StudyScreen(setId = setId))
-            },
-            onDeleteSetClick = { set ->
-                deleteDialog = DeleteSetDialog(
-                    set = set,
-                    onCancel = { deleteDialog = null },
-                    onConfirm = {
-                        deleteDialog = null
-                        scope.launch {
-                            deleteFlashcardSet(set.flashcardSet.id)
-                            loadFlashcardSets { sets ->
-                                flashcardSets = sets
-                            }
-                        }
-                    }
-                )
-            },
-            onRefresh = {
-                isLoading = true
-                scope.launch {
-                    loadFlashcardSets { sets ->
-                        flashcardSets = sets
-                        isLoading = false
-                    }
-                }
             },
             onSettingsClick = {
                 navigator.goTo(AuthScreen)
@@ -73,34 +128,41 @@ class HomePresenter(
         )
     }
 
-    private suspend fun loadFlashcardSets(onLoaded: (List<FlashcardSetWithMeta>) -> Unit) {
-        // Get sets from server if signed in
-        val serverSets = if (authRepository.isSignedIn()) {
-            try {
-                clientRepository.getAllFlashcardSets()
-            } catch (e: Exception) {
-                println("Failed to load server flashcards: $e")
+    private suspend fun loadFlashcardSets(
+        onLoaded: (List<FlashcardSetWithMeta>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            // Get sets from server if signed in
+            val serverSets = if (authRepository.isSignedIn()) {
+                try {
+                    clientRepository.getAllFlashcardSets()
+                } catch (e: Exception) {
+                    println("Failed to load server flashcards: $e")
+                    emptyList()
+                }
+            } else {
                 emptyList()
             }
-        } else {
-            emptyList()
-        }
 
-        // Get local sets
-        val localSets = try {
-            localRepository.getAllFlashcardSets()
+            // Get local sets
+            val localSets = try {
+                localRepository.getAllFlashcardSets()
+            } catch (e: Exception) {
+                println("Failed to load local flashcards: $e")
+                emptyList()
+            }
+
+            val serverIds = serverSets.map { it.id }.toSet()
+            val localOnlySets = localSets.filter { it.id !in serverIds }
+
+            val merged = serverSets.map { FlashcardSetWithMeta(it, isLocalOnly = false) } +
+                         localOnlySets.map { FlashcardSetWithMeta(it, isLocalOnly = true) }
+
+            onLoaded(merged.sortedByDescending { it.flashcardSet.createdAt })
         } catch (e: Exception) {
-            println("Failed to load local flashcards: $e")
-            emptyList()
+            onError(e.message ?: "Failed to load flashcard sets")
         }
-
-        val serverIds = serverSets.map { it.id }.toSet()
-        val localOnlySets = localSets.filter { it.id !in serverIds }
-
-        val merged = serverSets.map { FlashcardSetWithMeta(it, isLocalOnly = false) } +
-                     localOnlySets.map { FlashcardSetWithMeta(it, isLocalOnly = true) }
-
-        onLoaded(merged.sortedByDescending { it.flashcardSet.createdAt })
     }
 
     private suspend fun deleteFlashcardSet(id: String) {

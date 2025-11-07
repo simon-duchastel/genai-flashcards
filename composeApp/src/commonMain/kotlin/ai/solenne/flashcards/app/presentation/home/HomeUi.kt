@@ -65,8 +65,8 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             }
         }
     ) { padding ->
-        when {
-            state.isLoading -> {
+        when (val contentState = state.contentState) {
+            is ContentState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
@@ -74,40 +74,75 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                     CircularProgressIndicator()
                 }
             }
-            state.flashcardSets.isEmpty() -> {
-                EmptyState(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    onCreateClick = state.onCreateNewSet
-                )
-            }
-            else -> {
-                FlashcardSetList(
-                    sets = state.flashcardSets,
-                    onSetClick = { state.onOpenSet(it.flashcardSet.id) },
-                    onDeleteClick = state.onDeleteSetClick,
+            is ContentState.Error -> {
+                ErrorState(
+                    message = contentState.message,
+                    onRetry = contentState.onRetry,
                     modifier = Modifier.fillMaxSize().padding(padding)
                 )
+            }
+            is ContentState.Loaded -> {
+                if (contentState.flashcardSets.isEmpty()) {
+                    EmptyState(
+                        modifier = Modifier.fillMaxSize().padding(padding),
+                        onCreateClick = state.onCreateNewSet
+                    )
+                } else {
+                    FlashcardSetList(
+                        sets = contentState.flashcardSets,
+                        onSetClick = { contentState.onOpenSet(it.flashcardSet.id) },
+                        onDeleteClick = contentState.onDeleteSetClick,
+                        modifier = Modifier.fillMaxSize().padding(padding)
+                    )
+                }
             }
         }
     }
 
-    state.deleteDialog?.let { dialog ->
-        DisableSelection {
-            AlertDialog(
-                onDismissRequest = dialog.onCancel,
-                title = { Text("Remove Set") },
-                text = { Text("Are you sure you want to remove \"${dialog.set.flashcardSet.topic}\"?") },
-                confirmButton = {
-                    Button(onClick = dialog.onConfirm) {
-                        Text("Remove")
+    when (val dialogState = state.deleteDialogState) {
+        is DeleteDialogState.Hidden -> { /* No dialog */ }
+        is DeleteDialogState.Visible -> {
+            DisableSelection {
+                AlertDialog(
+                    onDismissRequest = dialogState.onCancel,
+                    title = { Text("Remove Set") },
+                    text = { Text("Are you sure you want to remove \"${dialogState.set.flashcardSet.topic}\"?") },
+                    confirmButton = {
+                        Button(onClick = dialogState.onConfirm) {
+                            Text("Remove")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = dialogState.onCancel) {
+                            Text("Cancel")
+                        }
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = dialog.onCancel) {
-                        Text("Cancel")
-                    }
-                }
-            )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRetry) {
+            Text("Retry")
         }
     }
 }
