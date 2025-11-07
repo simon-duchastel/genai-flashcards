@@ -154,7 +154,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 contentColor = MaterialTheme.colorScheme.onSurface
                             ),
-                            border = ButtonDefaults.outlinedButtonBorder
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -198,7 +198,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 contentColor = MaterialTheme.colorScheme.onSurface
                             ),
-                            border = ButtonDefaults.outlinedButtonBorder
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,

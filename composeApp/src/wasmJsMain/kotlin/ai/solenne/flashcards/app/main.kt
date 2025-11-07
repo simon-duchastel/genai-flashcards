@@ -7,6 +7,7 @@ import ai.solenne.flashcards.app.data.api.AuthApiClient
 import ai.solenne.flashcards.app.data.storage.ConfigRepository
 import dev.zacsweers.metro.createGraph
 import ai.solenne.flashcards.app.di.WasmAppGraph
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlinx.browser.window
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 /**
  * External interface for accessing URL search params.
  */
+@OptIn(ExperimentalWasmJsInterop::class)
 external interface URLSearchParams : JsAny {
     fun get(name: String): String?
 }
@@ -22,6 +24,7 @@ external interface URLSearchParams : JsAny {
 /**
  * Create URLSearchParams from window.location.search
  */
+@OptIn(ExperimentalWasmJsInterop::class)
 @JsFun("() => new URLSearchParams(window.location.search)")
 private external fun getURLSearchParams(): URLSearchParams
 
