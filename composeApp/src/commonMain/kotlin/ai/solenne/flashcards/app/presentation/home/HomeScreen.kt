@@ -12,18 +12,34 @@ data object HomeScreen : Screen
 
 // UI State
 data class HomeUiState(
-    val flashcardSets: List<FlashcardSetWithMeta>,
-    val isLoading: Boolean = false,
-    val deleteDialog: DeleteSetDialog? = null,
+    val contentState: ContentState,
+    val deleteDialogState: DeleteDialogState,
     val onCreateNewSet: () -> Unit,
-    val onOpenSet: (String) -> Unit,
-    val onDeleteSetClick: (FlashcardSetWithMeta) -> Unit,
-    val onRefresh: () -> Unit,
-    val onSettingsClick: () -> Unit
+    val onSettingsClick: () -> Unit,
 ) : CircuitUiState
 
-data class DeleteSetDialog(
-    val set: FlashcardSetWithMeta,
-    val onCancel: () -> Unit,
-    val onConfirm: () -> Unit
-)
+sealed interface ContentState {
+    data object Loading : ContentState
+
+    data class Error(
+        val message: String,
+        val onRetry: () -> Unit,
+    ) : ContentState
+
+    data class Loaded(
+        val flashcardSets: List<FlashcardSetWithMeta>,
+        val onOpenSet: (String) -> Unit,
+        val onDeleteSetClick: (FlashcardSetWithMeta) -> Unit,
+        val onRefresh: () -> Unit,
+    ) : ContentState
+}
+
+sealed interface DeleteDialogState {
+    data object Hidden : DeleteDialogState
+
+    data class Visible(
+        val set: FlashcardSetWithMeta,
+        val onCancel: () -> Unit,
+        val onConfirm: () -> Unit,
+    ) : DeleteDialogState
+}
