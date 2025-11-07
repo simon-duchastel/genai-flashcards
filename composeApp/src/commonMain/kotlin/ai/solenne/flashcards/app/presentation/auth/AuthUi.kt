@@ -138,10 +138,17 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                         Spacer(modifier = Modifier.height(32.dp))
                     }
-                    is LogInState.Loading -> {
+                    is LogInState.LoggedOut, is LogInState.Loading -> {
+                        val onGoogleSignInClicked = when (loginState) {
+                            is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
+                            is LogInState.Loading -> null
+                            is LogInState.LoggedIn -> null
+                        }
+                        val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
+
                         Button(
-                            onClick = {},
-                            enabled = false,
+                            onClick = onGoogleSignInClicked ?: {},
+                            enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.surface,
@@ -149,17 +156,17 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             ),
                             border = ButtonDefaults.outlinedButtonBorder
                         ) {
-                            if (loginState.loadingGoogle) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                if (googleButtonLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                } else {
                                     Text(
                                         text = "G",
                                         fontWeight = FontWeight.Bold,
@@ -177,9 +184,15 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        val onAppleSignInClicked = when (loginState) {
+                            is LogInState.LoggedOut -> loginState.onAppleSignInClicked
+                            is LogInState.Loading -> null
+                            is LogInState.LoggedIn -> null
+                        }
+                        val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
                         Button(
-                            onClick = {},
-                            enabled = false,
+                            onClick = onAppleSignInClicked ?: {},
+                            enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.surface,
@@ -187,85 +200,17 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             ),
                             border = ButtonDefaults.outlinedButtonBorder
                         ) {
-                            if (loginState.loadingApple) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                ) {
-                                    Image(
-                                        painter = painterResource(Res.drawable.apple_logo),
-                                        contentDescription = "Apple logo",
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                if (appleButtonLoading) {
+                                    CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
-                                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "Sign in with Apple",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
-                    is LogInState.LoggedOut -> {
-                        val isSaving = state.apiKeyState is ApiKeyState.Loaded
-                        val isAuthenticating = false
-
-                        Button(
-                            onClick = loginState.onGoogleSignInClicked,
-                            enabled = !isSaving && !isAuthenticating,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "G",
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(end = 12.dp)
-                                )
-                                Text(
-                                    text = "Sign in with Google",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Button(
-                            onClick = loginState.onAppleSignInClicked,
-                            enabled = !isSaving && !isAuthenticating,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
+                                } else {
                                 Image(
                                     painter = painterResource(Res.drawable.apple_logo),
                                     contentDescription = "Apple logo",
@@ -278,6 +223,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
+                                    }
                             }
                         }
 

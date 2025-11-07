@@ -62,28 +62,49 @@ import ai.solenne.flashcards.app.LocalSnackkbarHostState
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
-    if (state.flashcards.isEmpty()) {
-        LoadingState(modifier)
-        return
-    }
-
-    if (state.isComplete) {
-        CompletionScreen(
-            state = state,
+    when (val contentState = state.contentState) {
+        is ContentState.Loading -> LoadingState(modifier)
+        is ContentState.Error -> ErrorState(
+            message = contentState.message,
+            onRetry = contentState.onRetry,
+            onExit = state.onExitStudy,
             modifier = modifier
         )
-        return
+        is ContentState.Loaded -> {
+            when (val studyState = contentState.studyState) {
+                is StudyState.Studying -> StudyingScreen(
+                    studyState = studyState,
+                    topic = contentState.topic,
+                    onExitStudy = state.onExitStudy,
+                    modifier = modifier
+                )
+                is StudyState.Complete -> CompletionScreen(
+                    completeState = studyState,
+                    onExitStudy = state.onExitStudy,
+                    modifier = modifier
+                )
+            }
+        }
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StudyingScreen(
+    studyState: StudyState.Studying,
+    topic: String,
+    onExitStudy: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text(state.topic) },
+                title = { Text(topic) },
                 navigationIcon = {
-                    IconButton(onClick = state.onExitStudy) {
+                    IconButton(onClick = onExitStudy) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close"
@@ -92,7 +113,7 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
                 },
                 actions = {
                     Text(
-                        state.progress,
+                        studyState.progress,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(end = 16.dp)
                     )
@@ -108,13 +129,13 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            state.currentCard?.let { card ->
+            studyState.currentCard?.let { card ->
                 FlashcardView(
                     card = card,
-                    isFlipped = state.isFlipped,
-                    onFlip = state.onFlipCard,
-                    onSwipeLeft = state.onPreviousCard,
-                    onSwipeRight = state.onNextCard,
+                    isFlipped = studyState.isFlipped,
+                    onFlip = studyState.onFlipCard,
+                    onSwipeLeft = studyState.onPreviousCard,
+                    onSwipeRight = studyState.onNextCard,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -125,10 +146,10 @@ fun StudyUi(state: StudyUiState, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(32.dp))
 
             NavigationButtons(
-                canGoPrevious = state.currentIndex > 0,
-                canGoNext = state.currentIndex < state.flashcards.size - 1,
-                onPrevious = state.onPreviousCard,
-                onNext = state.onNextCard,
+                canGoPrevious = studyState.currentIndex > 0,
+                canGoNext = studyState.currentIndex < studyState.flashcards.size - 1,
+                onPrevious = studyState.onPreviousCard,
+                onNext = studyState.onNextCard,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
         }
@@ -142,6 +163,52 @@ private fun LoadingState(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    onExit: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Error") },
+                navigationIcon = {
+                    IconButton(onClick = onExit) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
     }
 }
 
@@ -297,7 +364,8 @@ private fun NavigationButtons(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CompletionScreen(
-    state: StudyUiState,
+    completeState: StudyState.Complete,
+    onExitStudy: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -331,7 +399,7 @@ private fun CompletionScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Studied ${state.flashcards.size} cards on ${state.topic}",
+                "Studied ${completeState.flashcards.size} cards on ${completeState.topic}",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -340,10 +408,10 @@ private fun CompletionScreen(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                OutlinedButton(onClick = state.onExitStudy) {
+                OutlinedButton(onClick = onExitStudy) {
                     Text("Go Home")
                 }
-                Button(onClick = state.onRestartStudy) {
+                Button(onClick = completeState.onRestartStudy) {
                     Text("Study Again")
                 }
             }

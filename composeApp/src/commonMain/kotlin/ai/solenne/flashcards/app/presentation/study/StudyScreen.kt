@@ -15,17 +15,41 @@ data class StudyScreen(
 
 // UI State
 data class StudyUiState(
-    val flashcards: List<Flashcard>,
-    val currentIndex: Int,
-    val isFlipped: Boolean,
-    val topic: String,
-    val onFlipCard: () -> Unit,
-    val onNextCard: () -> Unit,
-    val onPreviousCard: () -> Unit,
+    val contentState: ContentState,
     val onExitStudy: () -> Unit,
-    val onRestartStudy: () -> Unit
-) : CircuitUiState {
-    val currentCard: Flashcard? = flashcards.getOrNull(currentIndex)
-    val progress: String = "${currentIndex + 1}/${flashcards.size}"
-    val isComplete: Boolean = currentIndex >= flashcards.size
+) : CircuitUiState
+
+sealed interface ContentState {
+    data object Loading : ContentState
+
+    data class Error(
+        val message: String,
+        val onRetry: () -> Unit,
+    ) : ContentState
+
+    data class Loaded(
+        val topic: String,
+        val studyState: StudyState,
+    ) : ContentState
+}
+
+sealed interface StudyState {
+    data class Studying(
+        val flashcards: List<Flashcard>,
+        val currentIndex: Int,
+        val isFlipped: Boolean,
+        val onFlipCard: () -> Unit,
+        val onNextCard: () -> Unit,
+        val onPreviousCard: () -> Unit,
+        val onRestartStudy: () -> Unit,
+    ) : StudyState {
+        val currentCard: Flashcard? = flashcards.getOrNull(currentIndex)
+        val progress: String = "${currentIndex + 1}/${flashcards.size}"
+    }
+
+    data class Complete(
+        val flashcards: List<Flashcard>,
+        val topic: String,
+        val onRestartStudy: () -> Unit,
+    ) : StudyState
 }

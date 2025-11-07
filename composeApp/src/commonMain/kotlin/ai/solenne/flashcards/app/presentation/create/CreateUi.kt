@@ -61,36 +61,40 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
                     .align(Alignment.TopCenter)
                     .padding(16.dp)
             ) {
-                if (state.generatedCards.isEmpty()) {
-                    CreateForm(state)
-                } else {
-                    PreviewCards(state)
+                when (val contentState = state.contentState) {
+                    is ContentState.Idle -> CreateForm(contentState)
+                    is ContentState.Generating -> GeneratingScreen(contentState)
+                    is ContentState.Error -> ErrorForm(contentState)
+                    is ContentState.Generated -> PreviewCards(contentState)
                 }
             }
         }
     }
 
-    state.deleteDialog?.let { dialog ->
-        AlertDialog(
-            onDismissRequest = dialog.onCancel,
-            title = { Text("Remove Flashcard") },
-            text = { Text("Are you sure you want to remove this flashcard?") },
-            confirmButton = {
-                Button(onClick = dialog.onConfirm) {
-                    Text("Remove")
+    when (val dialogState = state.deleteDialogState) {
+        is DeleteDialogState.Hidden -> { /* No dialog */ }
+        is DeleteDialogState.Visible -> {
+            AlertDialog(
+                onDismissRequest = dialogState.onCancel,
+                title = { Text("Remove Flashcard") },
+                text = { Text("Are you sure you want to remove this flashcard?") },
+                confirmButton = {
+                    Button(onClick = dialogState.onConfirm) {
+                        Text("Remove")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = dialogState.onCancel) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = dialog.onCancel) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 }
 
 @Composable
-private fun CreateForm(state: CreateUiState) {
+private fun CreateForm(state: ContentState.Idle) {
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -110,7 +114,6 @@ private fun CreateForm(state: CreateUiState) {
             label = { Text("Topic") },
             placeholder = { Text("ex.  \"Cats\", \"Sirens in Greek Mythology\", \"16th Century Witchcraft\"") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isGenerating,
             singleLine = true,
             supportingText = {
                 Text(
@@ -126,7 +129,6 @@ private fun CreateForm(state: CreateUiState) {
             label = { Text("Additional Details (Optional)") },
             placeholder = { Text("Describe what you want to focus on, any specific areas, difficulty level, etc.") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isGenerating,
             singleLine = false,
             minLines = 3,
             maxLines = 5
@@ -148,23 +150,8 @@ private fun CreateForm(state: CreateUiState) {
                 onValueChange = { state.onCountChanged(it.toInt()) },
                 valueRange = 5f..50f,
                 steps = 44,
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                enabled = !state.isGenerating
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
             )
-        }
-
-        if (state.error != null) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = textWithHelpEmail(state.error, MaterialTheme.colorScheme.onErrorContainer),
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -172,24 +159,116 @@ private fun CreateForm(state: CreateUiState) {
         Button(
             onClick = state.onGenerateClicked,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isGenerating && state.topic.isNotBlank()
+            enabled = state.topic.isNotBlank()
         ) {
-            if (state.isGenerating) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Generating...")
-            } else {
-                Text("Generate Flashcards")
-            }
+            Text("Generate Flashcards")
         }
     }
 }
 
 @Composable
-private fun PreviewCards(state: CreateUiState) {
+private fun GeneratingScreen(state: ContentState.Generating) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "Generating flashcards for \"${state.topic}\"...",
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun ErrorForm(state: ContentState.Error) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            "What would you like to study?",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        OutlinedTextField(
+            value = state.topic,
+            onValueChange = state.onTopicChanged,
+            label = { Text("Topic") },
+            placeholder = { Text("ex.  \"Cats\", \"Sirens in Greek Mythology\", \"16th Century Witchcraft\"") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            supportingText = {
+                Text(
+                    "${state.topic.length}/30",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        )
+
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = state.onQueryChanged,
+            label = { Text("Additional Details (Optional)") },
+            placeholder = { Text("Describe what you want to focus on, any specific areas, difficulty level, etc.") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = false,
+            minLines = 3,
+            maxLines = 5
+        )
+
+        Text(
+            "How many flashcards?",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("${state.count} cards")
+            Slider(
+                value = state.count.toFloat(),
+                onValueChange = { state.onCountChanged(it.toInt()) },
+                valueRange = 5f..50f,
+                steps = 44,
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
+            )
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Text(
+                text = textWithHelpEmail(state.message, MaterialTheme.colorScheme.onErrorContainer),
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = state.onRetry,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = state.topic.isNotBlank()
+        ) {
+            Text("Retry")
+        }
+    }
+}
+
+@Composable
+private fun PreviewCards(state: ContentState.Generated) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             "Generated ${state.generatedCards.size} flashcards",
@@ -205,30 +284,50 @@ private fun PreviewCards(state: CreateUiState) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Re-roll section
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = state.regenerationPrompt,
-                onValueChange = state.onRegenerationPromptChanged,
-                placeholder = { Text("Not happy? Add instructions and re-roll (e.g., 'make them easier')") },
-                modifier = Modifier.weight(1f),
-                enabled = !state.isRegenerating,
-                singleLine = true
-            )
-            IconButton(
-                onClick = state.onRerollClicked,
-                enabled = !state.isRegenerating
-            ) {
-                if (state.isRegenerating) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                } else {
-                    Icon(
-                        painter = painterResource(Res.drawable.dice_icon),
-                        contentDescription = "Re-roll flashcards"
+        when (val regenerationState = state.regenerationState) {
+            is RegenerationState.Idle -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = regenerationState.regenerationPrompt,
+                        onValueChange = regenerationState.onRegenerationPromptChanged,
+                        placeholder = { Text("Not happy? Add instructions and re-roll (e.g., 'make them easier')") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
                     )
+                    IconButton(
+                        onClick = regenerationState.onRerollClicked
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.dice_icon),
+                            contentDescription = "Re-roll flashcards"
+                        )
+                    }
+                }
+            }
+            is RegenerationState.Regenerating -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = regenerationState.regenerationPrompt,
+                        onValueChange = {},
+                        placeholder = { Text("Not happy? Add instructions and re-roll (e.g., 'make them easier')") },
+                        modifier = Modifier.weight(1f),
+                        enabled = false,
+                        singleLine = true
+                    )
+                    IconButton(
+                        onClick = {},
+                        enabled = false
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
                 }
             }
         }
@@ -249,22 +348,11 @@ private fun PreviewCards(state: CreateUiState) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Button(
+            onClick = state.onSaveClicked,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedButton(
-                onClick = state.onBackClicked,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Cancel")
-            }
-            Button(
-                onClick = state.onSaveClicked,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Save Set")
-            }
+            Text("Save Set")
         }
     }
 }
