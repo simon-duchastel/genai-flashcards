@@ -23,54 +23,121 @@ class StudyPresenter(
         var currentIndex by remember { mutableStateOf(0) }
         var isFlipped by remember { mutableStateOf(false) }
         var topic by remember { mutableStateOf("") }
+        var isLoading by remember { mutableStateOf(true) }
+        var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
 
         // Load and shuffle flashcards
         LaunchedEffect(screen.setId) {
             scope.launch {
-                val set = getFlashcardSet(screen.setId)
-                if (set != null) {
-                    flashcards = set.flashcards.shuffled()
-                    topic = set.topic
-                } else {
-                    // Handle error - set not found
-                    navigator.pop()
+                isLoading = true
+                error = null
+                try {
+                    val set = getFlashcardSet(screen.setId)
+                    if (set != null) {
+                        flashcards = set.flashcards.shuffled()
+                        topic = set.topic
+                        isLoading = false
+                    } else {
+                        error = "Flashcard set not found"
+                        isLoading = false
+                    }
+                } catch (e: Exception) {
+                    error = e.message ?: "Failed to load flashcards"
+                    isLoading = false
                 }
             }
         }
 
-        return StudyUiState(
-            flashcards = flashcards,
-            currentIndex = currentIndex,
-            isFlipped = isFlipped,
-            topic = topic,
-            onFlipCard = {
-                isFlipped = !isFlipped
-            },
-            onNextCard = {
-                if (currentIndex < flashcards.size - 1) {
-                    currentIndex++
-                    isFlipped = false
-                }
-            },
-            onPreviousCard = {
-                if (currentIndex > 0) {
-                    currentIndex--
-                    isFlipped = false
-                }
-            },
-            onExitStudy = {
-                navigator.pop()
-            },
-            onRestartStudy = {
-                currentIndex = 0
-                isFlipped = false
-                scope.launch {
-                    val set = getFlashcardSet(screen.setId)
-                    if (set != null) {
-                        flashcards = set.flashcards.shuffled()
+        val currentError = error
+        val contentState: ContentState = when {
+            isLoading -> ContentState.Loading
+            currentError != null -> ContentState.Error(
+                message = currentError,
+                onRetry = {
+                    scope.launch {
+                        isLoading = true
+                        error = null
+                        try {
+                            val set = getFlashcardSet(screen.setId)
+                            if (set != null) {
+                                flashcards = set.flashcards.shuffled()
+                                topic = set.topic
+                                isLoading = false
+                            } else {
+                                error = "Flashcard set not found"
+                                isLoading = false
+                            }
+                        } catch (e: Exception) {
+                            error = e.message ?: "Failed to load flashcards"
+                            isLoading = false
+                        }
                     }
                 }
+            )
+            else -> {
+                val studyState: StudyState = if (currentIndex >= flashcards.size) {
+                    StudyState.Complete(
+                        flashcards = flashcards,
+                        topic = topic,
+                        onRestartStudy = {
+                            currentIndex = 0
+                            isFlipped = false
+                            scope.launch {
+                                val set = getFlashcardSet(screen.setId)
+                                if (set != null) {
+                                    flashcards = set.flashcards.shuffled()
+                                }
+                            }
+                        }
+                    )
+                } else {
+                    StudyState.Studying(
+                        flashcards = flashcards,
+                        currentIndex = currentIndex,
+                        isFlipped = isFlipped,
+                        onFlipCard = {
+                            isFlipped = !isFlipped
+                        },
+                        onNextCard = {
+                            if (currentIndex < flashcards.size - 1) {
+                                currentIndex++
+                                isFlipped = false
+                            } else {
+                                // Move to complete state
+                                currentIndex = flashcards.size
+                                isFlipped = false
+                            }
+                        },
+                        onPreviousCard = {
+                            if (currentIndex > 0) {
+                                currentIndex--
+                                isFlipped = false
+                            }
+                        },
+                        onRestartStudy = {
+                            currentIndex = 0
+                            isFlipped = false
+                            scope.launch {
+                                val set = getFlashcardSet(screen.setId)
+                                if (set != null) {
+                                    flashcards = set.flashcards.shuffled()
+                                }
+                            }
+                        }
+                    )
+                }
+                ContentState.Loaded(
+                    topic = topic,
+                    studyState = studyState
+                )
+            }
+        }
+
+        return StudyUiState(
+            contentState = contentState,
+            onExitStudy = {
+                navigator.pop()
             }
         )
     }
