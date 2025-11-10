@@ -20,6 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -37,11 +39,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -62,9 +65,6 @@ import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
-    var showSolenneAiInfo by remember { mutableStateOf(false) }
-    var showOwnAiInfo by remember { mutableStateOf(false) }
-
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -161,119 +161,142 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     is LogInState.LoggedOut, is LogInState.Loading -> {
                         // Option 1: Use Solenne's AI
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { state.onSolenneAiExpandedToggle() }
+                                .padding(vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Use Solenne's AI",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            IconButton(
-                                onClick = { showSolenneAiInfo = true },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Info about Solenne's AI",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val onGoogleSignInClicked = when (loginState) {
-                            is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
-                            is LogInState.Loading -> null
-                            is LogInState.LoggedIn -> null
-                        }
-                        val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
-
-                        Button(
-                            onClick = onGoogleSignInClicked ?: {},
-                            enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
-                        ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
+                                modifier = Modifier.weight(1f)
                             ) {
-                                if (googleButtonLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                } else {
-                                    Text(
-                                        text = "G",
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(end = 12.dp)
-                                    )
-                                    Text(
-                                        text = "Sign in with Google",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
+                                Text(
+                                    text = "Use Solenne's AI",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                IconButton(
+                                    onClick = { state.onSolenneAiInfoToggle() },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = "Info about Solenne's AI",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
+                            Icon(
+                                imageVector = if (state.solenneAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (state.solenneAiExpanded) "Collapse" else "Expand",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val onAppleSignInClicked = when (loginState) {
-                            is LogInState.LoggedOut -> loginState.onAppleSignInClicked
-                            is LogInState.Loading -> null
-                            is LogInState.LoggedIn -> null
-                        }
-                        val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
-                        Button(
-                            onClick = onAppleSignInClicked ?: {},
-                            enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
+                        AnimatedVisibility(
+                            visible = state.solenneAiExpanded,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                if (appleButtonLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                } else {
-                                Image(
-                                    painter = painterResource(Res.drawable.apple_logo),
-                                    contentDescription = "Apple logo",
-                                    modifier = Modifier.size(20.dp),
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = "Sign in with Apple",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                val onGoogleSignInClicked = when (loginState) {
+                                    is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
+                                    is LogInState.Loading -> null
+                                    is LogInState.LoggedIn -> null
+                                }
+                                val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
+
+                                Button(
+                                    onClick = onGoogleSignInClicked ?: {},
+                                    enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        if (googleButtonLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "G",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier.padding(end = 12.dp)
+                                            )
+                                            Text(
+                                                text = "Sign in with Google",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
                                     }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                val onAppleSignInClicked = when (loginState) {
+                                    is LogInState.LoggedOut -> loginState.onAppleSignInClicked
+                                    is LogInState.Loading -> null
+                                    is LogInState.LoggedIn -> null
+                                }
+                                val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
+                                Button(
+                                    onClick = onAppleSignInClicked ?: {},
+                                    enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        if (appleButtonLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        } else {
+                                            Image(
+                                                painter = painterResource(Res.drawable.apple_logo),
+                                                contentDescription = "Apple logo",
+                                                modifier = Modifier.size(20.dp),
+                                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(
+                                                text = "Sign in with Apple",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         // Divider with "OR"
                         Row(
@@ -290,116 +313,125 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             HorizontalDivider(modifier = Modifier.weight(1f))
                         }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         // Option 2: Use my own AI
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { state.onOwnAiExpandedToggle() }
+                                .padding(vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Use my own AI",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            IconButton(
-                                onClick = { showOwnAiInfo = true },
-                                modifier = Modifier.size(24.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Info about using your own AI",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
+                                Text(
+                                    text = "Use my own AI",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
                                 )
+                                IconButton(
+                                    onClick = { state.onOwnAiInfoToggle() },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = "Info about using your own AI",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
+                            Icon(
+                                imageVector = if (state.ownAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (state.ownAiExpanded) "Collapse" else "Expand",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Enter your Gemini API key",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        ApiKeyLinkText()
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-
-                when (val apiKeyState = state.apiKeyState) {
-                    is ApiKeyState.Loading -> {
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
-                            label = { CircularProgressIndicator() },
-                            placeholder = { Text("AIza...") },
-                            singleLine = true,
-                            enabled = false,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Button(
-                            onClick = {},
-                            enabled = false,
-                            modifier = Modifier.fillMaxWidth()
+                        AnimatedVisibility(
+                            visible = state.ownAiExpanded,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
                         ) {
-                            Text("Continue")
-                        }
-                    }
-                    is ApiKeyState.Empty -> {
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
-                            label = { Text("Gemini API Key") },
-                            placeholder = { Text("AIza...") },
-                            singleLine = true,
-                            enabled = false,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                                when (val apiKeyState = state.apiKeyState) {
+                                    is ApiKeyState.Loading -> {
+                                        OutlinedTextField(
+                                            value = "",
+                                            onValueChange = {},
+                                            label = { CircularProgressIndicator() },
+                                            placeholder = { Text("AIza...") },
+                                            singleLine = true,
+                                            enabled = false,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
 
-                        Button(
-                            onClick = {},
-                            enabled = false,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Continue")
-                        }
-                    }
-                    is ApiKeyState.Loaded -> {
-                        OutlinedTextField(
-                            value = apiKeyState.apiKey,
-                            onValueChange = apiKeyState.onApiKeyChanged,
-                            label = { Text("Gemini API Key") },
-                            placeholder = { Text("AIza...") },
-                            singleLine = true,
-                            enabled = true,
-                            isError = state.error != null,
-                            supportingText = state.error?.let { errorText ->
-                                { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                        Spacer(modifier = Modifier.height(24.dp))
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                                        Button(
+                                            onClick = {},
+                                            enabled = false,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Continue")
+                                        }
+                                    }
+                                    is ApiKeyState.Empty -> {
+                                        OutlinedTextField(
+                                            value = "",
+                                            onValueChange = {},
+                                            label = { Text("Gemini API Key") },
+                                            placeholder = { Text("AIza...") },
+                                            singleLine = true,
+                                            enabled = false,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
 
-                        Button(
-                            onClick = apiKeyState.onSaveClicked,
-                            enabled = apiKeyState.apiKey.isNotBlank(),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Continue")
+                                        Spacer(modifier = Modifier.height(24.dp))
+
+                                        Button(
+                                            onClick = {},
+                                            enabled = false,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Continue")
+                                        }
+                                    }
+                                    is ApiKeyState.Loaded -> {
+                                        OutlinedTextField(
+                                            value = apiKeyState.apiKey,
+                                            onValueChange = apiKeyState.onApiKeyChanged,
+                                            label = { Text("Gemini API Key") },
+                                            placeholder = { Text("AIza...") },
+                                            singleLine = true,
+                                            enabled = true,
+                                            isError = state.error != null,
+                                            supportingText = state.error?.let { errorText ->
+                                                { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+
+                                        Spacer(modifier = Modifier.height(24.dp))
+
+                                        Button(
+                                            onClick = apiKeyState.onSaveClicked,
+                                            enabled = apiKeyState.apiKey.isNotBlank(),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Continue")
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
                         }
                     }
                 }
@@ -583,18 +615,18 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
     }
 
     // Info dialog for "Use Solenne's AI"
-    if (showSolenneAiInfo) {
+    if (state.showSolenneAiInfo) {
         AlertDialog(
-            onDismissRequest = { showSolenneAiInfo = false },
+            onDismissRequest = state.onSolenneAiInfoToggle,
             title = { Text("Use Solenne's AI") },
             text = {
                 Text(
-                    text = "Sign in with Google or Apple to use Solenne's AI service. This allows you to generate flashcards without needing your own API key. Your flashcards will be stored securely in your account.",
+                    text = "Sign in with Google or Apple to use Solenne's AI via the Solenne server. Your flashcards will be stored securely in your account.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showSolenneAiInfo = false }) {
+                TextButton(onClick = state.onSolenneAiInfoToggle) {
                     Text("Got it")
                 }
             }
@@ -602,44 +634,36 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
     }
 
     // Info dialog for "Use my own AI"
-    if (showOwnAiInfo) {
+    if (state.showOwnAiInfo) {
         AlertDialog(
-            onDismissRequest = { showOwnAiInfo = false },
+            onDismissRequest = state.onOwnAiInfoToggle,
             title = { Text("Use my own AI") },
             text = {
-                Text(
-                    text = "Provide your own Gemini API key to generate flashcards using Google's AI directly. This option doesn't require a Solenne account and your API key stays on your device. You'll need to get a free API key from Google AI Studio.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Column {
+                    Text(
+                        text = "Provide your own Gemini API key to generate flashcards using Google's AI directly. You never use Solenne's server and all of your data goes straight to Gemini's AI service. Your API key stays on your device.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val annotatedString = buildAnnotatedString {
+                        withLink(LinkAnnotation.Url("https://aistudio.google.com/api-keys")) {
+                            append("Get your API key from Google AI Studio")
+                        }
+                    }
+                    Text(
+                        text = annotatedString,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    )
+                }
             },
             confirmButton = {
-                TextButton(onClick = { showOwnAiInfo = false }) {
+                TextButton(onClick = state.onOwnAiInfoToggle) {
                     Text("Got it")
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun ApiKeyLinkText() {
-    val annotatedString = buildAnnotatedString {
-        withLink(LinkAnnotation.Url("https://aistudio.google.com/api-keys")) {
-            append("Get your API key from Google AI Studio")
-        }
-    }
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = annotatedString,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.primary,
-                textDecoration = TextDecoration.Underline
-            )
         )
     }
 }

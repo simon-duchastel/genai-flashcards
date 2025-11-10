@@ -30,6 +30,10 @@ class AuthPresenter(
         var isDangerousModeEnabled by remember { mutableStateOf(false) }
         var showDeleteAccountDialog by remember { mutableStateOf(false) }
         var isDeletingAccount by remember { mutableStateOf(false) }
+        var solenneAiExpanded by remember { mutableStateOf(false) }
+        var ownAiExpanded by remember { mutableStateOf(false) }
+        var showSolenneAiInfo by remember { mutableStateOf(false) }
+        var showOwnAiInfo by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
@@ -188,6 +192,14 @@ class AuthPresenter(
             deleteAccountModal = deleteAccountModal,
             onBackClicked = if (canGoBack) { { navigator.pop() } } else null,
             error = error,
+            solenneAiExpanded = solenneAiExpanded,
+            onSolenneAiExpandedToggle = { solenneAiExpanded = !solenneAiExpanded },
+            ownAiExpanded = ownAiExpanded,
+            onOwnAiExpandedToggle = { ownAiExpanded = !ownAiExpanded },
+            showSolenneAiInfo = showSolenneAiInfo,
+            onSolenneAiInfoToggle = { showSolenneAiInfo = !showSolenneAiInfo },
+            showOwnAiInfo = showOwnAiInfo,
+            onOwnAiInfoToggle = { showOwnAiInfo = !showOwnAiInfo },
         )
     }
 

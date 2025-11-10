@@ -17,6 +17,14 @@ data class AuthUiState(
     val deleteAccountModal: DeleteAccountModal,
     val onBackClicked: (() -> Unit)?, // null if back button is not available
     val error: String?,
+    val solenneAiExpanded: Boolean,
+    val onSolenneAiExpandedToggle: () -> Unit,
+    val ownAiExpanded: Boolean,
+    val onOwnAiExpandedToggle: () -> Unit,
+    val showSolenneAiInfo: Boolean,
+    val onSolenneAiInfoToggle: () -> Unit,
+    val showOwnAiInfo: Boolean,
+    val onOwnAiInfoToggle: () -> Unit,
 ) : CircuitUiState
 
 sealed interface ApiKeyState {
