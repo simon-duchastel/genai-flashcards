@@ -1,6 +1,7 @@
 package ai.solenne.flashcards.app.presentation.home
 
 import ai.solenne.flashcards.app.LocalThemeState
+import ai.solenne.flashcards.app.presentation.components.SelectableText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,7 +36,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
+                title = { SelectableText("Solenne Flashcards", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -134,7 +135,7 @@ private fun ErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
+        SelectableText(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -157,13 +158,13 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
+        SelectableText(
             "No flashcards yet",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        SelectableText(
             "Create your first set to get started!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -231,7 +232,7 @@ private fun FlashcardSetItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
+                    SelectableText(
                         text = set.topic,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
@@ -253,12 +254,12 @@ private fun FlashcardSetItem(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
+                SelectableText(
                     text = "${set.cardCount} cards",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
+                SelectableText(
                     text = formatDate(set.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
