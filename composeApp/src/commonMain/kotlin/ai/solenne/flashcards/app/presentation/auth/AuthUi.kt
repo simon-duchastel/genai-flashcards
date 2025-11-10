@@ -1,6 +1,8 @@
 package ai.solenne.flashcards.app.presentation.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -48,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
@@ -106,38 +110,19 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                Text(
-                    text = when (state.logInState) {
-                        is LogInState.LoggedIn -> "Signed in"
-                        is LogInState.LoggedOut, is LogInState.Loading -> "Signed out"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = when (state.logInState) {
-                        is LogInState.LoggedIn -> MaterialTheme.colorScheme.primary
-                        is LogInState.LoggedOut, is LogInState.Loading -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                // Determine heading based on what's active
+                val headingText = when {
+                    state.logInState is LogInState.LoggedIn -> "Currently Using Solenne's AI"
+                    state.apiKeyState is ApiKeyState.Loaded && (state.apiKeyState as ApiKeyState.Loaded).apiKey.isNotBlank() -> "Currently using my own AI"
+                    else -> "Choose how your flashcards are generated"
+                }
 
                 Text(
-                    text = if (state.logInState is LogInState.LoggedIn) "Welcome!" else "Choose how your flashcards are generated",
+                    text = headingText,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-
-                if (state.logInState is LogInState.LoggedOut || state.logInState is LogInState.Loading) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "All Solenne Flashcard features require AI to work.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -159,41 +144,72 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                     is LogInState.LoggedOut, is LogInState.Loading -> {
+                        // Determine if each option is active
+                        val isSolenneAiActive = state.logInState is LogInState.LoggedIn
+                        val isOwnAiActive = state.apiKeyState is ApiKeyState.Loaded &&
+                            (state.apiKeyState as ApiKeyState.Loaded).apiKey.isNotBlank()
+
                         // Option 1: Use Solenne's AI
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { state.onSolenneAiExpandedToggle() }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        width = 2.dp,
+                                        color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                                        shape = MaterialTheme.shapes.medium
+                                    )
+                                    .clickable { state.onSolenneAiExpandedToggle() }
+                                    .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = "Use Solenne's AI",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                IconButton(
-                                    onClick = { state.onSolenneAiInfoToggle() },
-                                    modifier = Modifier.size(32.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = "Info about Solenne's AI",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
+                                    if (isSolenneAiActive) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "Active",
+                                            tint = Color(0xFF4CAF50),
+                                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Use Solenne's AI",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
+                                Icon(
+                                    imageVector = if (state.solenneAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (state.solenneAiExpanded) "Collapse" else "Expand",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                             }
-                            Icon(
-                                imageVector = if (state.solenneAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (state.solenneAiExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+
+                            // Learn more link outside the border
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { state.onSolenneAiInfoToggle() }
+                                    .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Info",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Learn more",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
 
                         AnimatedVisibility(
@@ -316,40 +332,66 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Option 2: Use my own AI
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { state.onOwnAiExpandedToggle() }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        width = 2.dp,
+                                        color = if (isOwnAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                                        shape = MaterialTheme.shapes.medium
+                                    )
+                                    .clickable { state.onOwnAiExpandedToggle() }
+                                    .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = "Use my own AI",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                IconButton(
-                                    onClick = { state.onOwnAiInfoToggle() },
-                                    modifier = Modifier.size(32.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = "Info about using your own AI",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
+                                    if (isOwnAiActive) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "Active",
+                                            tint = Color(0xFF4CAF50),
+                                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Use my own AI",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
+                                Icon(
+                                    imageVector = if (state.ownAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (state.ownAiExpanded) "Collapse" else "Expand",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                             }
-                            Icon(
-                                imageVector = if (state.ownAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (state.ownAiExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+
+                            // Learn more link outside the border
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { state.onOwnAiInfoToggle() }
+                                    .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Info",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Learn more",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
 
                         AnimatedVisibility(
