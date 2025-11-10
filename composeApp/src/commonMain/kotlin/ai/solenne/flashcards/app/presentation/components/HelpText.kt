@@ -20,7 +20,7 @@ fun HelpText(
     textAlign: TextAlign = TextAlign.Center
 ) {
     val annotatedString = textWithHelpEmail("Questions? Feedback? Email help@solenne.ai")
-    Text(
+    SelectableText(
         modifier = modifier,
         text = annotatedString,
         textAlign = textAlign

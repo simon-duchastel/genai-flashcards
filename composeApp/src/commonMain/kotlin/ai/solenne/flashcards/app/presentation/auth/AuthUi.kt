@@ -1,5 +1,6 @@
 package ai.solenne.flashcards.app.presentation.auth
 
+import ai.solenne.flashcards.app.presentation.components.SelectableText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,7 +64,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                title = { SelectableText("Settings", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -98,7 +99,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                Text(
+                SelectableText(
                     text = when (state.logInState) {
                         is LogInState.LoggedIn -> "Signed in"
                         is LogInState.LoggedOut, is LogInState.Loading -> "Signed out"
@@ -113,7 +114,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
+                SelectableText(
                     text = "Welcome!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
@@ -237,7 +238,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
+                    SelectableText(
                         text = " OR ",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -248,7 +249,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Text(
+                SelectableText(
                     text = "Enter your Gemini API key",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -314,7 +315,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             enabled = true,
                             isError = state.error != null,
                             supportingText = state.error?.let { errorText ->
-                                { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
+                                { SelectableText(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -341,7 +342,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
+                    SelectableText(
                         text = "Danger Zone",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
@@ -365,7 +366,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     onCheckedChange = { dangerousMode.onDangerousModeToggled() }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
+                                SelectableText(
                                     text = "I'd like to perform a dangerous action",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -412,7 +413,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     onCheckedChange = { dangerousMode.onDangerousModeToggled() }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
+                                SelectableText(
                                     text = "I'd like to perform a dangerous action",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -421,8 +422,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Delete account section - enabled when dangerous mode is enabled
-                            val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible &&
-                                (state.deleteAccountModal as? DeleteAccountModal.Visible)?.isDeletingAccount == true
+                            val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible && state.deleteAccountModal.isDeletingAccount
 
                             Box(
                                 modifier = Modifier

@@ -1,6 +1,7 @@
 package ai.solenne.flashcards.app.presentation.study
 
 import ai.solenne.flashcards.app.LocalSnackkbarHostState
+import ai.solenne.flashcards.app.presentation.components.SelectableText
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloatAsState
@@ -102,7 +103,7 @@ private fun StudyingScreen(
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text(topic) },
+                title = { SelectableText(topic) },
                 navigationIcon = {
                     IconButton(onClick = onExitStudy) {
                         Icon(
@@ -112,7 +113,7 @@ private fun StudyingScreen(
                     }
                 },
                 actions = {
-                    Text(
+                    SelectableText(
                         studyState.progress,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(end = 16.dp)
@@ -178,7 +179,7 @@ private fun ErrorState(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Error") },
+                title = { SelectableText("Error") },
                 navigationIcon = {
                     IconButton(onClick = onExit) {
                         Icon(
@@ -198,7 +199,7 @@ private fun ErrorState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
+            SelectableText(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
@@ -303,7 +304,7 @@ private fun FlashcardView(
                             else -> MaterialTheme.typography.headlineSmall
                         }
 
-                        Text(
+                        SelectableText(
                             text = text,
                             style = fontSize,
                             textAlign = TextAlign.Center,
@@ -321,7 +322,7 @@ private fun FlashcardView(
 
     // Hint text
     Spacer(modifier = Modifier.height(16.dp))
-    Text(
+    SelectableText(
         text = if (isFlipped) "Swipe or tap to flip" else "Tap to reveal answer",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -374,7 +375,7 @@ private fun CompletionScreen(
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Study Complete!") }
+                title = { SelectableText("Study Complete!") }
             )
         }
     ) { padding ->
@@ -386,19 +387,19 @@ private fun CompletionScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
+            SelectableText(
                 "🎉",
                 style = MaterialTheme.typography.displayLarge
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
+            SelectableText(
                 "You've completed all flashcards!",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
+            SelectableText(
                 "Studied ${completeState.flashcards.size} cards on ${completeState.topic}",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,

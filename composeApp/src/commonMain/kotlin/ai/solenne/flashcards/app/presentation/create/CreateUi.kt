@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.solenne.flashcards.shared.domain.model.Flashcard
 import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
+import ai.solenne.flashcards.app.presentation.components.SelectableText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +36,7 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Create Flashcards") },
+                title = { SelectableText("Create Flashcards") },
                 navigationIcon = {
                     IconButton(onClick = state.onBackClicked) {
                         Icon(
@@ -102,7 +103,7 @@ private fun CreateForm(state: ContentState.Idle) {
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
+        SelectableText(
             "What would you like to study?",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
@@ -134,7 +135,7 @@ private fun CreateForm(state: ContentState.Idle) {
             maxLines = 5
         )
 
-        Text(
+        SelectableText(
             "How many flashcards?",
             style = MaterialTheme.typography.titleMedium
         )
@@ -144,7 +145,7 @@ private fun CreateForm(state: ContentState.Idle) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("${state.count} cards")
+            SelectableText("${state.count} cards")
             Slider(
                 value = state.count.toFloat(),
                 onValueChange = { state.onCountChanged(it.toInt()) },
@@ -175,7 +176,7 @@ private fun GeneratingScreen(state: ContentState.Generating) {
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
+        SelectableText(
             "Generating flashcards for \"${state.topic}\"...",
             style = MaterialTheme.typography.bodyLarge
         )
@@ -191,7 +192,7 @@ private fun ErrorForm(state: ContentState.Error) {
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
+        SelectableText(
             "What would you like to study?",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
@@ -223,7 +224,7 @@ private fun ErrorForm(state: ContentState.Error) {
             maxLines = 5
         )
 
-        Text(
+        SelectableText(
             "How many flashcards?",
             style = MaterialTheme.typography.titleMedium
         )
@@ -233,7 +234,7 @@ private fun ErrorForm(state: ContentState.Error) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("${state.count} cards")
+            SelectableText("${state.count} cards")
             Slider(
                 value = state.count.toFloat(),
                 onValueChange = { state.onCountChanged(it.toInt()) },
@@ -248,7 +249,7 @@ private fun ErrorForm(state: ContentState.Error) {
                 containerColor = MaterialTheme.colorScheme.errorContainer
             )
         ) {
-            Text(
+            SelectableText(
                 text = textWithHelpEmail(state.message, MaterialTheme.colorScheme.onErrorContainer),
                 modifier = Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -270,13 +271,13 @@ private fun ErrorForm(state: ContentState.Error) {
 @Composable
 private fun PreviewCards(state: ContentState.Generated) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
+        SelectableText(
             "Generated ${state.generatedCards.size} flashcards",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        SelectableText(
             "Review and edit before saving",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -376,7 +377,7 @@ private fun FlashcardPreviewItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Text(
+                SelectableText(
                     "Front:",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
@@ -403,18 +404,18 @@ private fun FlashcardPreviewItem(
                     }
                 }
             }
-            Text(
+            SelectableText(
                 text = card.front,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
+            SelectableText(
                 "Back:",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Bold
             )
-            Text(
+            SelectableText(
                 text = card.back,
                 style = MaterialTheme.typography.bodyMedium
             )

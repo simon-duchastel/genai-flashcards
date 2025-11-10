@@ -1,6 +1,5 @@
 package ai.solenne.flashcards.app
 
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import ai.solenne.flashcards.app.data.api.AuthApiClient
@@ -64,12 +63,10 @@ fun main() {
 
     ComposeViewport(
         content = {
-            SelectionContainer {
-                App(
-                    configRepository = appGraph.configRepository,
-                    circuit = appGraph.circuit,
-                )
-            }
+            App(
+                configRepository = appGraph.configRepository,
+                circuit = appGraph.circuit,
+            )
         }
     )
 }
