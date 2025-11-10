@@ -315,7 +315,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             enabled = true,
                             isError = state.error != null,
                             supportingText = state.error?.let { errorText ->
-                                { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
+                                { SelectableText(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -422,8 +422,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Delete account section - enabled when dangerous mode is enabled
-                            val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible &&
-                                (state.deleteAccountModal as? DeleteAccountModal.Visible)?.isDeletingAccount == true
+                            val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible && state.deleteAccountModal.isDeletingAccount
 
                             Box(
                                 modifier = Modifier
