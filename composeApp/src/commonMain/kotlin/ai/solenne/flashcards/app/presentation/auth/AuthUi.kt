@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -37,6 +38,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -57,6 +62,9 @@ import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
+    var showSolenneAiInfo by remember { mutableStateOf(false) }
+    var showOwnAiInfo by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -114,10 +122,22 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Welcome!",
+                    text = if (state.logInState is LogInState.LoggedIn) "Welcome!" else "Choose how your flashcards are generated",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
+
+                if (state.logInState is LogInState.LoggedOut || state.logInState is LogInState.Loading) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "All Solenne Flashcard features require AI to work.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -139,6 +159,32 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                     is LogInState.LoggedOut, is LogInState.Loading -> {
+                        // Option 1: Use Solenne's AI
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Use Solenne's AI",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            IconButton(
+                                onClick = { showSolenneAiInfo = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Info about Solenne's AI",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         val onGoogleSignInClicked = when (loginState) {
                             is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
                             is LogInState.Loading -> null
@@ -228,38 +274,65 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         }
 
                         Spacer(modifier = Modifier.height(32.dp))
+
+                        // Divider with "OR"
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                            Text(
+                                text = " OR ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Option 2: Use my own AI
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Use my own AI",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            IconButton(
+                                onClick = { showOwnAiInfo = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Info about using your own AI",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Enter your Gemini API key",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ApiKeyLinkText()
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-
-                // Divider with "OR"
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
-                        text = " OR ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Text(
-                    text = "Enter your Gemini API key",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ApiKeyLinkText()
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 when (val apiKeyState = state.apiKeyState) {
                     is ApiKeyState.Loading -> {
@@ -507,6 +580,44 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
         is DeleteAccountModal.Hidden -> {
             // No dialog shown
         }
+    }
+
+    // Info dialog for "Use Solenne's AI"
+    if (showSolenneAiInfo) {
+        AlertDialog(
+            onDismissRequest = { showSolenneAiInfo = false },
+            title = { Text("Use Solenne's AI") },
+            text = {
+                Text(
+                    text = "Sign in with Google or Apple to use Solenne's AI service. This allows you to generate flashcards without needing your own API key. Your flashcards will be stored securely in your account.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showSolenneAiInfo = false }) {
+                    Text("Got it")
+                }
+            }
+        )
+    }
+
+    // Info dialog for "Use my own AI"
+    if (showOwnAiInfo) {
+        AlertDialog(
+            onDismissRequest = { showOwnAiInfo = false },
+            title = { Text("Use my own AI") },
+            text = {
+                Text(
+                    text = "Provide your own Gemini API key to generate flashcards using Google's AI directly. This option doesn't require a Solenne account and your API key stays on your device. You'll need to get a free API key from Google AI Studio.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showOwnAiInfo = false }) {
+                    Text("Got it")
+                }
+            }
+        )
     }
 }
 
