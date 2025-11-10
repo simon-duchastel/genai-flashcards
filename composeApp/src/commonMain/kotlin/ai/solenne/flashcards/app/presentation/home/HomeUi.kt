@@ -36,7 +36,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { Text("Solenne Flashcards", fontWeight = FontWeight.Bold) },
+                title = { SelectableText("Solenne Flashcards", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
