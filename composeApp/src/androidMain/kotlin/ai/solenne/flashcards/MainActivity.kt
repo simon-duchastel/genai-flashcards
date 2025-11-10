@@ -8,7 +8,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.text.selection.SelectionContainer
 import dev.zacsweers.metro.createGraphFactory
 
 class MainActivity : ComponentActivity() {
@@ -19,12 +18,10 @@ class MainActivity : ComponentActivity() {
         val appGraph = createGraphFactory<AndroidAppGraph.Factory>().create(applicationContext)
 
         setContent {
-            SelectionContainer {
-                App(
-                    configRepository = appGraph.configRepository,
-                    circuit = appGraph.circuit,
-                )
-            }
+            App(
+                configRepository = appGraph.configRepository,
+                circuit = appGraph.circuit,
+            )
         }
     }
 

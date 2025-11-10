@@ -1,6 +1,5 @@
 package ai.solenne.flashcards.app
 
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.window.ComposeUIViewController
 import dev.zacsweers.metro.createGraph
 import ai.solenne.flashcards.app.di.IosAppGraph
@@ -15,11 +14,9 @@ fun MainViewController(): UIViewController {
     val appGraph = createGraph<IosAppGraph>()
 
     return ComposeUIViewController {
-        SelectionContainer {
-            App(
-                configRepository = appGraph.configRepository,
-                circuit = appGraph.circuit,
-            )
-        }
+        App(
+            configRepository = appGraph.configRepository,
+            circuit = appGraph.circuit,
+        )
     }
 }
