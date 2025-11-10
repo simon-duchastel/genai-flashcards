@@ -23,6 +23,7 @@ class AuthPresenter(
     override fun present(): AuthUiState {
         val canGoBack = remember { navigator.peekBackStack().size > 1 }
         var apiKeyInput: String? by remember { mutableStateOf(null) }
+        var originalApiKey by remember { mutableStateOf("") }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
         var isAuthenticatingWithApple by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
@@ -30,26 +31,43 @@ class AuthPresenter(
         var isDangerousModeEnabled by remember { mutableStateOf(false) }
         var showDeleteAccountDialog by remember { mutableStateOf(false) }
         var isDeletingAccount by remember { mutableStateOf(false) }
-        var solenneAiExpanded by remember { mutableStateOf(false) }
-        var ownAiExpanded by remember { mutableStateOf(false) }
+        var solenneAiExpanded by remember { mutableStateOf<Boolean?>(null) }
+        var ownAiExpanded by remember { mutableStateOf<Boolean?>(null) }
         var showSolenneAiInfo by remember { mutableStateOf(false) }
         var showOwnAiInfo by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            apiKeyInput = configRepository.getGeminiApiKey() ?: ""
+            val loadedApiKey = configRepository.getGeminiApiKey() ?: ""
+            apiKeyInput = loadedApiKey
+            originalApiKey = loadedApiKey
 
             // Check if user is logged in and load persisted user info
             val sessionToken = configRepository.getSessionToken()
             isLoggedIn = sessionToken != null
+
+            // Auto-open based on what's active
+            if (solenneAiExpanded == null && ownAiExpanded == null) {
+                if (isLoggedIn) {
+                    solenneAiExpanded = true
+                    ownAiExpanded = false
+                } else if (loadedApiKey.isNotBlank()) {
+                    solenneAiExpanded = false
+                    ownAiExpanded = true
+                } else {
+                    solenneAiExpanded = false
+                    ownAiExpanded = false
+                }
+            }
         }
 
         val apiKey = apiKeyInput
         val apiKeyState = when {
             apiKey == null -> ApiKeyState.Loading
-            apiKey.isBlank() -> ApiKeyState.Empty
+            apiKey.isBlank() && originalApiKey.isBlank() -> ApiKeyState.Empty
             else -> ApiKeyState.Loaded(
-                apiKey = apiKey,
+                apiKey = apiKey ?: "",
+                originalApiKey = originalApiKey,
                 onApiKeyChanged = { newValue ->
                     apiKeyInput = newValue
                     error = null
@@ -69,6 +87,7 @@ class AuthPresenter(
                             scope.launch {
                                 try {
                                     configRepository.setGeminiApiKey(apiKeyToSubmit.trim())
+                                    originalApiKey = apiKeyToSubmit.trim()
                                     navigator.resetRoot(SplashScreen)
                                 } catch (e: Exception) {
                                     error = """
@@ -78,6 +97,23 @@ class AuthPresenter(
                                     """.trimIndent()
                                 }
                             }
+                        }
+                    }
+                },
+                onRemoveClicked = {
+                    error = null
+                    scope.launch {
+                        try {
+                            configRepository.setGeminiApiKey("")
+                            apiKeyInput = ""
+                            originalApiKey = ""
+                            navigator.resetRoot(SplashScreen)
+                        } catch (e: Exception) {
+                            error = """
+                                Failed to remove API key: ${e.message}
+
+                                Need help? Email help@solenne.ai
+                            """.trimIndent()
                         }
                     }
                 }
@@ -192,10 +228,22 @@ class AuthPresenter(
             deleteAccountModal = deleteAccountModal,
             onBackClicked = if (canGoBack) { { navigator.pop() } } else null,
             error = error,
-            solenneAiExpanded = solenneAiExpanded,
-            onSolenneAiExpandedToggle = { solenneAiExpanded = !solenneAiExpanded },
-            ownAiExpanded = ownAiExpanded,
-            onOwnAiExpandedToggle = { ownAiExpanded = !ownAiExpanded },
+            solenneAiExpanded = solenneAiExpanded ?: false,
+            onSolenneAiExpandedToggle = {
+                solenneAiExpanded = !(solenneAiExpanded ?: false)
+                // Close the other section when opening this one
+                if (solenneAiExpanded == true) {
+                    ownAiExpanded = false
+                }
+            },
+            ownAiExpanded = ownAiExpanded ?: false,
+            onOwnAiExpandedToggle = {
+                ownAiExpanded = !(ownAiExpanded ?: false)
+                // Close the other section when opening this one
+                if (ownAiExpanded == true) {
+                    solenneAiExpanded = false
+                }
+            },
             showSolenneAiInfo = showSolenneAiInfo,
             onSolenneAiInfoToggle = { showSolenneAiInfo = !showSolenneAiInfo },
             showOwnAiInfo = showOwnAiInfo,

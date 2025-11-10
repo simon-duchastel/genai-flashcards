@@ -150,15 +150,18 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             (state.apiKeyState as ApiKeyState.Loaded).apiKey.isNotBlank()
 
                         // Option 1: Use Solenne's AI
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 2.dp,
+                                    color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
-                                        shape = MaterialTheme.shapes.medium
-                                    )
                                     .clickable { state.onSolenneAiExpandedToggle() }
                                     .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -189,36 +192,14 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 )
                             }
 
-                            // Learn more link outside the border
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { state.onSolenneAiInfoToggle() }
-                                    .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            AnimatedVisibility(
+                                visible = state.solenneAiExpanded,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Info",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Learn more",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-
-                        AnimatedVisibility(
-                            visible = state.solenneAiExpanded,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                                    HorizontalDivider()
+                                    Spacer(modifier = Modifier.height(12.dp))
 
                                 val onGoogleSignInClicked = when (loginState) {
                                     is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
@@ -308,8 +289,31 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
+                        }
+
+                        // Learn more link outside the border
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { state.onSolenneAiInfoToggle() }
+                                .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Info",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Learn more",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -332,15 +336,18 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Option 2: Use my own AI
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 2.dp,
+                                    color = if (isOwnAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isOwnAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
-                                        shape = MaterialTheme.shapes.medium
-                                    )
                                     .clickable { state.onOwnAiExpandedToggle() }
                                     .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -371,36 +378,14 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                 )
                             }
 
-                            // Learn more link outside the border
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { state.onOwnAiInfoToggle() }
-                                    .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            AnimatedVisibility(
+                                visible = state.ownAiExpanded,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Info",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Learn more",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-
-                        AnimatedVisibility(
-                            visible = state.ownAiExpanded,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                                    HorizontalDivider()
+                                    Spacer(modifier = Modifier.height(12.dp))
 
                                 when (val apiKeyState = state.apiKeyState) {
                                     is ApiKeyState.Loading -> {
@@ -462,18 +447,65 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                                         Spacer(modifier = Modifier.height(24.dp))
 
+                                        // Determine button text and action
+                                        val hasOriginalKey = apiKeyState.originalApiKey.isNotBlank()
+                                        val hasCurrentKey = apiKeyState.apiKey.isNotBlank()
+                                        val keyChanged = apiKeyState.apiKey != apiKeyState.originalApiKey
+
+                                        val (buttonText, buttonAction, buttonEnabled) = when {
+                                            // Has original key and hasn't changed -> Remove
+                                            hasOriginalKey && !keyChanged -> Triple("Remove", apiKeyState.onRemoveClicked, true)
+                                            // Has original key and changed -> Update
+                                            hasOriginalKey && keyChanged -> Triple("Update", apiKeyState.onSaveClicked, hasCurrentKey)
+                                            // No original key and has text -> Add
+                                            !hasOriginalKey && hasCurrentKey -> Triple("Add", apiKeyState.onSaveClicked, true)
+                                            // No original key and no text -> disabled
+                                            else -> Triple("Add", apiKeyState.onSaveClicked, false)
+                                        }
+
                                         Button(
-                                            onClick = apiKeyState.onSaveClicked,
-                                            enabled = apiKeyState.apiKey.isNotBlank(),
-                                            modifier = Modifier.fillMaxWidth()
+                                            onClick = buttonAction,
+                                            enabled = buttonEnabled,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = if (buttonText == "Remove") {
+                                                ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                )
+                                            } else {
+                                                ButtonDefaults.buttonColors()
+                                            }
                                         ) {
-                                            Text("Continue")
+                                            Text(buttonText)
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
+                        }
+
+                        // Learn more link outside the border
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { state.onOwnAiInfoToggle() }
+                                .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Info",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Learn more",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 }
