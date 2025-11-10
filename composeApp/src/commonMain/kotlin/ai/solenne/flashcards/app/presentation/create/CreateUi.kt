@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.solenne.flashcards.shared.domain.model.Flashcard
 import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
+import ai.solenne.flashcards.app.presentation.components.SelectableText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -403,7 +404,7 @@ private fun FlashcardPreviewItem(
                     }
                 }
             }
-            Text(
+            SelectableText(
                 text = card.front,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -414,7 +415,7 @@ private fun FlashcardPreviewItem(
                 color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Bold
             )
-            Text(
+            SelectableText(
                 text = card.back,
                 style = MaterialTheme.typography.bodyMedium
             )
