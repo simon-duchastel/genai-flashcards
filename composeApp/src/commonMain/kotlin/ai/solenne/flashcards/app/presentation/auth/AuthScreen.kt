@@ -29,10 +29,15 @@ data class AuthUiState(
 
 sealed interface ApiKeyState {
     data object Loading : ApiKeyState
-    data object Empty : ApiKeyState
+    data class Modified(
+        val apiKey: String,
+        val wasEmptyBefore: Boolean,
+        val onApiKeyChanged: (String) -> Unit,
+        val onSaveClicked: () -> Unit,
+        val onRemoveClicked: () -> Unit,
+    ) : ApiKeyState
     data class Loaded(
         val apiKey: String,
-        val originalApiKey: String, // Track original to determine button text
         val onApiKeyChanged: (String) -> Unit,
         val onSaveClicked: () -> Unit,
         val onRemoveClicked: () -> Unit,
