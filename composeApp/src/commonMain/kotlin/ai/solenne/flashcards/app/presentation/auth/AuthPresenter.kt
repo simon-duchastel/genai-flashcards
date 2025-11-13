@@ -62,9 +62,8 @@ class AuthPresenter(
         }
 
         val apiKey = apiKeyInput
-        val apiKeyState = when {
-            apiKey == null -> ApiKeyState.Loading
-            apiKey.isBlank() && originalApiKey.isBlank() -> ApiKeyState.Empty
+        val apiKeyState = when (apiKey) {
+            null -> ApiKeyState.Loading
             else -> ApiKeyState.Loaded(
                 apiKey = apiKey ?: "",
                 originalApiKey = originalApiKey,
