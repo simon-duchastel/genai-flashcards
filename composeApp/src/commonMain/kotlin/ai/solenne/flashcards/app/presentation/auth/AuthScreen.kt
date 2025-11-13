@@ -29,19 +29,24 @@ data class AuthUiState(
 
 sealed interface ApiKeyState {
     data object Loading : ApiKeyState
-    data class Modified(
-        val apiKey: String,
-        val wasEmptyBefore: Boolean,
-        val onApiKeyChanged: (String) -> Unit,
-        val onSaveClicked: () -> Unit,
-        val onRemoveClicked: () -> Unit,
-    ) : ApiKeyState
     data class Loaded(
         val apiKey: String,
+        val currentlyUsingApiKey: Boolean, // whether an api key is currently active
         val onApiKeyChanged: (String) -> Unit,
-        val onSaveClicked: () -> Unit,
-        val onRemoveClicked: () -> Unit,
     ) : ApiKeyState
+    data class Modified(
+        val apiKey: String,
+        val currentlyUsingApiKey: Boolean, // whether an api key is currently active
+        val onApiKeyChanged: (String) -> Unit,
+        val onButtonClicked: () -> Unit,
+    ) : ApiKeyState
+
+    val currentlyUsingApiKeyOrNull: Boolean?
+        get() = when (this) {
+            is Loaded -> currentlyUsingApiKey
+            is Modified -> currentlyUsingApiKey
+            Loading -> null
+        }
 }
 
 sealed interface LogInState {
@@ -58,8 +63,14 @@ sealed interface LogInState {
     ) : LogInState
 
     data class LoggedIn(
+        val loginType: LoginType,
         val onLogoutClicked: () -> Unit,
-    ) : LogInState
+    ) : LogInState {
+        enum class LoginType {
+            SignedInWithGoogle,
+            SignedInWithApple,
+        }
+    }
 }
 
 sealed interface DangerousModeState {

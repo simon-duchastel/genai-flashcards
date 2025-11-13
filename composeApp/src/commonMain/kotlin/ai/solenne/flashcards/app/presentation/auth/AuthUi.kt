@@ -111,11 +111,16 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                // Determine heading based on what's active
-                val headingText = when {
-                    state.logInState is LogInState.LoggedIn -> "Currently Using Solenne's AI"
-                    state.apiKeyState is ApiKeyState.Loaded && (state.apiKeyState as ApiKeyState.Loaded).apiKey.isNotBlank() -> "Currently using my own AI"
-                    else -> "Choose how your flashcards are generated"
+                // Determine heading based on login type
+                val headingText = when (val loginState = state.logInState) {
+                    is LogInState.LoggedIn -> when (loginState.loginType) {
+                        LogInState.LoggedIn.LoginType.SignedInWithGoogle -> "Signed in with Google (using Solenne's AI)"
+                        LogInState.LoggedIn.LoginType.SignedInWithApple -> "Signed in with Apple (using Solenne's AI)"
+                    }
+                    else -> when  {
+                        state.apiKeyState.currentlyUsingApiKeyOrNull == true -> "Currently using your own API key (not signed in)"
+                        else -> "Choose how your flashcards are generated"
+                    }
                 }
 
                 SelectableText(
@@ -128,511 +133,467 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Login/Logout section based on LogInState
-                when (val loginState = state.logInState) {
-                    is LogInState.LoggedIn -> {
-                        Button(
-                            onClick = loginState.onLogoutClicked,
-                            enabled = state.deleteAccountModal !is DeleteAccountModal.Visible,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Text("Logout")
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
-                    is LogInState.LoggedOut, is LogInState.Loading -> {
-                        // Determine if each option is active
-                        val isSolenneAiActive = state.logInState is LogInState.LoggedIn
-                        val isOwnAiActive = state.apiKeyState is ApiKeyState.Loaded &&
-                            (state.apiKeyState as ApiKeyState.Loaded).apiKey.isNotBlank()
-
-                        // Option 1: Use Solenne's AI
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { state.onSolenneAiExpandedToggle() }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    if (isSolenneAiActive) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Active",
-                                            tint = Color(0xFF4CAF50),
-                                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Use Solenne's AI",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (state.solenneAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (state.solenneAiExpanded) "Collapse" else "Expand",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = state.solenneAiExpanded,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                                    HorizontalDivider()
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                val onGoogleSignInClicked = when (loginState) {
-                                    is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
-                                    is LogInState.Loading -> null
-                                    is LogInState.LoggedIn -> null
-                                }
-                                val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
-
-                                Button(
-                                    onClick = onGoogleSignInClicked ?: {},
-                                    enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.surface,
-                                        contentColor = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center,
-                                        modifier = Modifier.padding(vertical = 4.dp)
-                                    ) {
-                                        if (googleButtonLoading) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(20.dp),
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "G",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                modifier = Modifier.padding(end = 12.dp)
-                                            )
-                                            Text(
-                                                text = "Sign in with Google",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                val onAppleSignInClicked = when (loginState) {
-                                    is LogInState.LoggedOut -> loginState.onAppleSignInClicked
-                                    is LogInState.Loading -> null
-                                    is LogInState.LoggedIn -> null
-                                }
-                                val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
-                                Button(
-                                    onClick = onAppleSignInClicked ?: {},
-                                    enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.surface,
-                                        contentColor = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center,
-                                        modifier = Modifier.padding(vertical = 4.dp)
-                                    ) {
-                                        if (appleButtonLoading) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(20.dp),
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        } else {
-                                            Image(
-                                                painter = painterResource(Res.drawable.apple_logo),
-                                                contentDescription = "Apple logo",
-                                                modifier = Modifier.size(20.dp),
-                                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
-                                            )
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            Text(
-                                                text = "Sign in with Apple",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-                                }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                }
-                            }
-                        }
-
-                        // Learn more link outside the border
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { state.onSolenneAiInfoToggle() }
-                                .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Info",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Learn more",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Divider with "OR"
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                            Text(
-                                text = " OR ",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Option 2: Use my own AI
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isOwnAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { state.onOwnAiExpandedToggle() }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    if (isOwnAiActive) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Active",
-                                            tint = Color(0xFF4CAF50),
-                                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Use my own AI",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (state.ownAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (state.ownAiExpanded) "Collapse" else "Expand",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = state.ownAiExpanded,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                                    HorizontalDivider()
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                when (val apiKeyState = state.apiKeyState) {
-                                    is ApiKeyState.Loading -> {
-                                        OutlinedTextField(
-                                            value = "",
-                                            onValueChange = {},
-                                            label = { CircularProgressIndicator() },
-                                            placeholder = { Text("AIza...") },
-                                            singleLine = true,
-                                            enabled = false,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-
-                                        Spacer(modifier = Modifier.height(24.dp))
-
-                                        Button(
-                                            onClick = {},
-                                            enabled = false,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text("Continue")
-                                        }
-                                    }
-                                    is ApiKeyState.Empty -> {
-                                        OutlinedTextField(
-                                            value = "",
-                                            onValueChange = {},
-                                            label = { Text("Gemini API Key") },
-                                            placeholder = { Text("AIza...") },
-                                            singleLine = true,
-                                            enabled = false,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-
-                                        Spacer(modifier = Modifier.height(24.dp))
-
-                                        Button(
-                                            onClick = {},
-                                            enabled = false,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text("Continue")
-                                        }
-                                    }
-                                    is ApiKeyState.Loaded -> {
-                                        OutlinedTextField(
-                                            value = apiKeyState.apiKey,
-                                            onValueChange = apiKeyState.onApiKeyChanged,
-                                            label = { Text("Gemini API Key") },
-                                            placeholder = { Text("AIza...") },
-                                            singleLine = true,
-                                            enabled = true,
-                                            isError = state.error != null,
-                                            supportingText = state.error?.let { errorText ->
-                                                { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
-                                            },
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-
-                                        Spacer(modifier = Modifier.height(24.dp))
-
-                                        // Determine button text and action
-                                        val hasOriginalKey = apiKeyState.originalApiKey.isNotBlank()
-                                        val hasCurrentKey = apiKeyState.apiKey.isNotBlank()
-                                        val keyChanged = apiKeyState.apiKey != apiKeyState.originalApiKey
-
-                                        val (buttonText, buttonAction, buttonEnabled) = when {
-                                            // Has original key and hasn't changed -> Remove
-                                            hasOriginalKey && !keyChanged -> Triple("Remove", apiKeyState.onRemoveClicked, true)
-                                            // Has original key and changed -> Update
-                                            hasOriginalKey && keyChanged -> Triple("Update", apiKeyState.onSaveClicked, hasCurrentKey)
-                                            // No original key and has text -> Add
-                                            !hasOriginalKey && hasCurrentKey -> Triple("Add", apiKeyState.onSaveClicked, true)
-                                            // No original key and no text -> disabled
-                                            else -> Triple("Add", apiKeyState.onSaveClicked, false)
-                                        }
-
-                                        Button(
-                                            onClick = buttonAction,
-                                            enabled = buttonEnabled,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = if (buttonText == "Remove") {
-                                                ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                                )
-                                            } else {
-                                                ButtonDefaults.buttonColors()
-                                            }
-                                        ) {
-                                            Text(buttonText)
-                                        }
-                                    }
-                                }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                }
-                            }
-                        }
-
-                        // Learn more link outside the border
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { state.onOwnAiInfoToggle() }
-                                .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Info",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Learn more",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                val loginState = state.logInState
+                if (loginState is LogInState.LoggedIn) {
+                    Button(
+                        onClick = loginState.onLogoutClicked,
+                        enabled = state.deleteAccountModal !is DeleteAccountModal.Visible,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Text("Logout")
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                HelpText(modifier = Modifier.fillMaxWidth())
+                val isSolenneAiActive = state.logInState is LogInState.LoggedIn
+                val isOwnAiActive = state.apiKeyState is ApiKeyState.Loaded
+                        && state.apiKeyState.apiKey.isNotBlank()
 
-                // Dangerous actions section (only shown if logged in)
-                if (state.logInState is LogInState.LoggedIn) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    SelectableText(
-                        text = "Danger Zone",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    when (val dangerousMode = state.dangerousModeState) {
-                        is DangerousModeState.Disabled -> {
-                            // Checkbox to enable dangerous actions
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { dangerousMode.onDangerousModeToggled() }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = false,
-                                    onCheckedChange = { dangerousMode.onDangerousModeToggled() }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                SelectableText(
-                                    text = "I'd like to perform a dangerous action",
-                                    style = MaterialTheme.typography.bodyMedium
+                // Option 1: Use Solenne's AI
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 2.dp,
+                            color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                            shape = MaterialTheme.shapes.medium
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { state.onSolenneAiExpandedToggle() }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            if (isSolenneAiActive) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(24.dp).padding(end = 8.dp)
                                 )
                             }
+                            Text(
+                                text = "Use Solenne's AI",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Icon(
+                            imageVector = if (state.solenneAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (state.solenneAiExpanded) "Collapse" else "Expand",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                    AnimatedVisibility(
+                        visible = state.solenneAiExpanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            // Delete account section - greyed out when dangerous mode not enabled
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(0.4f)
+                        val onGoogleSignInClicked = when (loginState) {
+                            is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
+                            is LogInState.Loading -> null
+                            is LogInState.LoggedIn -> null
+                        }
+                        val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
+
+                        Button(
+                            onClick = onGoogleSignInClicked ?: {},
+                            enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             ) {
-                                TextButton(
-                                    onClick = {},
-                                    enabled = false,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.error,
-                                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                if (googleButtonLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Warning,
-                                        contentDescription = "Warning",
-                                        modifier = Modifier.size(20.dp)
+                                } else {
+                                    Text(
+                                        text = "G",
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(end = 12.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Delete Account")
+                                    Text(
+                                        text = "Sign in with Google",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
                             }
                         }
-                        is DangerousModeState.Enabled -> {
-                            // Checkbox to enable dangerous actions
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val onAppleSignInClicked = when (loginState) {
+                            is LogInState.LoggedOut -> loginState.onAppleSignInClicked
+                            is LogInState.Loading -> null
+                            is LogInState.LoggedIn -> null
+                        }
+                        val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
+                        Button(
+                            onClick = onAppleSignInClicked ?: {},
+                            enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
+                        ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { dangerousMode.onDangerousModeToggled() }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             ) {
-                                Checkbox(
-                                    checked = true,
-                                    onCheckedChange = { dangerousMode.onDangerousModeToggled() }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                SelectableText(
-                                    text = "I'd like to perform a dangerous action",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                if (appleButtonLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                } else {
+                                    Image(
+                                        painter = painterResource(Res.drawable.apple_logo),
+                                        contentDescription = "Apple logo",
+                                        modifier = Modifier.size(20.dp),
+                                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Sign in with Apple",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
+                        }
 
                             Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                }
 
-                            // Delete account section - enabled when dangerous mode is enabled
-                            val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible && state.deleteAccountModal.isDeletingAccount
+                // Learn more link outside the border
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { state.onSolenneAiInfoToggle() }
+                        .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Info",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Learn more",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(1f)
-                            ) {
-                                TextButton(
-                                    onClick = dangerousMode.onDeleteAccountClicked,
-                                    enabled = !isDeletingAccount,
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Divider with "OR"
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text(
+                        text = " OR ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Option 2: Use my own AI
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 2.dp,
+                            color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                            shape = MaterialTheme.shapes.medium
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { state.onOwnAiExpandedToggle() }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            if (isOwnAiActive) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                )
+                            }
+                            Text(
+                                text = "Use my own AI",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Icon(
+                            imageVector = if (state.ownAiExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (state.ownAiExpanded) "Collapse" else "Expand",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = state.ownAiExpanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                        when (val apiKeyState = state.apiKeyState) {
+                            is ApiKeyState.Loading -> {
+                                OutlinedTextField(
+                                    value = "",
+                                    onValueChange = {},
+                                    label = { CircularProgressIndicator() },
+                                    placeholder = { Text("AIza...") },
+                                    singleLine = true,
+                                    enabled = false,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            is ApiKeyState.Loaded -> {
+                                ApiKeyTextField(
+                                    apiKey = apiKeyState.apiKey,
+                                    onApiKeyChanged = apiKeyState.onApiKeyChanged,
+                                    error = state.error
+                                )
+                            }
+                            is ApiKeyState.Modified -> {
+                                ApiKeyTextField(
+                                    apiKey = apiKeyState.apiKey,
+                                    onApiKeyChanged = apiKeyState.onApiKeyChanged,
+                                    error = state.error
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                val buttonIsRemove = apiKeyState.apiKey.isBlank()
+                                val buttonText = when {
+                                    buttonIsRemove -> "Remove"
+                                    apiKeyState.currentlyUsingApiKey -> "Update"
+                                    else -> "Add"
+                                }
+
+                                Button(
+                                    onClick = apiKeyState.onButtonClicked,
+                                    enabled = true,
                                     modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.error,
-                                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                ) {
-                                    if (isDeletingAccount) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            color = MaterialTheme.colorScheme.error,
-                                            strokeWidth = 2.dp
+                                    colors = if (buttonIsRemove) {
+                                        ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
                                         )
                                     } else {
-                                        Icon(
-                                            imageVector = Icons.Default.Warning,
-                                            contentDescription = "Warning",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Delete Account")
+                                        ButtonDefaults.buttonColors()
                                     }
+                                ) {
+                                    Text(buttonText)
                                 }
+                            }
+                        }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                }
+
+                // Learn more link outside the border
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { state.onOwnAiInfoToggle() }
+                        .padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Info",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Learn more",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        HelpText(modifier = Modifier.fillMaxWidth())
+
+        // Dangerous actions section (only shown if logged in)
+        if (state.logInState is LogInState.LoggedIn) {
+            Spacer(modifier = Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SelectableText(
+                text = "Danger Zone",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            when (val dangerousMode = state.dangerousModeState) {
+                is DangerousModeState.Disabled -> {
+                    // Checkbox to enable dangerous actions
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { dangerousMode.onDangerousModeToggled() }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = false,
+                            onCheckedChange = { dangerousMode.onDangerousModeToggled() }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SelectableText(
+                            text = "I'd like to perform a dangerous action",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Delete account section - greyed out when dangerous mode not enabled
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(0.4f)
+                    ) {
+                        TextButton(
+                            onClick = {},
+                            enabled = false,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Warning",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delete Account")
+                        }
+                    }
+                }
+                is DangerousModeState.Enabled -> {
+                    // Checkbox to enable dangerous actions
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { dangerousMode.onDangerousModeToggled() }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = true,
+                            onCheckedChange = { dangerousMode.onDangerousModeToggled() }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SelectableText(
+                            text = "I'd like to perform a dangerous action",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Delete account section - enabled when dangerous mode is enabled
+                    val isDeletingAccount = state.deleteAccountModal is DeleteAccountModal.Visible && state.deleteAccountModal.isDeletingAccount
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(1f)
+                    ) {
+                        TextButton(
+                            onClick = dangerousMode.onDeleteAccountClicked,
+                            enabled = !isDeletingAccount,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            if (isDeletingAccount) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.error,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = "Warning",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Delete Account")
                             }
                         }
                     }
@@ -740,4 +701,26 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             }
         )
     }
+}
+
+@Composable
+private fun ApiKeyTextField(
+    apiKey: String,
+    onApiKeyChanged: (String) -> Unit,
+    error: String?,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = apiKey,
+        onValueChange = onApiKeyChanged,
+        label = { Text("Gemini API Key") },
+        placeholder = { Text("AIza...") },
+        singleLine = true,
+        enabled = true,
+        isError = error != null,
+        supportingText = error?.let { errorText ->
+            { Text(textWithHelpEmail(errorText, MaterialTheme.colorScheme.error), color = MaterialTheme.colorScheme.error) }
+        },
+        modifier = modifier.fillMaxWidth()
+    )
 }

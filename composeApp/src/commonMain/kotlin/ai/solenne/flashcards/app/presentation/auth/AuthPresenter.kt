@@ -27,6 +27,7 @@ class AuthPresenter(
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
         var isAuthenticatingWithApple by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
+        var loggedInProvider by remember { mutableStateOf<OAuthProvider?>(null) }
         var error by remember { mutableStateOf<String?>(null) }
         var isDangerousModeEnabled by remember { mutableStateOf(false) }
         var showDeleteAccountDialog by remember { mutableStateOf(false) }
@@ -64,29 +65,36 @@ class AuthPresenter(
         val apiKey = apiKeyInput
         val apiKeyState = when (apiKey) {
             null -> ApiKeyState.Loading
-            else -> ApiKeyState.Loaded(
-                apiKey = apiKey,
-                originalApiKey = originalApiKey,
-                onApiKeyChanged = { newValue ->
-                    apiKeyInput = newValue
-                    error = null
-                },
-                onSaveClicked = {
-                    val apiKeyToSubmit = apiKeyInput
-                    when {
-                        apiKeyToSubmit.isNullOrBlank() -> {
-                            error = """
-                                Please enter an API key.
+            else -> {
+                val currentKey = apiKey
+                val hasChanged = currentKey != originalApiKey
 
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
+                if (!hasChanged) {
+                    // Key hasn't changed - show loaded state
+                    ApiKeyState.Loaded(
+                        apiKey = currentKey,
+                        currentlyUsingApiKey = originalApiKey.isNotBlank(),
+                        onApiKeyChanged = { newValue ->
+                            apiKeyInput = newValue
+                            error = null
                         }
-                        else -> {
+                    )
+                } else {
+                    // Key has changed - show modified state
+                    ApiKeyState.Modified(
+                        apiKey = currentKey,
+                        currentlyUsingApiKey = originalApiKey.isNotBlank(),
+                        onApiKeyChanged = { newValue ->
+                            apiKeyInput = newValue
+                            error = null
+                        },
+                        onButtonClicked = {
                             error = null
                             scope.launch {
                                 try {
-                                    configRepository.setGeminiApiKey(apiKeyToSubmit.trim())
-                                    originalApiKey = apiKeyToSubmit.trim()
+                                    configRepository.setGeminiApiKey(currentKey.trim())
+                                    apiKeyInput = currentKey.trim()
+                                    originalApiKey = currentKey.trim()
                                     navigator.resetRoot(SplashScreen)
                                 } catch (e: Exception) {
                                     error = """
@@ -97,26 +105,9 @@ class AuthPresenter(
                                 }
                             }
                         }
-                    }
-                },
-                onRemoveClicked = {
-                    error = null
-                    scope.launch {
-                        try {
-                            configRepository.setGeminiApiKey("")
-                            apiKeyInput = ""
-                            originalApiKey = ""
-                            navigator.resetRoot(SplashScreen)
-                        } catch (e: Exception) {
-                            error = """
-                                Failed to remove API key: ${e.message}
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
-                        }
-                    }
+                    )
                 }
-            )
+            }
         }
 
         val dangerousModeState = if (isDangerousModeEnabled) {
@@ -135,30 +126,39 @@ class AuthPresenter(
                 loadingGoogle = isAuthenticatingWithGoogle,
                 loadingApple = isAuthenticatingWithApple,
             )
-            isLoggedIn -> LogInState.LoggedIn(
-                onLogoutClicked = {
-                    error = null
-                    scope.launch {
-                        try {
-                            val sessionToken = configRepository.getSessionToken()
-                            if (sessionToken != null) {
-                                authApiClient.logout(sessionToken)
+            isLoggedIn -> {
+                val loginType = when (loggedInProvider) {
+                    OAuthProvider.GOOGLE -> LogInState.LoggedIn.LoginType.SignedInWithGoogle
+                    OAuthProvider.APPLE -> LogInState.LoggedIn.LoginType.SignedInWithApple
+                    null -> LogInState.LoggedIn.LoginType.SignedInWithGoogle // Default if unknown
+                }
+                LogInState.LoggedIn(
+                    loginType = loginType,
+                    onLogoutClicked = {
+                        error = null
+                        scope.launch {
+                            try {
+                                val sessionToken = configRepository.getSessionToken()
+                                if (sessionToken != null) {
+                                    authApiClient.logout(sessionToken)
+                                }
+                                configRepository.clearSessionToken()
+                                isLoggedIn = false
+                                loggedInProvider = null
+
+                                // go back to splash screen
+                                navigator.resetRoot(SplashScreen)
+                            } catch (e: Exception) {
+                                error = """
+                                    Logout failed: ${e.message}
+
+                                    Need help? Email help@solenne.ai
+                                """.trimIndent()
                             }
-                            configRepository.clearSessionToken()
-                            isLoggedIn = false
-
-                            // go back to splash screen
-                            navigator.resetRoot(SplashScreen)
-                        } catch (e: Exception) {
-                            error = """
-                                Logout failed: ${e.message}
-
-                                Need help? Email help@solenne.ai
-                            """.trimIndent()
                         }
                     }
-                }
-            )
+                )
+            }
             else -> LogInState.LoggedOut(
                 onGoogleSignInClicked = {
                     scope.handleOAuthSignIn(
@@ -166,6 +166,7 @@ class AuthPresenter(
                         setAuthenticating = { isAuthenticatingWithGoogle = it },
                         setError = { error = it },
                         setLoggedIn = { isLoggedIn = it },
+                        setLoggedInProvider = { loggedInProvider = it },
                     )
                 },
                 onAppleSignInClicked = {
@@ -174,6 +175,7 @@ class AuthPresenter(
                         setAuthenticating = { isAuthenticatingWithApple = it },
                         setError = { error = it },
                         setLoggedIn = { isLoggedIn = it },
+                        setLoggedInProvider = { loggedInProvider = it },
                     )
                 },
                 dangerousModeState = dangerousModeState,
@@ -258,6 +260,7 @@ class AuthPresenter(
         setAuthenticating: (Boolean) -> Unit,
         setError: (String?) -> Unit,
         setLoggedIn: (Boolean) -> Unit,
+        setLoggedInProvider: (OAuthProvider?) -> Unit,
     ) {
         setAuthenticating(true)
         setError(null)
@@ -283,6 +286,7 @@ class AuthPresenter(
 
                 // Update state
                 setLoggedIn(true)
+                setLoggedInProvider(provider)
 
                 // Navigate to home
                 navigator.resetRoot(HomeScreen)
