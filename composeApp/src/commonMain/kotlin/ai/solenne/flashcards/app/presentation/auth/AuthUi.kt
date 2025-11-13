@@ -112,14 +112,14 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Top
             ) {
                 // Determine heading based on login type
-                val headingText = when (val loginState = state.logInState) {
+                val (headingText, subText) = when (val loginState = state.logInState) {
                     is LogInState.LoggedIn -> when (loginState.loginType) {
-                        LogInState.LoggedIn.LoginType.SignedInWithGoogle -> "Signed in with Google (using Solenne's AI)"
-                        LogInState.LoggedIn.LoginType.SignedInWithApple -> "Signed in with Apple (using Solenne's AI)"
+                        LogInState.LoggedIn.LoginType.SignedInWithGoogle -> "Signed in with Google" to "(using Solenne's AI)"
+                        LogInState.LoggedIn.LoginType.SignedInWithApple -> "Signed in with Apple" to "(using Solenne's AI)"
                     }
                     else -> when  {
-                        state.apiKeyState.currentlyUsingApiKeyOrNull == true -> "Currently using your own API key (not signed in)"
-                        else -> "Choose how your flashcards are generated"
+                        state.apiKeyState.currentlyUsingApiKeyOrNull == true -> "Currently using your own API key" to "(not signed in)"
+                        else -> "Choose how your flashcards are generated" to null
                     }
                 }
 
@@ -129,6 +129,14 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
+                if (subText != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SelectableText(
+                        text = subText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -151,8 +159,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 val isSolenneAiActive = state.logInState is LogInState.LoggedIn
-                val isOwnAiActive = state.apiKeyState is ApiKeyState.Loaded
-                        && state.apiKeyState.apiKey.isNotBlank()
+                val isOwnAiActive = state.apiKeyState.currentlyUsingApiKeyOrNull == true
 
                 // Option 1: Use Solenne's AI
                 Column(
@@ -346,7 +353,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         .fillMaxWidth()
                         .border(
                             width = 2.dp,
-                            color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
+                            color = if (isOwnAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
                             shape = MaterialTheme.shapes.medium
                         )
                 ) {
@@ -392,58 +399,66 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(12.dp))
 
-                        when (val apiKeyState = state.apiKeyState) {
-                            is ApiKeyState.Loading -> {
-                                OutlinedTextField(
-                                    value = "",
-                                    onValueChange = {},
-                                    label = { CircularProgressIndicator() },
-                                    placeholder = { Text("AIza...") },
-                                    singleLine = true,
-                                    enabled = false,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                            is ApiKeyState.Loaded -> {
-                                ApiKeyTextField(
-                                    apiKey = apiKeyState.apiKey,
-                                    onApiKeyChanged = apiKeyState.onApiKeyChanged,
-                                    error = state.error
-                                )
-                            }
-                            is ApiKeyState.Modified -> {
-                                ApiKeyTextField(
-                                    apiKey = apiKeyState.apiKey,
-                                    onApiKeyChanged = apiKeyState.onApiKeyChanged,
-                                    error = state.error
-                                )
-
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                val buttonIsRemove = apiKeyState.apiKey.isBlank()
-                                val buttonText = when {
-                                    buttonIsRemove -> "Remove"
-                                    apiKeyState.currentlyUsingApiKey -> "Update"
-                                    else -> "Add"
+                            when (val apiKeyState = state.apiKeyState) {
+                                is ApiKeyState.Loading -> {
+                                    OutlinedTextField(
+                                        value = "",
+                                        onValueChange = {},
+                                        label = { CircularProgressIndicator() },
+                                        placeholder = { Text("AIza...") },
+                                        singleLine = true,
+                                        enabled = false,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
 
-                                Button(
-                                    onClick = apiKeyState.onButtonClicked,
-                                    enabled = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = if (buttonIsRemove) {
-                                        ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    } else {
-                                        ButtonDefaults.buttonColors()
+                                is ApiKeyState.Loaded, is ApiKeyState.Modified -> {
+                                    val apiKey = when (apiKeyState) {
+                                        is ApiKeyState.Loaded -> apiKeyState.apiKey
+                                        is ApiKeyState.Modified -> apiKeyState.apiKey
+                                        else -> "" // this should never happen
                                     }
-                                ) {
-                                    Text(buttonText)
+                                    val onApiKeyChanged = when (apiKeyState) {
+                                        is ApiKeyState.Loaded -> apiKeyState.onApiKeyChanged
+                                        is ApiKeyState.Modified -> apiKeyState.onApiKeyChanged
+                                        else -> ({}) // this should never happen
+                                    }
+
+                                    ApiKeyTextField(
+                                        apiKey = apiKey,
+                                        onApiKeyChanged = onApiKeyChanged,
+                                        error = state.error
+                                    )
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    val buttonText = when {
+                                        apiKeyState !is ApiKeyState.Modified -> "Update" // default is modified if it's unchanged
+                                        apiKeyState.apiKey.isBlank() -> "Remove"
+                                        apiKeyState.currentlyUsingApiKey -> "Update"
+                                        else -> "Add"
+                                    }
+
+                                    // if the api key isn't modified, it's disabled
+                                    val onClick =
+                                        (apiKeyState as? ApiKeyState.Modified)?.onButtonClicked
+                                    Button(
+                                        onClick = onClick ?: {},
+                                        enabled = onClick != null,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = if ((apiKeyState as? ApiKeyState.Modified)?.apiKey?.isBlank() == true) {
+                                            ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        } else {
+                                            ButtonDefaults.buttonColors()
+                                        }
+                                    ) {
+                                        Text(buttonText)
+                                    }
                                 }
                             }
-                        }
 
                             Spacer(modifier = Modifier.height(16.dp))
                         }
