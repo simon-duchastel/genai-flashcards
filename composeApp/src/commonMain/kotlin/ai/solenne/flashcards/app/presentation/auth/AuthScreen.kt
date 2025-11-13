@@ -33,12 +33,14 @@ sealed interface ApiKeyState {
         val apiKey: String,
         val currentlyUsingApiKey: Boolean, // whether an api key is currently active
         val onApiKeyChanged: (String) -> Unit,
+        val onRemoveClicked: () -> Unit,
     ) : ApiKeyState
     data class Modified(
         val apiKey: String,
         val currentlyUsingApiKey: Boolean, // whether an api key is currently active
         val onApiKeyChanged: (String) -> Unit,
         val onButtonClicked: () -> Unit,
+        val onRemoveClicked: () -> Unit,
     ) : ApiKeyState
 
     val currentlyUsingApiKeyOrNull: Boolean?
