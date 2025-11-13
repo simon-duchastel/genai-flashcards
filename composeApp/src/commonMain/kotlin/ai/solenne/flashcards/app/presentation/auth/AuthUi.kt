@@ -395,7 +395,11 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         enter = expandVertically() + fadeIn(),
                         exit = shrinkVertically() + fadeOut()
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(12.dp))
 
@@ -423,6 +427,11 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                         is ApiKeyState.Modified -> apiKeyState.onApiKeyChanged
                                         else -> ({}) // this should never happen
                                     }
+                                    val onRemoveClicked = when (apiKeyState) {
+                                        is ApiKeyState.Loaded -> apiKeyState.onRemoveClicked
+                                        is ApiKeyState.Modified -> apiKeyState.onRemoveClicked
+                                        else -> ({}) // this should never happen
+                                    }
 
                                     ApiKeyTextField(
                                         apiKey = apiKey,
@@ -432,30 +441,51 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                                     Spacer(modifier = Modifier.height(24.dp))
 
-                                    val buttonText = when {
-                                        apiKeyState !is ApiKeyState.Modified -> "Update" // default is modified if it's unchanged
-                                        apiKeyState.apiKey.isBlank() -> "Remove"
-                                        apiKeyState.currentlyUsingApiKey -> "Update"
-                                        else -> "Add"
-                                    }
-
                                     // if the api key isn't modified, it's disabled
                                     val onClick =
                                         (apiKeyState as? ApiKeyState.Modified)?.onButtonClicked
-                                    Button(
-                                        onClick = onClick ?: {},
-                                        enabled = onClick != null,
+                                    val currentlyUsingApiKey = apiKeyState.currentlyUsingApiKeyOrNull ?: false
+                                    val apiKeyModifiedAndNowEmpty = (apiKeyState as? ApiKeyState.Modified)?.apiKey?.isBlank() ?: false
+                                    Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = if ((apiKeyState as? ApiKeyState.Modified)?.apiKey?.isBlank() == true) {
-                                            ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                            )
-                                        } else {
-                                            ButtonDefaults.buttonColors()
-                                        }
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(buttonText)
+                                        AnimatedVisibility(
+                                            visible = !apiKeyModifiedAndNowEmpty,
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Button(
+                                                onClick = onClick ?: {},
+                                                enabled = onClick != null,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors()
+                                            ) {
+                                                Text(
+                                                    text = if (currentlyUsingApiKey) {
+                                                        "Update"
+                                                    } else {
+                                                        "Add"
+                                                    }
+                                                )
+                                            }
+                                        }
+                                        AnimatedVisibility(
+                                            visible = currentlyUsingApiKey,
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Button(
+                                                onClick = onRemoveClicked,
+                                                enabled = true,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                )
+                                            ) {
+                                                Text("Remove")
+                                            }
+                                        }
                                     }
                                 }
                             }
