@@ -26,6 +26,7 @@ class AuthPresenter(
         var originalApiKey by remember { mutableStateOf("") }
         var isAuthenticatingWithGoogle by remember { mutableStateOf(false) }
         var isAuthenticatingWithApple by remember { mutableStateOf(false) }
+        var isLoggingOut by remember { mutableStateOf(false) }
         var isLoggedIn by remember { mutableStateOf(false) }
         var loggedInProvider by remember { mutableStateOf<OAuthProvider?>(null) }
         var error by remember { mutableStateOf<String?>(null) }
@@ -156,9 +157,10 @@ class AuthPresenter(
         }
 
         val logInState = when {
-            isAuthenticatingWithGoogle || isAuthenticatingWithApple -> LogInState.Loading(
+            isAuthenticatingWithGoogle || isAuthenticatingWithApple || isLoggingOut -> LogInState.Loading(
                 loadingGoogle = isAuthenticatingWithGoogle,
                 loadingApple = isAuthenticatingWithApple,
+                loadingLogout = isLoggingOut,
             )
             isLoggedIn -> {
                 val loginType = when (loggedInProvider) {
@@ -170,6 +172,7 @@ class AuthPresenter(
                     loginType = loginType,
                     onLogoutClicked = {
                         error = null
+                        isLoggingOut = true
                         scope.launch {
                             try {
                                 val sessionToken = configRepository.getSessionToken()
@@ -179,6 +182,7 @@ class AuthPresenter(
                                 configRepository.clearSessionToken()
                                 isLoggedIn = false
                                 loggedInProvider = null
+                                isLoggingOut = false
 
                                 // go back to splash screen
                                 navigator.resetRoot(SplashScreen)
@@ -188,6 +192,7 @@ class AuthPresenter(
 
                                     Need help? Email help@solenne.ai
                                 """.trimIndent()
+                                isLoggingOut = false
                             }
                         }
                     }
