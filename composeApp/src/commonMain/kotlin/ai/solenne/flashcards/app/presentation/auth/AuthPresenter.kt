@@ -77,6 +77,23 @@ class AuthPresenter(
                         onApiKeyChanged = { newValue ->
                             apiKeyInput = newValue
                             error = null
+                        },
+                        onRemoveClicked = {
+                            error = null
+                            scope.launch {
+                                try {
+                                    configRepository.setGeminiApiKey("")
+                                    apiKeyInput = ""
+                                    originalApiKey = ""
+                                    navigator.resetRoot(SplashScreen)
+                                } catch (e: Exception) {
+                                    error = """
+                                        Failed to save API key: ${e.message}
+
+                                        Need help? Email help@solenne.ai
+                                    """.trimIndent()
+                                }
+                            }
                         }
                     )
                 } else {
@@ -95,6 +112,23 @@ class AuthPresenter(
                                     configRepository.setGeminiApiKey(currentKey.trim())
                                     apiKeyInput = currentKey.trim()
                                     originalApiKey = currentKey.trim()
+                                    navigator.resetRoot(SplashScreen)
+                                } catch (e: Exception) {
+                                    error = """
+                                        Failed to save API key: ${e.message}
+
+                                        Need help? Email help@solenne.ai
+                                    """.trimIndent()
+                                }
+                            }
+                        },
+                        onRemoveClicked = {
+                            error = null
+                            scope.launch {
+                                try {
+                                    configRepository.setGeminiApiKey("")
+                                    apiKeyInput = ""
+                                    originalApiKey = ""
                                     navigator.resetRoot(SplashScreen)
                                 } catch (e: Exception) {
                                     error = """

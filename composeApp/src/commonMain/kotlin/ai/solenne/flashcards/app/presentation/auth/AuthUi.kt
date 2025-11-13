@@ -43,11 +43,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +72,17 @@ import genai_flashcards.composeapp.generated.resources.apple_logo
 import org.jetbrains.compose.resources.painterResource
 import ai.solenne.flashcards.app.presentation.components.HelpText
 import ai.solenne.flashcards.app.presentation.components.textWithHelpEmail
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FloatAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -395,7 +412,11 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                         enter = expandVertically() + fadeIn(),
                         exit = shrinkVertically() + fadeOut()
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(12.dp))
 
@@ -423,6 +444,11 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                         is ApiKeyState.Modified -> apiKeyState.onApiKeyChanged
                                         else -> ({}) // this should never happen
                                     }
+                                    val onRemoveClicked = when (apiKeyState) {
+                                        is ApiKeyState.Loaded -> apiKeyState.onRemoveClicked
+                                        is ApiKeyState.Modified -> apiKeyState.onRemoveClicked
+                                        else -> ({}) // this should never happen
+                                    }
 
                                     ApiKeyTextField(
                                         apiKey = apiKey,
@@ -432,30 +458,71 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                                     Spacer(modifier = Modifier.height(24.dp))
 
-                                    val buttonText = when {
-                                        apiKeyState !is ApiKeyState.Modified -> "Update" // default is modified if it's unchanged
-                                        apiKeyState.apiKey.isBlank() -> "Remove"
-                                        apiKeyState.currentlyUsingApiKey -> "Update"
-                                        else -> "Add"
-                                    }
-
                                     // if the api key isn't modified, it's disabled
-                                    val onClick =
-                                        (apiKeyState as? ApiKeyState.Modified)?.onButtonClicked
-                                    Button(
-                                        onClick = onClick ?: {},
-                                        enabled = onClick != null,
+                                    val onClick = (apiKeyState as? ApiKeyState.Modified)?.onButtonClicked
+                                    val currentlyUsingApiKey = apiKeyState.currentlyUsingApiKeyOrNull ?: false
+                                    val apiKeyModifiedAndNowEmpty = (apiKeyState as? ApiKeyState.Modified)?.apiKey?.isBlank() ?: false
+                                    Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = if ((apiKeyState as? ApiKeyState.Modified)?.apiKey?.isBlank() == true) {
-                                            ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                            )
-                                        } else {
-                                            ButtonDefaults.buttonColors()
-                                        }
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(buttonText)
+                                        val showAddUpdateButton = !apiKeyModifiedAndNowEmpty
+                                        val showRemoveButton = currentlyUsingApiKey
+
+                                        val addUpdateWeight by animateFloatAsState(
+                                            targetValue = if (showAddUpdateButton) 1f else 0f,
+                                            animationSpec = tween(durationMillis = 300),
+                                            label = "AddUpdateWeight"
+                                        )
+                                        val removeWeight by animateFloatAsState(
+                                            targetValue = if (showRemoveButton) 1f else 0f,
+                                            animationSpec = tween(durationMillis = 300),
+                                            label = "RemoveWeight"
+                                        )
+                                        val spacerWidth by animateDpAsState(
+                                            targetValue = if (showAddUpdateButton && showRemoveButton) 8.dp else 0.dp,
+                                            animationSpec = tween(durationMillis = 300),
+                                            label = "SpacerWidth"
+                                        )
+
+                                        if (addUpdateWeight > 0f) {
+                                            Button(
+                                                onClick = onClick ?: {},
+                                                enabled = onClick != null,
+                                                modifier = Modifier.weight(addUpdateWeight),
+                                                colors = ButtonDefaults.buttonColors()
+                                            ) {
+                                                Text(
+                                                    text = if (currentlyUsingApiKey) {
+                                                        "Update"
+                                                    } else {
+                                                        "Add"
+                                                    },
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Clip,
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.width(spacerWidth))
+
+                                        if (removeWeight > 0f) {
+                                            Button(
+                                                onClick = onRemoveClicked,
+                                                enabled = true,
+                                                modifier = Modifier.weight(removeWeight),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = "Remove",
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Clip,
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
