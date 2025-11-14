@@ -361,8 +361,15 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     enabled = state.deleteAccountModal !is DeleteAccountModal.Visible && !logoutButtonLoading,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                        containerColor = Color(0xFFDC2626),
+                                        contentColor = Color.White,
+                                        disabledContainerColor = Color(0xFFDC2626).copy(alpha = 0.5f),
+                                        disabledContentColor = Color.White.copy(alpha = 0.7f)
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 4.dp,
+                                        pressedElevation = 8.dp,
+                                        disabledElevation = 0.dp
                                     )
                                 ) {
                                     Row(
@@ -373,13 +380,13 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                         if (logoutButtonLoading) {
                                             CircularProgressIndicator(
                                                 modifier = Modifier.size(20.dp),
-                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                                color = Color.White
                                             )
                                         } else {
                                             Text(
                                                 text = "Logout",
                                                 style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Medium
+                                                fontWeight = FontWeight.Bold
                                             )
                                         }
                                     }
@@ -580,14 +587,20 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                                 enabled = true,
                                                 modifier = Modifier.weight(removeWeight),
                                                 colors = ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                    containerColor = Color(0xFFDC2626),
+                                                    contentColor = Color.White
+                                                ),
+                                                elevation = ButtonDefaults.buttonElevation(
+                                                    defaultElevation = 4.dp,
+                                                    pressedElevation = 8.dp,
+                                                    disabledElevation = 0.dp
                                                 )
                                             ) {
                                                 Text(
                                                     text = "Remove",
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Clip,
+                                                    fontWeight = FontWeight.Bold
                                                 )
                                             }
                                         }
