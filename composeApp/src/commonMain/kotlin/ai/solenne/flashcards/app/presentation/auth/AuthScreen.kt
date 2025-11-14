@@ -55,6 +55,7 @@ sealed interface LogInState {
     data class Loading(
         val loadingGoogle: Boolean,
         val loadingApple: Boolean,
+        val loadingLogout: Boolean = false,
     ) : LogInState
 
     data class LoggedOut(
