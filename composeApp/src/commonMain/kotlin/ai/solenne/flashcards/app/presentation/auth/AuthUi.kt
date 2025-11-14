@@ -212,178 +212,179 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(12.dp))
 
-                        val onGoogleSignInClicked = when (loginState) {
-                            is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
-                            is LogInState.Loading -> null
-                            is LogInState.LoggedIn -> null
-                        }
-                        val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
-                        val isSignedInWithGoogle = loginState is LogInState.LoggedIn &&
-                            loginState.loginType == LogInState.LoggedIn.LoginType.SignedInWithGoogle
-
-                        Button(
-                            onClick = onGoogleSignInClicked ?: {},
-                            enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = if (isSignedInWithGoogle) {
-                                ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF4CAF50),
-                                    contentColor = Color.White,
-                                    disabledContainerColor = Color(0xFF4CAF50),
-                                    disabledContentColor = Color.White
-                                )
-                            } else {
-                                ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            border = if (!isSignedInWithGoogle) {
-                                ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
-                            } else {
-                                null
+                            val loginState = state.logInState
+                            val onGoogleSignInClicked = when (loginState) {
+                                is LogInState.LoggedOut -> loginState.onGoogleSignInClicked
+                                is LogInState.Loading -> null
+                                is LogInState.LoggedIn -> null
                             }
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                if (googleButtonLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                } else {
-                                    if (isSignedInWithGoogle) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Signed in",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp).padding(end = 8.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "G",
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(end = 12.dp)
-                                    )
-                                    Text(
-                                        text = if (isSignedInWithGoogle) "Signed in with Google" else "Sign in with Google",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
+                            val googleButtonLoading = loginState is LogInState.Loading && loginState.loadingGoogle
+                            val isSignedInWithGoogle = loginState is LogInState.LoggedIn &&
+                                loginState.loginType == LogInState.LoggedIn.LoginType.SignedInWithGoogle
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val onAppleSignInClicked = when (loginState) {
-                            is LogInState.LoggedOut -> loginState.onAppleSignInClicked
-                            is LogInState.Loading -> null
-                            is LogInState.LoggedIn -> null
-                        }
-                        val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
-                        val isSignedInWithApple = loginState is LogInState.LoggedIn &&
-                            loginState.loginType == LogInState.LoggedIn.LoginType.SignedInWithApple
-
-                        Button(
-                            onClick = onAppleSignInClicked ?: {},
-                            enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = if (isSignedInWithApple) {
-                                ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF4CAF50),
-                                    contentColor = Color.White,
-                                    disabledContainerColor = Color(0xFF4CAF50),
-                                    disabledContentColor = Color.White
-                                )
-                            } else {
-                                ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            border = if (!isSignedInWithApple) {
-                                ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
-                            } else {
-                                null
-                            }
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                if (appleButtonLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                } else {
-                                    if (isSignedInWithApple) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Signed in",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp).padding(end = 8.dp)
-                                        )
-                                    }
-                                    Image(
-                                        painter = painterResource(Res.drawable.apple_logo),
-                                        contentDescription = "Apple logo",
-                                        modifier = Modifier.size(20.dp),
-                                        colorFilter = ColorFilter.tint(if (isSignedInWithApple) Color.White else MaterialTheme.colorScheme.onSurface)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = if (isSignedInWithApple) "Signed in with Apple" else "Sign in with Apple",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-
-                        // Logout button (shown when logged in or logging out)
-                        val showLogoutButton = loginState is LogInState.LoggedIn ||
-                            (loginState is LogInState.Loading && loginState.loadingLogout)
-                        if (showLogoutButton) {
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            val logoutButtonLoading = loginState is LogInState.Loading && loginState.loadingLogout
-                            val onLogoutClicked = (loginState as? LogInState.LoggedIn)?.onLogoutClicked ?: {}
                             Button(
-                                onClick = onLogoutClicked,
-                                enabled = state.deleteAccountModal !is DeleteAccountModal.Visible && !logoutButtonLoading,
+                                onClick = onGoogleSignInClicked ?: {},
+                                enabled = loginState is LogInState.LoggedOut && !googleButtonLoading,
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
+                                colors = if (isSignedInWithGoogle) {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50),
+                                        contentColor = Color.White,
+                                        disabledContainerColor = Color(0xFF4CAF50),
+                                        disabledContentColor = Color.White
+                                    )
+                                } else {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                border = if (!isSignedInWithGoogle) {
+                                    ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !googleButtonLoading)
+                                } else {
+                                    null
+                                }
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center,
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 ) {
-                                    if (logoutButtonLoading) {
+                                    if (googleButtonLoading) {
                                         CircularProgressIndicator(
                                             modifier = Modifier.size(20.dp),
-                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     } else {
+                                        if (isSignedInWithGoogle) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Signed in",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp).padding(end = 8.dp)
+                                            )
+                                        }
                                         Text(
-                                            text = "Logout",
+                                            text = "G",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            modifier = Modifier.padding(end = 12.dp)
+                                        )
+                                        Text(
+                                            text = if (isSignedInWithGoogle) "Signed in with Google" else "Sign in with Google",
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
                                 }
                             }
-                        }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            val onAppleSignInClicked = when (loginState) {
+                                is LogInState.LoggedOut -> loginState.onAppleSignInClicked
+                                is LogInState.Loading -> null
+                                is LogInState.LoggedIn -> null
+                            }
+                            val appleButtonLoading = loginState is LogInState.Loading && loginState.loadingApple
+                            val isSignedInWithApple = loginState is LogInState.LoggedIn &&
+                                loginState.loginType == LogInState.LoggedIn.LoginType.SignedInWithApple
+
+                            Button(
+                                onClick = onAppleSignInClicked ?: {},
+                                enabled = loginState is LogInState.LoggedOut && !appleButtonLoading,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = if (isSignedInWithApple) {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50),
+                                        contentColor = Color.White,
+                                        disabledContainerColor = Color(0xFF4CAF50),
+                                        disabledContentColor = Color.White
+                                    )
+                                } else {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                border = if (!isSignedInWithApple) {
+                                    ButtonDefaults.outlinedButtonBorder(enabled = loginState is LogInState.LoggedOut && !appleButtonLoading)
+                                } else {
+                                    null
+                                }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                ) {
+                                    if (appleButtonLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    } else {
+                                        if (isSignedInWithApple) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Signed in",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp).padding(end = 8.dp)
+                                            )
+                                        }
+                                        Image(
+                                            painter = painterResource(Res.drawable.apple_logo),
+                                            contentDescription = "Apple logo",
+                                            modifier = Modifier.size(20.dp),
+                                            colorFilter = ColorFilter.tint(if (isSignedInWithApple) Color.White else MaterialTheme.colorScheme.onSurface)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = if (isSignedInWithApple) "Signed in with Apple" else "Sign in with Apple",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Logout button (shown when logged in or logging out)
+                            val showLogoutButton = loginState is LogInState.LoggedIn ||
+                                (loginState is LogInState.Loading && loginState.loadingLogout)
+                            if (showLogoutButton) {
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                val logoutButtonLoading = loginState is LogInState.Loading && loginState.loadingLogout
+                                val onLogoutClicked = (loginState as? LogInState.LoggedIn)?.onLogoutClicked ?: {}
+                                Button(
+                                    onClick = onLogoutClicked,
+                                    enabled = state.deleteAccountModal !is DeleteAccountModal.Visible && !logoutButtonLoading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        if (logoutButtonLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp),
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "Logout",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(16.dp))
                         }
