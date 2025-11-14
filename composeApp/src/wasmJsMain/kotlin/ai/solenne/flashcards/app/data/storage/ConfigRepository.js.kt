@@ -1,5 +1,6 @@
 package ai.solenne.flashcards.app.data.storage
 
+import ai.solenne.flashcards.shared.api.dto.OAuthProvider
 import kotlinx.browser.localStorage
 
 /**
@@ -9,6 +10,7 @@ class ConfigRepositoryJs : ConfigRepository {
     private val apiKeyStorageKey = "gemini_api_key"
     private val darkModeStorageKey = "dark_mode"
     private val sessionTokenKey = "session_token"
+    private val oauthProviderKey = "oauth_provider"
 
     // Gemini API Key
     override suspend fun getGeminiApiKey(): String? {
@@ -39,6 +41,20 @@ class ConfigRepositoryJs : ConfigRepository {
 
     override suspend fun clearSessionToken() {
         localStorage.removeItem(sessionTokenKey)
+    }
+
+    override suspend fun getOAuthProvider(): OAuthProvider? {
+        return localStorage.getItem(oauthProviderKey)?.let { providerName ->
+            try {
+                OAuthProvider.valueOf(providerName)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+    }
+
+    override suspend fun setOAuthProvider(provider: OAuthProvider) {
+        localStorage.setItem(oauthProviderKey, provider.name)
     }
 }
 

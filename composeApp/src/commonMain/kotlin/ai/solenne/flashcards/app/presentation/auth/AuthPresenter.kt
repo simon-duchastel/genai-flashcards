@@ -48,6 +48,11 @@ class AuthPresenter(
             val sessionToken = configRepository.getSessionToken()
             isLoggedIn = sessionToken != null
 
+            // Load the persisted OAuth provider
+            if (isLoggedIn) {
+                loggedInProvider = configRepository.getOAuthProvider()
+            }
+
             // Auto-open based on what's active
             if (solenneAiExpanded == null && ownAiExpanded == null) {
                 if (isLoggedIn) {
@@ -180,6 +185,7 @@ class AuthPresenter(
                                     authApiClient.logout(sessionToken)
                                 }
                                 configRepository.clearSessionToken()
+                                // Note: We don't clear OAuth provider here to maintain a record of last used provider
                                 isLoggedIn = false
                                 loggedInProvider = null
                                 isLoggingOut = false
@@ -320,8 +326,9 @@ class AuthPresenter(
                     return@launch
                 }
 
-                // Save session token
+                // Save session token and OAuth provider
                 configRepository.setSessionToken(authResponse.sessionToken)
+                configRepository.setOAuthProvider(provider)
 
                 // Update state
                 setLoggedIn(true)
