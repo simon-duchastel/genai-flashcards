@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
@@ -267,8 +267,8 @@ private fun FlashcardSetItem(
             }
             IconButton(onClick = onDeleteClick) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
                 )
             }
         }
