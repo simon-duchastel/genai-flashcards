@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.metro)
+    alias(libs.plugins.mokkery)
 }
 
 kotlin {
@@ -104,6 +105,12 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotest.framework.engine)
+            implementation(libs.kotest.assertions.core)
+            implementation(libs.kotest.property)
+            implementation(libs.kotest.framework.datatest)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
         }
 
         androidMain.dependencies {
