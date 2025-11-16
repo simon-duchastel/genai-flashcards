@@ -1,5 +1,6 @@
 package ai.solenne.flashcards.app.data.storage
 
+import ai.solenne.flashcards.shared.api.dto.OAuthProvider
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSUserDefaults
 
@@ -10,6 +11,7 @@ class ConfigRepositoryIos : ConfigRepository {
     private val apiKeyStorageKey = "gemini_api_key"
     private val darkModeStorageKey = "dark_mode"
     private val sessionTokenStorageKey = "session_token"
+    private val oauthProviderStorageKey = "oauth_provider"
     private val userDefaults = NSUserDefaults.standardUserDefaults
 
     @OptIn(ExperimentalForeignApi::class)
@@ -48,6 +50,23 @@ class ConfigRepositoryIos : ConfigRepository {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun clearSessionToken() {
         userDefaults.removeObjectForKey(sessionTokenStorageKey)
+        userDefaults.synchronize()
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun getOAuthProvider(): OAuthProvider? {
+        return userDefaults.stringForKey(oauthProviderStorageKey)?.let { providerName ->
+            try {
+                OAuthProvider.valueOf(providerName)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun setOAuthProvider(provider: OAuthProvider) {
+        userDefaults.setObject(provider.name, forKey = oauthProviderStorageKey)
         userDefaults.synchronize()
     }
 }

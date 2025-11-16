@@ -1,5 +1,6 @@
 package ai.solenne.flashcards.app.data.storage
 
+import ai.solenne.flashcards.shared.api.dto.OAuthProvider
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -14,6 +15,7 @@ class ConfigRepositoryAndroid(private val context: Context) : ConfigRepository {
     private val apiKeyKey = stringPreferencesKey("gemini_api_key")
     private val darkModeKey = booleanPreferencesKey("dark_mode")
     private val sessionTokenKey = stringPreferencesKey("session_token")
+    private val oauthProviderKey = stringPreferencesKey("oauth_provider")
 
     override suspend fun getGeminiApiKey(): String? {
         return context.dataStore.data.map { preferences ->
@@ -54,6 +56,24 @@ class ConfigRepositoryAndroid(private val context: Context) : ConfigRepository {
     override suspend fun clearSessionToken() {
         context.dataStore.edit { preferences ->
             preferences.remove(sessionTokenKey)
+        }
+    }
+
+    override suspend fun getOAuthProvider(): OAuthProvider? {
+        return context.dataStore.data.map { preferences ->
+            preferences[oauthProviderKey]?.let { providerName ->
+                try {
+                    OAuthProvider.valueOf(providerName)
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }
+        }.first()
+    }
+
+    override suspend fun setOAuthProvider(provider: OAuthProvider) {
+        context.dataStore.edit { preferences ->
+            preferences[oauthProviderKey] = provider.name
         }
     }
 }
