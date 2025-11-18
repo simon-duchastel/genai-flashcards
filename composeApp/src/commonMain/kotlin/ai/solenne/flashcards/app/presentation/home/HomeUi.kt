@@ -51,7 +51,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                     IconButton(onClick = state.onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = "Authentication"
                         )
                     }
                 }
@@ -277,9 +277,8 @@ private fun FlashcardSetItem(
 
 @OptIn(ExperimentalTime::class)
 private fun formatDate(timestamp: Long): String {
-//    val instant = Instant.fromEpochMilliseconds(timestamp)
-//    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-//    val date = dateTime.date
-//    return "${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}, ${date.year}"
-    return "${timestamp}"
+    val instant = Instant.fromEpochMilliseconds(timestamp)
+    val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    val date = dateTime.date
+    return "${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}, ${date.year}"
 }
