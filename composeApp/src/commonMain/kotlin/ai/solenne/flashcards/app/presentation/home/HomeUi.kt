@@ -51,7 +51,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                     IconButton(onClick = state.onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = "Authentication"
                         )
                     }
                 }
