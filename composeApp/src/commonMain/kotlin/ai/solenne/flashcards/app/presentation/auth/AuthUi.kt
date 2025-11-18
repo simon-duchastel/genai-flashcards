@@ -93,7 +93,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { SelectableText("Settings", fontWeight = FontWeight.Bold) },
+                title = { SelectableText("Authentication", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
