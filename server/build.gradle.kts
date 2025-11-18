@@ -52,7 +52,25 @@ kotlin {
                 implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
             }
         }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotest.runner.junit5)
+                implementation(libs.kotest.assertions.core)
+                implementation(libs.kotest.property)
+                implementation(libs.kotest.framework.datatest)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.mockk)
+                implementation(libs.ktor.server.test.host)
+                implementation(libs.ktor.client.mock)
+            }
+        }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 // Create a run task for the server
