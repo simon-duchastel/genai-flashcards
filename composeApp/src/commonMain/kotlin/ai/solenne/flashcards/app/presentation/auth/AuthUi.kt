@@ -361,9 +361,12 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     enabled = state.deleteAccountModal !is DeleteAccountModal.Visible && !logoutButtonLoading,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                    )
+                                        containerColor = Color(0xFFFFEBEE),
+                                        contentColor = Color(0xFFC62828),
+                                        disabledContainerColor = MaterialTheme.colorScheme.errorContainer,
+                                        disabledContentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    ),
+                                    border = BorderStroke(3.dp, Color(0xFFD32F2F))
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
