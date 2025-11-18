@@ -159,6 +159,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
 
                 val isSolenneAiActive = state.logInState is LogInState.LoggedIn
                 val isOwnAiActive = state.apiKeyState.currentlyUsingApiKeyOrNull == true
+                val bothAuthMethodsExist = isSolenneAiActive && isOwnAiActive
 
                 // Option 1: Use Solenne's AI
                 Column(
@@ -169,6 +170,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                             color = if (isSolenneAiActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
                             shape = MaterialTheme.shapes.medium
                         )
+                        .alpha(if (bothAuthMethodsExist) 0.7f else 1f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -187,7 +189,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Active",
                                     tint = Color(0xFF4CAF50),
-                                    modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                    modifier = Modifier.size(32.dp).padding(end = 8.dp)
                                 )
                             }
                             Text(
@@ -466,7 +468,7 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Active",
                                     tint = Color(0xFF4CAF50),
-                                    modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                    modifier = Modifier.size(32.dp).padding(end = 8.dp)
                                 )
                             }
                             Text(
@@ -668,7 +670,8 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     ) {
                         Checkbox(
                             checked = false,
-                            onCheckedChange = { dangerousMode.onDangerousModeToggled() }
+                            onCheckedChange = { dangerousMode.onDangerousModeToggled() },
+                            modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         SelectableText(
@@ -715,7 +718,8 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                     ) {
                         Checkbox(
                             checked = true,
-                            onCheckedChange = { dangerousMode.onDangerousModeToggled() }
+                            onCheckedChange = { dangerousMode.onDangerousModeToggled() },
+                            modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         SelectableText(
