@@ -36,7 +36,11 @@ fun CreateUi(state: CreateUiState, modifier: Modifier = Modifier) {
             .imePadding(),
         topBar = {
             TopAppBar(
-                title = { SelectableText("Create Flashcards") },
+                title = {
+                    SelectableText(
+                        if (state.isEditMode) "Edit Flashcards" else "Create Flashcards"
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = state.onBackClicked) {
                         Icon(
@@ -353,7 +357,7 @@ private fun PreviewCards(state: ContentState.Generated) {
             onClick = state.onSaveClicked,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Save Set")
+            Text(if (state.isEditMode) "Update Set" else "Save Set")
         }
     }
 }

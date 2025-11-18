@@ -8,6 +8,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -67,6 +68,33 @@ class ServerFlashcardApiClient(
             }
         } catch (e: Exception) {
             println("Error saving flashcard set: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * Update an existing flashcard set on the server (idempotent).
+     * @param token Bearer token for authentication
+     * @param set FlashcardSet to update
+     * @return Updated FlashcardSet with server-assigned metadata, or null if request fails
+     */
+    suspend fun updateFlashcardSet(token: String, set: FlashcardSet): FlashcardSet? {
+        return try {
+            val response = httpClient.put("$baseUrl${ApiRoutes.FLASHCARD_SETS}") {
+                contentType(ContentType.Application.Json)
+                bearerAuth(token)
+                setBody(set)
+            }
+
+            if (response.status == HttpStatusCode.OK) {
+                response.body<FlashcardSet>()
+            } else {
+                println("Failed to update flashcard set: ${response.status}")
+                null
+            }
+        } catch (e: Exception) {
+            println("Error updating flashcard set: ${e.message}")
             e.printStackTrace()
             null
         }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -92,6 +93,7 @@ fun HomeUi(state: HomeUiState, modifier: Modifier = Modifier) {
                     FlashcardSetList(
                         sets = contentState.flashcardSets,
                         onSetClick = { contentState.onOpenSet(it.flashcardSet.id) },
+                        onEditClick = contentState.onEditSetClick,
                         onDeleteClick = contentState.onDeleteSetClick,
                         modifier = Modifier.fillMaxSize().padding(padding)
                     )
@@ -180,6 +182,7 @@ private fun EmptyState(
 private fun FlashcardSetList(
     sets: List<FlashcardSetWithMeta>,
     onSetClick: (FlashcardSetWithMeta) -> Unit,
+    onEditClick: (FlashcardSetWithMeta) -> Unit,
     onDeleteClick: (FlashcardSetWithMeta) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -198,6 +201,7 @@ private fun FlashcardSetList(
                 FlashcardSetItem(
                     setWithMeta = setWithMeta,
                     onClick = { onSetClick(setWithMeta) },
+                    onEditClick = { onEditClick(setWithMeta) },
                     onDeleteClick = { onDeleteClick(setWithMeta) }
                 )
             }
@@ -209,6 +213,7 @@ private fun FlashcardSetList(
 private fun FlashcardSetItem(
     setWithMeta: FlashcardSetWithMeta,
     onClick: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -265,11 +270,19 @@ private fun FlashcardSetItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                )
+            Row {
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                    )
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                    )
+                }
             }
         }
     }
