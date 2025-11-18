@@ -130,7 +130,7 @@ interface AppGraph {
                 is HomeScreen -> ui<HomeUiState> { state, modifier ->
                     HomeUi(state, modifier)
                 }
-                CreateScreen -> ui<CreateUiState> { state, modifier ->
+                is CreateScreen -> ui<CreateUiState> { state, modifier ->
                     CreateUi(state, modifier)
                 }
                 is StudyScreen -> ui<StudyUiState> { state, modifier ->

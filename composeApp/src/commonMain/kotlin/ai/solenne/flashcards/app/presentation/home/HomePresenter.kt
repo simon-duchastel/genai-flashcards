@@ -123,7 +123,7 @@ class HomePresenter(
             contentState = contentState,
             deleteDialogState = deleteDialogState,
             onCreateNewSet = {
-                navigator.goTo(CreateScreen)
+                navigator.goTo(CreateScreen())
             },
             onSettingsClick = {
                 navigator.goTo(AuthScreen)
