@@ -114,7 +114,7 @@ interface AppGraph {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
                 is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
                 is HomeScreen -> HomePresenter(navigator, authRepository, clientRepository, localRepository)
-                CreateScreen -> CreatePresenter(navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
+                is CreateScreen -> CreatePresenter(screen, navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
                 is StudyScreen -> StudyPresenter(screen, navigator, authRepository, clientRepository, localRepository)
                 else -> null
             }
