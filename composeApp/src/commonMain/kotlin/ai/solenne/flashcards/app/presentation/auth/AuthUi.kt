@@ -365,23 +365,17 @@ fun AuthUi(state: AuthUiState, modifier: Modifier = Modifier) {
                                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center,
-                                        modifier = Modifier.padding(vertical = 4.dp)
-                                    ) {
-                                        if (logoutButtonLoading) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(20.dp),
-                                                color = MaterialTheme.colorScheme.onErrorContainer
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "Logout",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
+                                    if (logoutButtonLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Logout",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Clip,
+                                        )
                                     }
                                 }
                             }
