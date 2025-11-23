@@ -110,6 +110,10 @@ fun App(
                                 onRootPop = { }, // no-op root pop
                             )
 
+                            BackHandler(enabled = backStack.size > 1) {
+                                navigator.pop()
+                            }
+
                             NavigableCircuitContent(
                                 navigator = navigator,
                                 backStack = backStack,
