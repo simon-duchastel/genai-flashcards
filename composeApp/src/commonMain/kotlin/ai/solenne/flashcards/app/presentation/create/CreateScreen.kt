@@ -8,12 +8,15 @@ import ai.solenne.flashcards.app.parcel.Parcelize
 
 @Serializable
 @Parcelize
-data object CreateScreen: Screen
+data class CreateScreen(
+    val editSetId: String? = null
+): Screen
 
 // UI State
 data class CreateUiState(
     val contentState: ContentState,
     val deleteDialogState: DeleteDialogState,
+    val isEditMode: Boolean,
     val onBackClicked: () -> Unit,
 ) : CircuitUiState
 
@@ -49,6 +52,7 @@ sealed interface ContentState {
         val topic: String,
         val generatedCards: List<Flashcard>,
         val regenerationState: RegenerationState,
+        val isEditMode: Boolean,
         val onSaveClicked: () -> Unit,
         val onEditCard: (String, String, String) -> Unit,
         val onDeleteCardClick: (Flashcard) -> Unit,

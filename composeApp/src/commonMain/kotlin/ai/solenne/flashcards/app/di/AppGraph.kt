@@ -114,7 +114,7 @@ interface AppGraph {
                 is SplashScreen -> SplashPresenter(navigator, configRepository)
                 is AuthScreen -> AuthPresenter(navigator, configRepository, oauthHandler, authApiClient)
                 is HomeScreen -> HomePresenter(navigator, authRepository, clientRepository, localRepository)
-                CreateScreen -> CreatePresenter(navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
+                is CreateScreen -> CreatePresenter(screen, navigator, authRepository, clientRepository, localRepository, serverGenerator, koogGenerator)
                 is StudyScreen -> StudyPresenter(screen, navigator, authRepository, clientRepository, localRepository)
                 else -> null
             }
@@ -130,7 +130,7 @@ interface AppGraph {
                 is HomeScreen -> ui<HomeUiState> { state, modifier ->
                     HomeUi(state, modifier)
                 }
-                CreateScreen -> ui<CreateUiState> { state, modifier ->
+                is CreateScreen -> ui<CreateUiState> { state, modifier ->
                     CreateUi(state, modifier)
                 }
                 is StudyScreen -> ui<StudyUiState> { state, modifier ->
