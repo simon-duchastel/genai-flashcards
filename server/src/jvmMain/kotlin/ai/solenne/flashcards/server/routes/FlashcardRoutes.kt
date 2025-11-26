@@ -13,6 +13,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 
 /**
@@ -46,6 +47,31 @@ fun Route.flashcardRoutes(repository: ServerFlashcardRepository) {
                 val userSet = set.copy(userId = principal.userId)
                 repository.saveFlashcardSet(userSet)
                 call.respond(HttpStatusCode.Created, userSet)
+            }
+
+            // PUT /api/v1/flashcards/sets - Update a flashcard set (idempotent)
+            put {
+                val principal = call.principal<AuthenticatedUser>()
+                    ?: return@put call.respond(
+                        HttpStatusCode.Unauthorized,
+                        ErrorResponse("Authentication required", "UNAUTHORIZED")
+                    )
+
+                val set = call.receive<FlashcardSet>()
+
+                // Verify the set exists and belongs to the user
+                val existingSet = repository.getFlashcardSet(set.id, principal.userId)
+                if (existingSet == null) {
+                    return@put call.respond(
+                        HttpStatusCode.NotFound,
+                        ErrorResponse("Flashcard set not found", "NOT_FOUND")
+                    )
+                }
+
+                // Ensure userId matches authenticated user (prevent tampering)
+                val userSet = set.copy(userId = principal.userId)
+                repository.saveFlashcardSet(userSet)
+                call.respond(HttpStatusCode.OK, userSet)
             }
         }
 

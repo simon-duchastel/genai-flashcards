@@ -1,6 +1,7 @@
 package ai.solenne.flashcards.app.presentation.create
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
 class CreatePresenter(
+    private val screen: CreateScreen,
     private val navigator: Navigator,
     private val authRepository: AuthRepository,
     private val clientRepository: ClientFlashcardRepository,
@@ -29,6 +31,7 @@ class CreatePresenter(
 
     @Composable
     override fun present(): CreateUiState {
+        val isEditMode = screen.editSetId != null
         var topic by remember { mutableStateOf("") }
         var query by remember { mutableStateOf("") }
         var count by remember { mutableStateOf(10) }
@@ -39,6 +42,36 @@ class CreatePresenter(
         var regenerationPrompt by remember { mutableStateOf("") }
         var isRegenerating by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
+
+        // Load existing flashcard set if in edit mode
+        LaunchedEffect(screen.editSetId) {
+            if (isEditMode && screen.editSetId != null) {
+                try {
+                    val existingSet = if (authRepository.isSignedIn()) {
+                        clientRepository.getFlashcardSet(screen.editSetId)
+                    } else {
+                        localRepository.getFlashcardSet(screen.editSetId)
+                    }
+
+                    if (existingSet != null) {
+                        generatedCardsSet = existingSet
+                        topic = existingSet.topic
+                    } else {
+                        error = """
+                            Failed to load flashcard set.
+
+                            Need help? Email help@solenne.ai
+                        """.trimIndent()
+                    }
+                } catch (e: Exception) {
+                    error = """
+                        Error loading flashcard set: ${e.message}
+
+                        Need help? Email help@solenne.ai
+                    """.trimIndent()
+                }
+            }
+        }
 
         val onTopicChanged: (String) -> Unit = { newTopic ->
             topic = newTopic.take(30)
@@ -202,14 +235,21 @@ class CreatePresenter(
                     topic = currentSet.topic,
                     generatedCards = currentSet.flashcards,
                     regenerationState = regenerationState,
-                    onSaveClicked = remember(generatedCardsSet) {
+                    isEditMode = isEditMode,
+                    onSaveClicked = remember(generatedCardsSet, isEditMode) {
                         {
                             scope.launch {
                                 try {
                                     // Save to server if authenticated, otherwise save locally
                                     if (authRepository.isSignedIn()) {
                                         try {
-                                            clientRepository.saveFlashcardSet(currentSet)
+                                            if (isEditMode) {
+                                                // Use PUT for updating existing set
+                                                clientRepository.updateFlashcardSet(currentSet)
+                                            } else {
+                                                // Use POST for creating new set
+                                                clientRepository.saveFlashcardSet(currentSet)
+                                            }
                                             runCatching {
                                                 localRepository.deleteFlashcardSet(
                                                     currentSet.id
@@ -283,6 +323,7 @@ class CreatePresenter(
         return CreateUiState(
             contentState = contentState,
             deleteDialogState = deleteDialogState,
+            isEditMode = isEditMode,
             onBackClicked = {
                 navigator.pop()
             }

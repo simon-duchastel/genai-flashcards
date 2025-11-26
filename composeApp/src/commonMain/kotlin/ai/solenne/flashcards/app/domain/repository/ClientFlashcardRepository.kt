@@ -44,6 +44,16 @@ class ClientFlashcardRepository(
     }
 
     /**
+     * Update an existing flashcard set on the server (idempotent).
+     * Requires authentication.
+     */
+    suspend fun updateFlashcardSet(set: FlashcardSet) {
+        val token = authRepository.getSessionToken()
+            ?: throw IllegalStateException("Not authenticated")
+        serverClient.updateFlashcardSet(token, set)
+    }
+
+    /**
      * Delete a flashcard set from the server.
      * Requires authentication.
      */

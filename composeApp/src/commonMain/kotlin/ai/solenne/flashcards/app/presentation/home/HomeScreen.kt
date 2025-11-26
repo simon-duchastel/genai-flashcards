@@ -29,6 +29,7 @@ sealed interface ContentState {
     data class Loaded(
         val flashcardSets: List<FlashcardSetWithMeta>,
         val onOpenSet: (String) -> Unit,
+        val onEditSetClick: (FlashcardSetWithMeta) -> Unit,
         val onDeleteSetClick: (FlashcardSetWithMeta) -> Unit,
         val onRefresh: () -> Unit,
     ) : ContentState
