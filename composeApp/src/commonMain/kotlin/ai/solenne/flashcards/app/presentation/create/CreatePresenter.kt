@@ -47,10 +47,10 @@ class CreatePresenter(
         LaunchedEffect(screen.editSetId) {
             if (isEditMode && screen.editSetId != null) {
                 try {
-                    val existingSet = if (authRepository.isSignedIn()) {
-                        clientRepository.getFlashcardSet(screen.editSetId)
-                    } else {
+                    val existingSet = if (screen.isLocalOnly) {
                         localRepository.getFlashcardSet(screen.editSetId)
+                    } else {
+                        clientRepository.getFlashcardSet(screen.editSetId)
                     }
 
                     if (existingSet != null) {
