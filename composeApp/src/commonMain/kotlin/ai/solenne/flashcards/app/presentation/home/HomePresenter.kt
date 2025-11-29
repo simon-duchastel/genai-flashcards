@@ -70,7 +70,7 @@ class HomePresenter(
                     navigator.goTo(StudyScreen(setId = setId))
                 },
                 onEditSetClick = { set ->
-                    navigator.goTo(CreateScreen(editSetId = set.flashcardSet.id))
+                    navigator.goTo(CreateScreen(editSetId = set.flashcardSet.id, isLocalOnly = set.isLocalOnly))
                 },
                 onDeleteSetClick = { set ->
                     deleteDialogSet = set

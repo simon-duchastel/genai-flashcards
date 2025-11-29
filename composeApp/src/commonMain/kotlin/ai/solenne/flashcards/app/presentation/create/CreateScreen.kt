@@ -9,7 +9,8 @@ import ai.solenne.flashcards.app.parcel.Parcelize
 @Serializable
 @Parcelize
 data class CreateScreen(
-    val editSetId: String? = null
+    val editSetId: String? = null,
+    val isLocalOnly: Boolean = false
 ): Screen
 
 // UI State
