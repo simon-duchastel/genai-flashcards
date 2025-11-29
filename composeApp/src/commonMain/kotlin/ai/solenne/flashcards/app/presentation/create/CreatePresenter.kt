@@ -49,8 +49,10 @@ class CreatePresenter(
                 try {
                     val existingSet = if (screen.isLocalOnly) {
                         localRepository.getFlashcardSet(screen.editSetId)
-                    } else {
+                    } else if (authRepository.isSignedIn()) {
                         clientRepository.getFlashcardSet(screen.editSetId)
+                    } else {
+                        null
                     }
 
                     if (existingSet != null) {
