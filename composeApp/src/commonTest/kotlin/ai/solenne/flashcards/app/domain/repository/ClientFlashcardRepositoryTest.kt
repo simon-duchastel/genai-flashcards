@@ -208,6 +208,110 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
             }
         }
 
+        describe("updateFlashcardSet") {
+            it("should throw when not authenticated") {
+                everySuspend { mockAuthRepository.getSessionToken() } returns null
+
+                val set = FlashcardSet(id = "update-me", topic = "Updated")
+
+                runTest {
+                    shouldThrow<IllegalStateException> {
+                        repository.updateFlashcardSet(set)
+                    }
+                }
+            }
+
+            it("should update set with valid token") {
+                val token = "valid-token"
+                val set = FlashcardSet(
+                    id = "existing-set",
+                    topic = "Updated Topic",
+                    flashcards = listOf(
+                        Flashcard(front = "Updated Q", back = "Updated A")
+                    )
+                )
+
+                everySuspend { mockAuthRepository.getSessionToken() } returns token
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+
+                runTest {
+                    repository.updateFlashcardSet(set)
+                }
+
+                verifySuspend { mockServerClient.updateFlashcardSet(token, set) }
+            }
+
+            it("should pass correct token and set to server") {
+                val token = "user-specific-token"
+                val set = FlashcardSet(
+                    id = "set-to-update",
+                    userId = "user-123",
+                    topic = "Modified Topic",
+                    flashcards = listOf(
+                        Flashcard(front = "Q1", back = "A1"),
+                        Flashcard(front = "Q2", back = "A2")
+                    )
+                )
+
+                everySuspend { mockAuthRepository.getSessionToken() } returns token
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+
+                runTest {
+                    repository.updateFlashcardSet(set)
+                }
+
+                verifySuspend { mockServerClient.updateFlashcardSet(token, set) }
+            }
+
+            it("should propagate server errors") {
+                val token = "valid-token"
+                val set = FlashcardSet(id = "error-set")
+
+                everySuspend { mockAuthRepository.getSessionToken() } returns token
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } throws RuntimeException("Server error")
+
+                runTest {
+                    shouldThrow<RuntimeException> {
+                        repository.updateFlashcardSet(set)
+                    }
+                }
+            }
+
+            it("should handle CORS errors gracefully") {
+                val token = "valid-token"
+                val set = FlashcardSet(id = "cors-set")
+
+                everySuspend { mockAuthRepository.getSessionToken() } returns token
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } throws RuntimeException("CORS error")
+
+                runTest {
+                    shouldThrow<RuntimeException> {
+                        repository.updateFlashcardSet(set)
+                    }
+                }
+            }
+
+            it("should support idempotent updates") {
+                val token = "valid-token"
+                val set = FlashcardSet(
+                    id = "idempotent-set",
+                    topic = "Same Topic"
+                )
+
+                everySuspend { mockAuthRepository.getSessionToken() } returns token
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+
+                runTest {
+                    // Update same set twice - should be idempotent
+                    repository.updateFlashcardSet(set)
+                    repository.updateFlashcardSet(set)
+                }
+
+                // Verify it was called twice (idempotent means safe to retry)
+                verifySuspend(atLeast = 2) { mockServerClient.updateFlashcardSet(token, set) }
+            }
+        }
+
         describe("deleteFlashcardSet") {
             it("should throw when not authenticated") {
                 everySuspend { mockAuthRepository.getSessionToken() } returns null
@@ -328,6 +432,11 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                     // Save requires auth
                     shouldThrow<IllegalStateException> {
                         repository.saveFlashcardSet(set)
+                    }
+
+                    // Update requires auth
+                    shouldThrow<IllegalStateException> {
+                        repository.updateFlashcardSet(set)
                     }
 
                     // Delete requires auth
