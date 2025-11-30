@@ -19,7 +19,7 @@ compose-material-icons-extended = "1.6.10"
 agp = "8.13.0"
 metro = "0.7.3"
 kotest = "5.9.1"
-mokkery = "2.7.0"
+mokkery = "2.10.2"
 mockk = "1.13.13"
 turbine = "1.2.0"
 
