@@ -20,4 +20,5 @@ plugins {
     alias(libs.plugins.kotlinParcelize) apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.mokkery) apply false
 }

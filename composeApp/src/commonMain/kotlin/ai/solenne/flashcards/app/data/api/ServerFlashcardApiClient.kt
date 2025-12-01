@@ -1,5 +1,6 @@
 package ai.solenne.flashcards.app.data.api
 
+import ai.solenne.flashcards.app.testing.Mockable
 import ai.solenne.flashcards.shared.api.routes.ApiRoutes
 import ai.solenne.flashcards.shared.domain.model.FlashcardSet
 import io.ktor.client.HttpClient
@@ -18,6 +19,7 @@ import io.ktor.http.contentType
  * Client for interacting with server flashcard API endpoints.
  * Handles HTTP communication for flashcard CRUD operations.
  */
+@Mockable
 class ServerFlashcardApiClient(
     private val httpClient: HttpClient,
     private val baseUrl: String
