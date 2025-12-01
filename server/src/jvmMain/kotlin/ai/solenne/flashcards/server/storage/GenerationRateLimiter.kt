@@ -79,7 +79,14 @@ class GenerationRateLimiter : RateLimiter {
                 .filter { it.userId == userId && it.timestamp >= cutoff }
                 .sortedByDescending { it.timestamp }
 
-            if (recentAttempts.size >= userLimit) {
+            // Special handling for zero limit: only block after first attempt
+            val isExceeded = if (userLimit == 0) {
+                recentAttempts.isNotEmpty()
+            } else {
+                recentAttempts.size >= userLimit
+            }
+
+            if (isExceeded) {
                 // Rate limit exceeded
                 val earliestAttempt = recentAttempts.last().timestamp
                 val tryAgainAt = earliestAttempt + 24.hours

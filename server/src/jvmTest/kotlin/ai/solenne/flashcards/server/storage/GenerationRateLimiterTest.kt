@@ -244,10 +244,9 @@ class GenerationRateLimiterTest : DescribeSpec({
                 // tryAgainAt should be approximately 24 hours from now
                 val expectedTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000)
                 // Allow 1 minute tolerance
-                val tolerance = 60 * 1000
-                (exceeded.tryAgainAt - expectedTime).let { diff ->
-                    kotlin.math.abs(diff) shouldBe (diff < tolerance)
-                }
+                val tolerance = 60 * 1000L
+                val diff = kotlin.math.abs(exceeded.tryAgainAt - expectedTime)
+                (diff < tolerance) shouldBe true
             }
         }
 
