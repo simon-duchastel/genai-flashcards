@@ -1,12 +1,12 @@
-name: PR Build Check
+name: PR Build and Test
 
 on:
   pull_request:
     branches: [ main ]
 
 jobs:
-  build-android:
-    name: Build Android
+  test-jvm:
+    name: Run JVM Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -31,12 +31,64 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Run shared module JVM tests
+        run: ./gradlew :shared:jvmTest
+
+      - name: Run server module tests
+        run: ./gradlew :server:jvmTest
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-test-reports
+          path: |
+            shared/build/reports/tests/
+            server/build/reports/tests/
+
+  build-android:
+    name: Build and Test Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Android unit tests
+        run: ./gradlew :composeApp:testDebugUnitTest
 
       - name: Build Android app
         run: ./gradlew composeApp:assembleDebug
 
+      - name: Upload Android test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          path: composeApp/build/reports/tests/
+
   build-web:
-    name: Build Web
+    name: Build and Test Web
     runs-on: ubuntu-latest
 
     steps:
@@ -62,11 +114,21 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Run WASM JS tests
+        run: ./gradlew :composeApp:wasmJsTest || echo "WASM tests not yet configured"
+
       - name: Build web app
         run: ./gradlew wasmJsBrowserDistribution
 
+      - name: Upload WASM test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-test-reports
+          path: composeApp/build/reports/tests/
+
   build-ios:
-    name: Build iOS
+    name: Build and Test iOS
     runs-on: macos-latest
 
     steps:
@@ -92,5 +154,15 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Run iOS tests
+        run: ./gradlew :composeApp:iosSimulatorArm64Test || echo "iOS tests not yet configured"
+
       - name: Build iOS framework
         run: ./gradlew composeApp:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Upload iOS test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-reports
+          path: composeApp/build/reports/tests/

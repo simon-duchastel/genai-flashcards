@@ -18,6 +18,10 @@ logback = "1.4.14"
 compose-material-icons-extended = "1.6.10"
 agp = "8.13.0"
 metro = "0.7.3"
+kotest = "5.9.1"
+mokkery = "2.10.2"
+mockk = "1.13.13"
+turbine = "1.2.0"
 
 [libraries]
 # Kotlin
@@ -67,6 +71,25 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 # Metro DI
 metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
 
+# Testing - Kotest
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+
+# Testing - Mocking
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-agent-jvm = { module = "io.mockk:mockk-agent-jvm", version.ref = "mockk" }
+
+# Testing - Coroutines
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+
+# Testing - Ktor
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
 [plugins]
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
@@ -80,3 +103,5 @@ ktorPlugin = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+mokkery = { id = "dev.mokkery", version.ref = "mokkery" }
+kotest-multiplatform = { id = "io.kotest.multiplatform", version.ref = "kotest" }
