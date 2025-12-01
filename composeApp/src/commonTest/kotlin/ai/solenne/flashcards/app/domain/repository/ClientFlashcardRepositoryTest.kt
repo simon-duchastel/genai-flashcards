@@ -6,7 +6,9 @@ import ai.solenne.flashcards.shared.domain.model.FlashcardSet
 import dev.mokkery.answering.returns
 import dev.mokkery.answering.throws
 import dev.mokkery.everySuspend
+import dev.mokkery.matcher.any
 import dev.mokkery.mock
+import dev.mokkery.verify.VerifyMode.Companion.atLeast
 import dev.mokkery.verifySuspend
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -49,7 +51,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 val set = FlashcardSet(id = "set-123", topic = "Test")
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.saveFlashcardSet(token, set) } returns Unit
+                everySuspend { mockServerClient.saveFlashcardSet(token, set) } returns null
 
                 runTest {
                     repository.saveFlashcardSet(set)
@@ -67,7 +69,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 )
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.saveFlashcardSet(token, set) } returns Unit
+                everySuspend { mockServerClient.saveFlashcardSet(token, set) } returns null
 
                 runTest {
                     repository.saveFlashcardSet(set)
@@ -232,7 +234,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 )
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns null
 
                 runTest {
                     repository.updateFlashcardSet(set)
@@ -254,7 +256,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 )
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns null
 
                 runTest {
                     repository.updateFlashcardSet(set)
@@ -299,7 +301,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 )
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns Unit
+                everySuspend { mockServerClient.updateFlashcardSet(token, set) } returns null
 
                 runTest {
                     // Update same set twice - should be idempotent
@@ -308,7 +310,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 }
 
                 // Verify it was called twice (idempotent means safe to retry)
-                verifySuspend(atLeast = 2) { mockServerClient.updateFlashcardSet(token, set) }
+                verifySuspend(atLeast(2)) { mockServerClient.updateFlashcardSet(token, set) }
             }
         }
 
@@ -328,7 +330,7 @@ class ClientFlashcardRepositoryTest : DescribeSpec({
                 val setId = "delete-me"
 
                 everySuspend { mockAuthRepository.getSessionToken() } returns token
-                everySuspend { mockServerClient.deleteFlashcardSet(token, setId) } returns Unit
+                everySuspend { mockServerClient.deleteFlashcardSet(token, setId) } returns true
 
                 runTest {
                     repository.deleteFlashcardSet(setId)

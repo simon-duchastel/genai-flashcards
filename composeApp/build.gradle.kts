@@ -12,6 +12,12 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.metro)
     alias(libs.plugins.mokkery)
+    kotlin("plugin.allopen") version libs.versions.kotlin.get()
+}
+
+// Configure all-open plugin for Mokkery mocking
+allOpen {
+    annotation("ai.solenne.flashcards.app.testing.Mockable")
 }
 
 kotlin {
